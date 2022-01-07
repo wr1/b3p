@@ -8,7 +8,7 @@ Note that this code does *not* include an FEA solver or any other solvers at thi
 - Create rectangle grid for the blade
 - Assign scalable *slab based* laminate plans 
 - Assemble a shell mesh with laminate properties
-- Based on VTK
+- Write mesh information to VTK files
 
 ## How to run
 ```sh
