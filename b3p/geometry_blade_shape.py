@@ -1,6 +1,4 @@
 import vtk
-
-# import geom_utils
 from b3p import geometry_section
 import numpy
 
@@ -79,7 +77,6 @@ class blade_shape:
         # loop over the interpolated sections
         for i in self.interp_sections:
             # respline the section with the standard number of points
-            # print self.webs
             pnts, data = i.respline(
                 n_points, self.webs, self.added_datums, panel_mesh_scale
             )

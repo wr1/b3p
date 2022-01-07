@@ -14,10 +14,7 @@ def plyify(r, t, ply_thickness, reverse=False):
     active = []
     done = []
     np = len(r)
-
-    # print("number of plies", np, ply_thickness)
     for i in range(np):
-        # print(i)
         while t[i] > len(active) * ply_thickness:
             active.append([r[i], -1])
         while t[i] <= (len(active) - 1) * ply_thickness:
@@ -178,16 +175,18 @@ def lamplan2plies(blade):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("yaml", help="Laminate plan yaml ")
-    parser.add_argument("--out", default="__lamplan.pck")
+    parser = argparse.ArgumentParser(
+        description="Split up the slab based laminate plan into plies (for laminae) and blocks (for core materials), write to a .pck file for use in draping"
+    )
+    parser.add_argument("yaml", help="Laminate plan yaml file")
+    parser.add_argument("--out", default="__lamplan.pck", help="Output file name")
     args = parser.parse_args()
 
     blade = yaml.load(open(args.yaml, "r"), Loader=yaml.CLoader)
 
     allstacks = lamplan2plies(blade)
 
-    of = os.path.join(blade["general"]["workdir"], args.out)
+    of = args.out
     pickle.dump(allstacks, open(of, "wb"))
 
     print("written plydrape to %s" % of)

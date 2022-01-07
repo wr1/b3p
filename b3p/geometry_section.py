@@ -30,7 +30,6 @@ class section:
         else:
             self.base_points = points
         self.te_thickness = min_te_thickness
-        # self._open_te(points,min_te_thickness)
         self.points = vtk.vtkPoints()
         for i in self.base_points:
             self.points.InsertNextPoint((i[0], i[1], r))
@@ -151,30 +150,12 @@ class section:
             for i in webs:
                 splts.extend(i.splits(self.r, self.r_relative))
 
-            # print("respline", panel_mesh_scale)
-            # print(intervals, splts, inum, isize)
-            # try:
-            #     if make_plots:
-            #         figure(2)
-            #         plot([self.r], [splts[0]], "+")
-            #         plot([self.r], [splts[1]], "s")
-            #         plot([self.r], [splts[2]], "s")
-            #         plot([self.r], [splts[3]], "s")
-            #         title(
-            #             "R=%f,R_rel=%f,t_te=%f"
-            #             % (self.r, self.r_relative, self.te_thickness)
-            #         )
-            #         savefig("wbs.png")
-            # except:
-            #     pass
-
             real_intervals = sorted([0, 1] + list(splts))
             pnts = []
             for i in range(len(inum)):
                 interval = np.linspace(
                     real_intervals[i], real_intervals[i + 1], inum[i] + 1 * (i != 0)
                 )
-                # print inum[i]+1*(i!=0)
                 pnts.extend(interval)
 
             return sorted(set(pnts))
@@ -206,13 +187,9 @@ class section:
             )
         ]
 
-        # print 'webs ',webs
-        # print("pmeshscale", panel_mesh_scale)
         evaluations = self._create_evaluations(
             n_points, webs, panel_mesh_scale=panel_mesh_scale
         )
-        # print evaluations
-        # print len(evaluations),n_points
         for i in evaluations:
             p[0] = i
             u = [0, 0, 0]
@@ -245,13 +222,11 @@ class section:
         # get the in-plane normal to the chordline
         vtk.vtkMath.Cross(cline, [0, 0, -1], nor)
         chord = []
-        # print(out)
         for i in out:
             v1 = cline  # chord line
             v2 = nor  # normal to chord line
             v3 = [j[1] - j[0] for j in zip(te, i)]  # vector from TE to point
 
-            # print(i, v1, v2, v3)
             chord.append(
                 max(
                     0,
@@ -263,9 +238,7 @@ class section:
         lechord = [-i + 1.0 for i in chord]
         lechord_absolute = [i * (cline[0] ** 2 + cline[1] ** 2) ** 0.5 for i in lechord]
 
-        le_datum = [
-            math.fabs(dist[le_point] - i) for i in dist
-        ]  # dist[dist_from_te.index(max_dist_from_te)]
+        le_datum = [math.fabs(dist[le_point] - i) for i in dist]
 
         te_datum = [
             (dist[i] if i < le_point else max(dist) - dist[i]) for i in range(len(dist))
@@ -287,10 +260,8 @@ class section:
         counter = 0
         for i in webs:
             splits = sorted(i.splits(self.r, self.r_relative))
-            # print splits
             datum, datum_r = [], []
             for j in zip(rel_dist_from_te, pressure_side):
-                # print le_point, splits[not j[1]]
                 datum.append(
                     (j[0] - splits[j[1]]) * distance_along_airfoil * (-1 if j[1] else 1)
                 )
@@ -310,7 +281,6 @@ class section:
         # chord_length: chord length of the section the point is a part of
         # loc_le: d_along_airfoil coordinate of the leading edge point
 
-        # print max(r)
         mdist = max(dist)
         datums = {
             "d_te": te_datum,
@@ -338,10 +308,7 @@ class section:
             datums[i] = web_datums[i]
 
         for i in added_datums.items():
-            # print 'added datum',self.r, i
             offs = interp(self.r, i[1][1], i[1][2])
             datums[i[0]] = list(np.array(datums[i[1][0]]) + offs)
 
         return out, datums
-
-    # def write_as_precomp(self,filename):
