@@ -26,9 +26,10 @@ make drape
 make combine 
 ```
 ## Output
-
+Plot of geometric input parameters for the example blade
 ![test_blade](https://user-images.githubusercontent.com/8971152/148471383-7f652a84-447a-4db0-81e2-2e27b1785745.png)
 
+Visualisation of the number of plies on the mesh using [Paraview](https://paraview.org)
 ![3dblade_nplies](https://user-images.githubusercontent.com/8971152/148471469-61fb3efb-1789-4667-97b4-11b9e36d2e73.png)
 
 ## Input file format
