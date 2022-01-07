@@ -1,0 +1,124 @@
+general:
+  # prefix for output files
+  prefix: test_blade
+  # workdirectory for all variants
+  workdir : temp
+  
+
+planform:
+  npchord: 100
+  npspan : 70 
+  # offset in prebend direction, negative is upwind
+  dx    : [[0.0,0.0],[0.2,0.0],[0.4,0.0],[1.0,-5.0]]
+  # offset in chord direction
+  dy    : [[0,0],[1,0]]
+  z     : [[0,3],[1,126]]
+  chord : [[0.0,5],[0.03,5.06],[0.2,6.5],[.4,4.4],[.6,2.8],[.75,2.1],[0.94,1.5],[.985,.8],[1,.1]]
+  thickness:  [[0.0, 1.0],[.05,.97], [0.2, 0.53], [0.31, 0.39],  [1.0, 0.17]]
+  twist :   [[0.0,17],[0.6,0],[1.,0]]
+
+aero:
+  airfoils: {1.  : 'airfoils/circ_m32.dat',
+  .25         : 'airfoils/du_91_w2_250_smoothed_dero_0.250.dat',
+  0.21        : 'airfoils/DU93-W-210_smoothed_dero_0.210.dat',
+  0.179928    : 'airfoils/naca633418_te.dat',
+  0.17        : 'airfoils/naca0017.dat'}
+
+mesh:
+  radii: np.linspace(0,120, 160) 
+  webs:
+    "w0": 
+      origin: [0,0,0]
+      z_start: 0 
+      z_follow_blade: 100
+      z_end : 105
+    "w1": 
+      origin: [0,0.5,0]
+      z_start: 0 
+      z_follow_blade: 100
+      z_end : 105
+    "w2": 
+      origin: [0,-0.5,0]
+      z_start: 0 
+      z_follow_blade: 100
+      z_end : 105
+  n_web_points : 20
+  n_chordwise_points : 130
+
+laminates:
+  slabs: 
+    sparcap:
+      material: carbon_ud
+      cover: 
+        d_w0: [-0.5, 0.5,0]
+      slab: [[.03,0],[.08,58],[.7,45],[.9,0]]  
+      ply_thickness: 0.73
+      key: [100,2000]
+      increment: [1,-1]
+      grid: shell
+    trailing_edge_ud:
+      material: glass_ud
+      cover:
+        d_te: [.02,.25,0.02]
+      slab: [[.05,0],[.2,20],[.7,15],[.9,0]]
+      key: [300,3000]
+      increment: [1,-1]
+      ply_thickness: 1.15
+      grid: shell
+    shell_triax:
+      material: triax
+      cover:
+        d_te_r: [0, 1 , 0]
+      slab: [[.0,4],[.2,4],[.7,4],[1.,0]]
+      key: [0,8000]
+      increment: [1,-1]
+      splitstack: [.5 , .5]
+      ply_thickness: 1.25
+      grid: shell
+    transition_triax:
+      material: triax_30
+      cover:
+        d_te_r: [0, 1 , 0]
+      slab: [[.0,89],[.01,89],[.1,15],[.2,0]]
+      key: [600,0]
+      ply_thickness: 1.25
+      grid: shell
+    trailing_edge_core:
+      material: pet100
+      cover:
+        d_te: [0.15,8,0]
+        d_w0: [-10,-0.5,0]
+      slab: [[.05,0],[.06,50],[.4,50],[.405,20],[1.,20]]
+      key: [900,0]
+      ply_thickness: 1.
+      draping: blocks
+      grid: shell
+    leading_edge_core:
+      material: balsa
+      cover:
+        d_le_r: [0.1,1,0]
+        d_w0: [.5, 10,0]
+      slab: [[.05,0],[.06,30],[.4,30],[.405,10],[1.,10]]
+      ply_thickness: 1.
+      draping: blocks
+      key: [1100,0]
+      grid: shell
+    web0_biax:
+      material: biax
+      cover: 
+        d_w0_r: [0,1,0]
+      slab: [[.0,4],[1.,4]]
+      ply_thickness: 1.2
+      key: [0,8000]
+      splitstack: [.5,.5]
+      grid: web0
+      draping: plies
+    web0_core:
+      material: pet80
+      cover: 
+        d_w0_r: [0,1,0]
+      slab: [[.0,25],[1.,25]]
+      ply_thickness: 1.
+      key: [100,8000]
+      grid: web0
+      draping: blocks
