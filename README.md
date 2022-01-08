@@ -5,10 +5,10 @@ Note that this code does *not* include an FEA solver or any other solvers at thi
 ## Functionality
 - Interpolating a blade through a series of airfoils
 - Aligning airfoils to create maximum building height over a straight shearweb
-- Create rectangle grid for the blade
-- Assign scalable *slab based* laminate plans 
-- Assemble a shell mesh with laminate properties
-- Write mesh information to VTK files
+- Creating a quad mesh for the blade
+- Assigning scalable *slab based* laminate plans to the structure
+- Assembling a shell mesh with laminate properties
+- Writing mesh information to VTK files
 
 ## How to run
 ```sh
