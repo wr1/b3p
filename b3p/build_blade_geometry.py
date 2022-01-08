@@ -40,6 +40,7 @@ def run_loft(configfile, verbose=False):
 
     blade.mesh("%s.stl" % wdp)
     blade.dump("%s.pck" % (wdp), z_rotation=0)
+    blade.export_variables("%s.var" % (wdp))
     blade.export_xfoil(
         prefix=os.path.join(
             config["general"]["workdir"],

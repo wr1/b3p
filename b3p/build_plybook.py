@@ -124,7 +124,7 @@ def lamplan2plies(blade):
         name = i
         material = "glass_biax" if "material" not in slabs[i] else slabs[i]["material"]
         if material not in material_map:
-            material_map[material] = len(material_map)
+            material_map[material] = len(material_map) + 1
         grid = "lamplan" if "grid" not in slabs[i] else slabs[i]["grid"]
         coverage = (
             slabs[i]["cover"]

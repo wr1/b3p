@@ -16,4 +16,5 @@ drape:
 combine:
 	combine_meshes temp/test_blade_shell.vtu  temp/test_blade_w0.vtu --out temp/joinedup_mesh.vtu
 
-
+mesh2d:
+	mesh_2d --vtu temp/joinedup_mesh.vtu --r "[5,20,35,50,90]" --var temp/test_blade.var
