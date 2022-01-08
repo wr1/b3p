@@ -24,6 +24,8 @@ make plybook
 make drape 
 # combine the laminated shearwebs and shell meshes into a single grid with shared nodes
 make combine 
+# create 2d meshes of various cross sections of the blade 
+make mesh2d
 ```
 ## Output
 Plot of geometric input parameters for the example blade
