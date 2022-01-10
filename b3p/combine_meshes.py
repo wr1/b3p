@@ -46,7 +46,10 @@ def main():
                 i.GetCellData().AddArray(arr)
 
     for i in meshes:
+        # for j in range(i.GetCellData().GetNumberOfArrays()):
+        #     print(i.GetCellData().GetArray(j).GetName())
         append.AddInputData(i)
+        print(i)
     append.Update()
     append = append.GetOutput()
 

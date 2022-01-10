@@ -94,14 +94,16 @@ def main():
         name, material, data = i
         o.addCellArray(data, name)
         if material not in mtarr:  # create a thickness array for each material
-            mtarr[material] = data[:, 1]
+            mtarr[material] = data[:, 1].astype(np.float32)
         else:
-            mtarr[material] += data[:, 1]
+            mtarr[material] += data[:, 1].astype(np.float32)
         n_plies += data[:, 1] > 0
 
     o.addCellArray(n_plies, "n_plies")
 
-    thickness = np.zeros(len(data[:, 1]))  # add a total thickness array
+    thickness = np.zeros(
+        len(data[:, 1]), dtype=np.float32
+    )  # add a total thickness array
     for i in mtarr:
         o.addCellArray(mtarr[i], "mat_%i_thickness" % i)
         thickness += mtarr[i]

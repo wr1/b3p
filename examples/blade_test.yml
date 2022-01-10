@@ -51,7 +51,7 @@ laminates:
       material: carbon_ud
       cover: 
         d_w0: [-0.5, 0.5,0]
-      slab: [[.03,0],[.08,58],[.7,45],[.9,0]]  
+      slab: [[.03,0],[.08,58],[.7,58],[.9,0]]  
       ply_thickness: 0.73
       key: [100,2000]
       increment: [1,-1]
