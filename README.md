@@ -24,6 +24,8 @@ make plybook
 make drape 
 # combine the laminated shearwebs and shell meshes into a single grid with shared nodes
 make combine 
+# create 2d meshes of various cross sections of the blade 
+make mesh2d
 ```
 ## Output
 Plot of geometric input parameters for the example blade
@@ -32,6 +34,10 @@ Plot of geometric input parameters for the example blade
 Visualisation of the number of plies on the mesh using [Paraview](https://paraview.org)
 ![3dblade_nplies](https://user-images.githubusercontent.com/8971152/148471469-61fb3efb-1789-4667-97b4-11b9e36d2e73.png)
 
+Visualisation of a 2d cross section mesh 
+![mesh2d](https://user-images.githubusercontent.com/8971152/148645980-51c36e1a-89e1-469d-aeea-49bf5adf4070.png)
+
 ## Input file format
 TODO
+
 
