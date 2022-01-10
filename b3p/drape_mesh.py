@@ -68,8 +68,8 @@ def main():
     o = vedo.Mesh(poly)
 
     df = pd.DataFrame()
-    for i in o.getArrayNames()["CellData"]:
-        df[i] = o.getCellArray(i)
+    for i in o.celldata.keys():
+        df[i] = o.celldata[i]
 
     stck = pickle.load(open(args.pck, "rb"))
 
