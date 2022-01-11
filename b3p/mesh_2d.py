@@ -628,7 +628,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     return dirname
 
 
-def run_all(vtu, rr, if_bondline, rotz, var, debug=False, is2d=False):
+def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False):
     vtuabs = os.path.abspath(vtu)
     var = eval(open(var, "r").read())
     os.chdir(os.path.dirname(vtu))
@@ -640,15 +640,16 @@ def run_all(vtu, rr, if_bondline, rotz, var, debug=False, is2d=False):
         rotz=rotz,
         var=var,
         is2d=is2d,
+        verbose=verbose,
     )
-    if debug == False:
-        pool = multiprocessing.Pool()
-        al = pool.map(part, rr)
-        pool.close()
-        pool.join()
-    else:
-        for i in rr:
-            part(i)
+    # if debug == False:
+    pool = multiprocessing.Pool()
+    al = pool.map(part, rr)
+    pool.close()
+    pool.join()
+    # else:
+    #     for i in rr:
+    #         part(i)
 
 
 def main():
@@ -660,7 +661,7 @@ def main():
     p.add_argument("--bondline", default=False)
     p.add_argument("--rotz", type=float, default=0)
     p.add_argument("--var", type=str)
-    p.add_argument("--debug", action="store_true")
+    p.add_argument("--verbose", action="store_true")
     p.add_argument("--is2d", action="store_true")
     args = p.parse_args()
 
@@ -671,7 +672,7 @@ def main():
         args.bondline,
         args.rotz,
         args.var,
-        args.debug,
+        args.verbose,
         args.is2d,
     )
 
