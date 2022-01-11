@@ -27,7 +27,9 @@ def get_ply_cover(inp):
         sel = sel & cov
 
     mat = material * sel
-    out = np.stack([np.where(mat == 0, -1, mat), thickness * sel, np.zeros(len(sel))]).T
+    out = np.stack(
+        [np.where(mat == 0, -1, mat), thickness * sel, np.zeros(len(sel))]
+    ).T.astype(np.float32)
 
     return ("ply_%.8i_%s" % (ply_key, name), material, out)
 

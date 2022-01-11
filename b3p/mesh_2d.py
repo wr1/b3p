@@ -38,6 +38,7 @@ def join_up(nodes, epid, stacks, sec, poly):
     for inn in nodes:  # loop over all nodes that need joining up
         i, el = inn
         s0, s1 = np.array(stacks[el[0]]), np.array(stacks[el[1]])
+
         s0 /= np.linalg.norm(s0)
         s1 /= np.linalg.norm(s1)
 
@@ -628,7 +629,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     return dirname
 
 
-def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False):
+def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False):
     vtuabs = os.path.abspath(vtu)
     var = eval(open(var, "r").read())
     os.chdir(os.path.dirname(vtu))
@@ -642,14 +643,14 @@ def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False):
         is2d=is2d,
         verbose=verbose,
     )
-    # if debug == False:
-    pool = multiprocessing.Pool()
-    al = pool.map(part, rr)
-    pool.close()
-    pool.join()
-    # else:
-    #     for i in rr:
-    #         part(i)
+    if debug == False:
+        pool = multiprocessing.Pool()
+        al = pool.map(part, rr)
+        pool.close()
+        pool.join()
+    else:
+        for i in rr:
+            part(i)
 
 
 def main():
@@ -662,6 +663,7 @@ def main():
     p.add_argument("--rotz", type=float, default=0)
     p.add_argument("--var", type=str)
     p.add_argument("--verbose", action="store_true")
+    p.add_argument("--debug", action="store_true")
     p.add_argument("--is2d", action="store_true")
     args = p.parse_args()
 
@@ -674,6 +676,7 @@ def main():
         args.var,
         args.verbose,
         args.is2d,
+        args.debug,
     )
 
 

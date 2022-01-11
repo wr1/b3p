@@ -18,3 +18,6 @@ combine:
 
 mesh2d:
 	mesh_2d --vtu temp/joinedup_mesh.vtu --r "[5,20,35,50,65,80,90]" --var temp/test_blade.var
+
+
+all: geom mesh plybook drape combine mesh2d
