@@ -1,6 +1,5 @@
 # b3p (blade3 preprocessor)
 Command line tools to create models for composite (wind turbine) blades. 
-Note that this code does *not* include an FEA solver or any other solvers at this stage. 
 
 ## Functionality
 - Interpolating a blade through a series of airfoils
@@ -14,19 +13,25 @@ Note that this code does *not* include an FEA solver or any other solvers at thi
 ```sh
 pip install -e . 
 cd examples
-# build the geometry of the blade (closed geometry, triangles, no shearwebs)
-make geom 
-# create a structural mesh of the blade (including shearwebs)
-make mesh 
-# create a ply-based plybook out of slab-based input
-make plybook 
-# assign the plies to the mesh
-make drape 
-# combine the laminated shearwebs and shell meshes into a single grid with shared nodes
-make combine 
-# create 2d meshes of various cross sections of the blade 
-make mesh2d
+make
 ```
+which outputs the following targets
+```
+help                 Show this help
+geom                 create blade shell geometry (no shearwebs)
+mesh                 create blade structure 
+plybook              create a plybook out of slab definition
+drape                drape the shell and the shear web
+combine              add the meshes together 
+mesh2d               extract 2D meshes 
+loads                assign nodal forces to the joined mesh for use in FEA
+ccx                  export a grid to ccx format, solve and postprocess (requires ccx to be installed and be in PATH)
+all                  run all targets in sequence
+```
+To run all steps type:
+```
+make all
+``` 
 ## Output
 Plot of geometric input parameters for the example blade
 ![test_blade](https://user-images.githubusercontent.com/8971152/148471383-7f652a84-447a-4db0-81e2-2e27b1785745.png)
