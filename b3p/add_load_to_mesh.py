@@ -11,25 +11,6 @@ import scipy.optimize
 from functools import partial
 from matplotlib import pyplot
 
-# def cmx(fy, nz, z_load):
-#     return np.array([np.sum((nz > i) * (nz - i) * -fy) for i in z_load])
-
-
-# def cmy(fx, nz, z_load):
-#     return np.array([np.sum((nz > i) * (nz - i) * fx) for i in z_load])
-
-
-# def compute_mx_error(fy, nz, z_load, mx_target, smooth=1e-2):
-#     mx = cmx(fy, nz, z_load)
-#     mx_error = np.array(mx_target) - mx
-#     return np.sum(mx_error ** 2) + smooth * sum(fy ** 2)
-
-
-# def compute_my_error(fx, nz, z_load, my_target, smooth=1e-2):
-#     my = cmy(fx, nz, z_load)
-#     my_error = np.array(my_target) - my
-#     return np.sum(my_error ** 2) + smooth * sum(fx ** 2)
-
 
 def compute_nodal_forces(nz, target_z, target_moment, fmult=1.0):
     assert fmult ** 2 == 1
@@ -58,9 +39,6 @@ def main():
     yml = args.yaml
     gridname = args.grid
 
-    # yml = "blade_test.yml"
-    # gridname = "temp/joinedup_mesh.vtu"
-
     config = yaml.load(open(yml, "r"), Loader=yaml.CLoader)
     grid = pyvista.UnstructuredGrid(gridname)
 
@@ -80,7 +58,6 @@ def main():
         loaded_node_ids = np.where(is_loaded_node)
 
         nz = grid.points[loaded_node_ids][:, 2]
-        # fx, fy = np.zeros_like(nz), np.zeros_like(nz)
         z = lds[i]["z"]
         mx = lds[i]["mx"]
         my = lds[i]["my"]
