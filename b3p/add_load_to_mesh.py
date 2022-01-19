@@ -105,17 +105,7 @@ def main():
 
     print("writing loadcases to grid %s" % gridname)
     grid.save(gridname)
-    pyplot.savefig("gaai.png")
-    # mxoptf = partial(compute_mx_error, nz=nz, z_load=z, mx_target=mx, smooth=1.0)
-
-    # optfy = scipy.optimize.fmin(mxoptf, fy, maxiter=2000)
-
-    # myoptf = partial(compute_my_error, nz=nz, z_load=z, my_target=my, smooth=0.0)
-
-    # optfx = scipy.optimize.fmin(myoptf, fx, maxiter=2000, full_output=True, direc)
-
-    # print(loaded_node_ids)
-    # print(nodes)
+    pyplot.savefig("load_output.png")
 
 
 if __name__ == "__main__":

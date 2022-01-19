@@ -33,4 +33,4 @@ ccx: ## export a grid to ccx format, solve and postprocess (requires ccx to be i
 	b3p_frd2vtu temp/ccxmodel.frd 
 
 
-all: geom mesh plybook drape combine mesh2d loads ccx 
+all: geom mesh plybook drape combine mesh2d loads ccx ## run all targets in sequence
