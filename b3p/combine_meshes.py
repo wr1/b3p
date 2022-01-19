@@ -20,6 +20,7 @@ def main():
 
     allcellarrays = []
     meshes = []
+    # loop over all meshes and get associated arrays
     for i in args.meshes:
         reader = vtk.vtkXMLUnstructuredGridReader()
         reader.SetFileName(i)
@@ -34,6 +35,7 @@ def main():
                 )
             )
 
+    # make sure all meshes have all arrays (add zero arrays) so that they show up after the merge
     for i in meshes:
         for j in allcellarrays:
             if not i.GetCellData().HasArray(j[0]):

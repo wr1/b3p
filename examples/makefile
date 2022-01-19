@@ -19,7 +19,7 @@ drape: ## drape the shell and the shear web
 	b3p_drape temp/plybook.pck temp/test_blade_w0.vtp --key web0  --out temp/test_blade_w0.vtu 
 
 combine: ## add the meshes together 
-	b3p_combine temp/test_blade_shell.vtu  temp/test_blade_w0.vtu --out temp/joinedup_mesh.vtu
+	b3p_meshcombine temp/test_blade_shell.vtu  temp/test_blade_w0.vtu --out temp/joinedup_mesh.vtu
 
 mesh2d: ## extract 2D meshes 
 	b3p_2dmesh --vtu temp/joinedup_mesh.vtu --r "[5,20,35,50,65,80,90]" --var temp/test_blade.var
@@ -27,10 +27,10 @@ mesh2d: ## extract 2D meshes
 loads: ## assign nodal forces to the joined mesh for use in FEA
 	b3p_add_load blade_test.yml temp/joinedup_mesh.vtu
 
-ccx: ## export a grid to ccx format
+ccx: ## export a grid to ccx format, solve and postprocess (requires ccx to be installed and be in PATH)
 	b3p_export_ccx temp/joinedup_mesh.vtu --out temp/ccxmodel.inp	
 	ccx temp/ccxmodel 
 	b3p_frd2vtu temp/ccxmodel.frd 
 
 
-all: geom mesh plybook drape combine mesh2d
+all: geom mesh plybook drape combine mesh2d loads ccx 
