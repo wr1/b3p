@@ -94,23 +94,23 @@ def main():
     n_plies = np.zeros(len(dsets[0][2][:, 0]), dtype=int)
     for i in dsets:
         name, material, data = i
-        o.addCellArray(data, name)
+        o.celldata[name] = data
         if material not in mtarr:  # create a thickness array for each material
             mtarr[material] = data[:, 1].astype(np.float32)
         else:
             mtarr[material] += data[:, 1].astype(np.float32)
         n_plies += data[:, 1] > 0
 
-    o.addCellArray(n_plies, "n_plies")
+    o.celldata["n_plies"] = n_plies
 
     thickness = np.zeros(
         len(data[:, 1]), dtype=np.float32
     )  # add a total thickness array
     for i in mtarr:
-        o.addCellArray(mtarr[i], "mat_%i_thickness" % i)
+        o.celldata["mat_%i_thickness" % i] = mtarr[i]
         thickness += mtarr[i]
 
-    o.addCellArray(thickness, "thickness")
+    o.celldata["thickness"] = thickness  # addCellArray(thickness, "thickness")
 
     o.reverse()
 
@@ -135,7 +135,7 @@ def main():
     # add cell area array
     o.addCellArray(get_area_array(o), "area")
 
-    if args.key == "blade":
+    if args.key.lower().find("web") == -1:
         o.addCellArray(np.zeros(len(n)), "is_web")
     else:
         o.addCellArray(np.ones(len(n)), "is_web")
