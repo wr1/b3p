@@ -25,7 +25,7 @@ aero:
   0.17        : 'airfoils/naca0017.dat'}
 
 mesh:
-  radii: np.linspace(0,120, 160) 
+  radii: np.linspace(0,100, 100) 
   webs:
     "w0": 
       origin: [0,0,0]
@@ -42,8 +42,10 @@ mesh:
       z_start: 0 
       z_follow_blade: 100
       z_end : 105
-  n_web_points : 20
-  n_chordwise_points : 130
+  n_web_points : 10
+  n_chordwise_points : 40
+
+# TODO materials section
 
 laminates:
   slabs: 
@@ -122,3 +124,12 @@ laminates:
       key: [100,8000]
       grid: web0
       draping: blocks
+
+loads:
+  forward_flap:
+    z: [10., 26., 42., 58., 74.]
+    my: [7225., 4761., 2809., 1369.,  441.]
+    mx: [0, 0, 0, 0,0]
+    apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
+      d_w0: [-0.5, 0.1]
+      is_web: [-0.5,0.5]
