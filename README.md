@@ -42,6 +42,10 @@ Visualisation of the number of plies on the mesh using [Paraview](https://paravi
 Visualisation of a 2d cross section mesh 
 ![mesh2d](https://user-images.githubusercontent.com/8971152/148645980-51c36e1a-89e1-469d-aeea-49bf5adf4070.png)
 
+CalculiX results (very coarse mesh)
+![anim3 0020](https://user-images.githubusercontent.com/8971152/150238270-3e057722-efca-4d07-bc28-27b786c456bd.png)
+
+
 ## Input file format
 TODO
 
