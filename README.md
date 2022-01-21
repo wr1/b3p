@@ -42,7 +42,7 @@ Visualisation of the number of plies on the mesh using [Paraview](https://paravi
 Visualisation of a 2d cross section mesh 
 ![mesh2d](https://user-images.githubusercontent.com/8971152/148645980-51c36e1a-89e1-469d-aeea-49bf5adf4070.png)
 
-CalculiX results (very coarse mesh)
+[CalculiX](http://www.dhondt.de/) results (very coarse mesh)
 ![zstrain](https://user-images.githubusercontent.com/8971152/150238604-82903de0-cebc-4835-840e-4fbae5e96419.png)
 
 
