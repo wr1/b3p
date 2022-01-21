@@ -47,6 +47,6 @@ CalculiX results (very coarse mesh)
 
 
 ## Input file format
-TODO
+Take a look at ```examples/blade_test.yml```
 
 
