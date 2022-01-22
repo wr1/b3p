@@ -558,10 +558,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     ang.SetComponent(i, 0, ang.GetTuple1(j))
 
     mkeys = sorted(set([mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())]))
-    dirname = "sec_%i" % (1e3 * r)
-
-    if not os.path.isdir(dirname):
-        os.mkdir(dirname)
 
     if verbose:
         write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
