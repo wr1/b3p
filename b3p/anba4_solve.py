@@ -11,7 +11,8 @@ def run_mesh(meshname):
     with XDMFFile(meshname) as infile:
         infile.read(mesh)
 
-    # Basic material parameters. 9 is needed for orthotropic materials. TODO materials
+    # Basic material parameters. 9 is needed for orthotropic materials.
+    # TODO materials and orientations
     E = 1.0
     nu = 0.33
     # Assmble into material mechanical property Matrix.
