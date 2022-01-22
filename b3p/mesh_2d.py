@@ -239,6 +239,7 @@ def get_node_avg_normal(connected_cell_normals):
 
 def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=False):
     print("# creating cross section mesh from %s at r=%.3f" % (vtu, r))
+    workdir = os.path.dirname(vtu)
     # read in the mesh
     if vtu.endswith(".vtu"):
         rd = vtk.vtkXMLUnstructuredGridReader()
@@ -490,7 +491,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
         create_bondline(0.1, epid, stacks, sec, poly)
 
     if verbose:
-        write_vtp(poly, "inter_%i.vtp" % (1e3 * r))
+        write_vtp(poly, os.path.join(workdir, "inter_%i.vtp" % (1e3 * r)))
     # clean up the polydata, i.e. remove duplicate points
     cln = vtk.vtkCleanPolyData()
     cln.SetInputData(poly)
@@ -563,80 +564,79 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
         os.mkdir(dirname)
 
     if verbose:
-        write_vtp(out, "prerealign_%i.vtp" % (1e3 * r))
+        write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
 
     align_normals(out)
 
-    of = "msec_%i.vtp" % (1e3 * r)
+    of = os.path.join(workdir, "msec_%i.vtp" % (1e3 * r))
     wrt = vtk.vtkXMLPolyDataWriter()
     wrt.SetInputData(out)
     wrt.SetFileName(of)
     wrt.Write()
     print("# written vtk to %s" % of)
+    table_out.to_csv(
+        os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
+    )
 
-    eb = ""
-    em = ""
-    c = 1
-    angle_lookup = {}
-    material_map = {}
-    for i in range(out.GetNumberOfCells()):
-        cl = out.GetCell(i)
-        npo = cl.GetNumberOfPoints()
-        if npo > 2:
-            order = [
-                cl.GetPointId(0) + 1,
-                cl.GetPointId(1) + 1,
-                cl.GetPointId(2) + 1,
-                cl.GetPointId(2) + 1
-                if cl.GetNumberOfPoints() == 3
-                else cl.GetPointId(3) + 1,
-            ]
+    # eb = ""
+    # em = ""
+    # c = 1
+    # angle_lookup = {}
+    # material_map = {}
+    # for i in range(out.GetNumberOfCells()):
+    #     cl = out.GetCell(i)
+    #     npo = cl.GetNumberOfPoints()
+    #     if npo > 2:
+    #         order = [
+    #             cl.GetPointId(0) + 1,
+    #             cl.GetPointId(1) + 1,
+    #             cl.GetPointId(2) + 1,
+    #             cl.GetPointId(2) + 1
+    #             if cl.GetNumberOfPoints() == 3
+    #             else cl.GetPointId(3) + 1,
+    #         ]
 
-            [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
+    #         [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
 
-            vec = np.array([pt2[j] - pt1[j] for j in range(3)])
-            vec /= np.linalg.norm(vec)
-            dot = vtk.vtkMath.Dot([1, 0, 0], vec)
+    #         vec = np.array([pt2[j] - pt1[j] for j in range(3)])
+    #         vec /= np.linalg.norm(vec)
+    #         dot = vtk.vtkMath.Dot([1, 0, 0], vec)
 
-            angle = math.degrees(math.acos(dot))
+    #         angle = math.degrees(math.acos(dot))
 
-            if pt2[1] < pt1[1]:
-                angle *= -1
+    #         if pt2[1] < pt1[1]:
+    #             angle *= -1
 
-            # this logic looks up the angle from a connected node (that was assigned
-            # to it by the nearest quad)
-            if cl.GetNumberOfPoints() == 3:  # if
-                for jj in range(3):
-                    if cl.GetPointId(jj) in angle_lookup:
-                        angle = angle_lookup[cl.GetPointId(jj)]
-            else:
-                angle_lookup[cl.GetPointId(0)] = angle
-            order.reverse()
+    #         # this logic looks up the angle from a connected node (that was assigned
+    #         # to it by the nearest quad)
+    #         if cl.GetNumberOfPoints() == 3:  # if
+    #             for jj in range(3):
+    #                 if cl.GetPointId(jj) in angle_lookup:
+    #                     angle = angle_lookup[cl.GetPointId(jj)]
+    #         else:
+    #             angle_lookup[cl.GetPointId(0)] = angle
+    #         order.reverse()
 
-            eb += "%i %i %i %i %i 0 0 0 0\n" % tuple([c] + order)
-            matnum = mkeys.index(mat.GetTuple1(i)) + 1
-            em += "%i %i %f %f \n" % (
-                c,
-                mkeys.index(mat.GetTuple1(i)) + 1,
-                ang.GetTuple1(i),
-                angle,
-            )
-            material_map[mkeys.index(mat.GetTuple1(i))] = int(mat.GetTuple1(i))
-            c += 1
-
-    table_out.to_csv(os.path.join(dirname, "xsection_location.csv"), index=False)
+    #         eb += "%i %i %i %i %i 0 0 0 0\n" % tuple([c] + order)
+    #         matnum = mkeys.index(mat.GetTuple1(i)) + 1
+    #         em += "%i %i %f %f \n" % (
+    #             c,
+    #             mkeys.index(mat.GetTuple1(i)) + 1,
+    #             ang.GetTuple1(i),
+    #             angle,
+    #         )
+    #         material_map[mkeys.index(mat.GetTuple1(i))] = int(mat.GetTuple1(i))
+    #         c += 1
 
     return dirname
 
 
 def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False):
-    vtuabs = os.path.abspath(vtu)
     var = eval(open(var, "r").read())
-    os.chdir(os.path.dirname(vtu))
 
     part = partial(
         cut_blade,
-        vtu=vtuabs,
+        vtu=vtu,
         if_bondline=if_bondline,
         rotz=rotz,
         var=var,
