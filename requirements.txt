@@ -6,3 +6,4 @@ scipy==1.7.3
 setuptools==52.0.0
 vedo==2021.0.7
 vtk==9.0.3
+pyvista==0.33.2
