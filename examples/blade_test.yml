@@ -3,7 +3,6 @@ general:
   prefix: test_blade
   # workdirectory for all variants
   workdir : temp
-  
 
 planform:
   npchord: 100
@@ -45,7 +44,7 @@ mesh:
   n_web_points : 10
   n_chordwise_points : 40
 
-# TODO materials section
+materials: materials.yml
 
 laminates:
   slabs: 
