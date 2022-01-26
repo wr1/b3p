@@ -7,6 +7,8 @@ import yaml
 import os
 from itertools import chain, zip_longest
 import pickle
+import json
+import shutil
 
 
 def plyify(r, t, ply_thickness, reverse=False):
@@ -170,7 +172,21 @@ def lamplan2plies(blade):
         allstacks.append((name.strip(), grid.strip(), cover, stack_numbering, stack))
 
     print("material map ", material_map)
-
+    if "materials" in blade:
+        mdb = blade["materials"]
+        assert (os.path.isfile(mdb), "mdb {mdb} not a file")
+        material_map["matdb"] = mdb
+        # copy the material db over to the working directory, this means that rerunning
+        # a model in a workdir is not affected by changes in the source matdb, this is
+        # the desired behaviour
+        shutil.copyfile(
+            blade["materials"], os.path.join(blade["general"]["workdir"], mdb)
+        )
+    else:
+        print("no material db defined in blade file")
+    matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
+    json.dump(material_map, open(matmap, "w"))
+    print("written material map to %s" % matmap)
     return allstacks
 
 

@@ -95,7 +95,7 @@ laminates:
       draping: blocks
       grid: shell
     leading_edge_core:
-      material: balsa
+      material: balsa110
       cover:
         d_le_r: [0.1,1,0]
         d_w0: [.5, 10,0]

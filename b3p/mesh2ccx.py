@@ -7,6 +7,9 @@ import vtk
 import argparse
 from functools import partial
 import time
+import json
+import os
+import yaml
 
 
 def make_shell_section(plyarray):
@@ -23,8 +26,70 @@ def make_shell_section(plyarray):
 
     comp = ""
     for i in plies:
-        comp += "%f,,mat%i,or1\n" % tuple(i)
+        comp += "%f,,m%i,or1\n" % tuple(i)
     return comp
+
+
+def material_db_to_ccx(grid, materials):
+    gdir = os.path.dirname(grid)
+    mm_name = os.path.join(gdir, "material_map.json")
+    # 2 files are relevant, a material map that maps the material ID (integer)
+    # in the VTK file to a key (string) in the material database and the material
+    # database itself
+    mat_db = None
+    if os.path.isfile(mm_name):  # check if the material map file is there
+        mm = json.load(open(mm_name, "r"))
+        if "matdb" in mm:  # check if the material map file points to a material db
+            mat_db = yaml.load(
+                open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader
+            )
+        else:
+            exit(
+                "material map available, but no link to material db, need matdb definition to do FEA"
+            )
+    else:
+        exit("no material map defined")
+
+    mm_inv = {v: k for k, v in mm.items()}
+    matblock = ""
+    for i in materials:
+        if i > 1e-6:
+            material_properties = mat_db[mm_inv[int(i)]]
+
+            if "vf" in material_properties:
+                print(material_properties["name"], "is assumed to be orthotropic")
+                C = np.array(material_properties["C"])
+                # https://github.com/rsmith-nl/lamprop/blob/410ebfef2e14d7cc2988489ca2c31103056da38f/lp/text.py#L96
+                # https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node193.html
+                matblock += "*material,name=m%i\n*elastic,type=ortho\n" % i
+                D = C
+                D[0, 3] = C[0, 5]
+                D[0, 5] = C[0, 3]
+                D[1, 3] = C[1, 5]
+                D[1, 5] = C[1, 3]
+                D[2, 3] = C[2, 5]
+                D[2, 5] = C[2, 3]
+                D[3, 3] = C[5, 5]
+                D[5, 5] = C[3, 3]
+                D *= 1e6
+                matblock += (
+                    f"{D[0,0]:.4g},{D[0,1]:.4g},{D[1,1]:.4g},"
+                    + f"{D[0,2]:.4g},{D[1,2]:.4g},{D[2,2]:.4g},"
+                    + f"{D[3,3]:.4g},{D[4,4]:.4g},\n"
+                    + f"{D[5,5]:.4g},293\n"
+                )
+            else:
+                print(material_properties["name"], "is assumed to be isotropic")
+                nu = min(0.45, max(0.1, float(material_properties["nu"])))  # min()
+                E = 1e6 * float(
+                    material_properties["Ex"]
+                    if "Ex" in material_properties
+                    else material_properties["E"]
+                )
+                matblock += "*material,name=m%i\n*elastic,type=iso\n" % i
+                matblock += f"{E:.4g},{nu:.4g},293\n"
+
+    return matblock
 
 
 def main():
@@ -77,13 +142,7 @@ def main():
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
-    # TODO proper material definitions defined in yaml file...
-    mod = {1: 100e9, 2: 40e9, 3: 10e9, 4: 20e9, 5: 0.2e9, 6: 0.2e9, 7: 10e9, 8: 0.2e9}
-    matblock = ""
-    for i in materials:
-        if i > 1e-6:
-            matblock += "*material,name=mat%i\n*elastic,type=iso\n" % i
-            matblock += "%f,.3\n" % mod[i]
+    matblock = material_db_to_ccx(grid, materials)
 
     buf += matblock
 
@@ -98,7 +157,7 @@ def main():
 
     comps = ""
     for n, i in enumerate(blx):
-        comps += "*shell section, composite, elset=e%i,offset=-1\n%s" % (n + 1, i)
+        comps += "*shell section, composite, elset=e%i,offset=-.5\n%s" % (n + 1, i)
 
     buf += comps
 
@@ -155,6 +214,7 @@ def main():
     buf += bcs + frc + "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n" + "*end step\n"
 
     open(args.out, "w").write(buf)
+    print("written ccx input file to %s" % args.out)
 
 
 if __name__ == "__main__":
