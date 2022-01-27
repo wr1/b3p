@@ -12,7 +12,8 @@ import os
 import yaml
 
 
-def make_shell_section(plyarray):
+def make_shell_section(inp):
+    elem_id, plyarray = inp
     plies = []
     # if material in next ply is the same, add it to the previous ply,
     # NOTE this does not take ply angle into account so it only works
@@ -26,11 +27,12 @@ def make_shell_section(plyarray):
 
     comp = ""
     for i in plies:
-        comp += "%f,,m%i,or1\n" % tuple(i)
+        comp += "%f,,m%i,or%i\n" % tuple(i + [elem_id + 1])
     return comp
 
 
 def material_db_to_ccx(grid, materials):
+    "find the material db and write properties to a ccx block"
     gdir = os.path.dirname(grid)
     mm_name = os.path.join(gdir, "material_map.json")
     # 2 files are relevant, a material map that maps the material ID (integer)
@@ -134,9 +136,9 @@ def main():
 
     # write orientation TODO match with element orientation, for now just align with z-axis
     for n, i in enumerate(conn):
+        xdir, ydir = g.cell_data["x_dir"][n], g.cell_data["y_dir"][n]
         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
-        buf += "0,0,1,0,1,0\n"
-        break
+        buf += "%.4g,%.4g,%.4g,%.4g,%.4g,%.4g\n" % tuple(xdir.tolist() + ydir.tolist())
 
     plydat = np.stack(g.cell_data[i] for i in g.cell_data if i.startswith("ply_"))
     # get all materials of all plies
@@ -149,7 +151,9 @@ def main():
     tic = time.perf_counter()
     p = multiprocessing.Pool()
 
-    blx = p.map(make_shell_section, [plydat[:, i, :] for i in range(plydat.shape[1])])
+    blx = p.map(
+        make_shell_section, [(i, plydat[:, i, :]) for i in range(plydat.shape[1])]
+    )
     toc = time.perf_counter()
     print("time spent creating shell sections %f" % (toc - tic))
 
