@@ -206,16 +206,12 @@ def main():
         buf += loadcases[i]
         break  # only add the first loadcase
 
-    frc = "*cload\n"
-    for i in mid[0]:
-        frc += "%i,1,1e6\n" % (i + 1)
-
     root = np.where(g.points[:, 2] == g.points[:, 2].min())
     bcs = "*boundary,op=new\n"
     for i in root[0]:
         bcs += "%i,1,3\n" % (i + 1)
 
-    buf += bcs + frc + "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n" + "*end step\n"
+    buf += bcs + "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n" + "*end step\n"
 
     open(args.out, "w").write(buf)
     print("written ccx input file to %s" % args.out)

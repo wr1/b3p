@@ -42,6 +42,8 @@ def main():
     config = yaml.load(open(yml, "r"), Loader=yaml.CLoader)
     grid = pyvista.UnstructuredGrid(gridname)
 
+    fig, ax = pyplot.subplots(2, 1)
+
     lds = config["loads"]
     for i in lds:
         # get applicable nodes
@@ -67,13 +69,14 @@ def main():
         fx, zmy, bmy = compute_nodal_forces(nz, z, my, fmult=1.0)
         fy, zmx, bmx = compute_nodal_forces(nz, z, mx, fmult=-1.0)
 
-        pyplot.plot(zmy, bmy, label="my moment backcalc from forces ")
-        pyplot.plot(z, my, "o", label="my moment target ")
-
-        pyplot.plot(zmx, bmx, label="mx moment backcalc from forces ")
-        pyplot.plot(z, mx, "o", label="mx moment target ")
-
-        pyplot.legend(loc="best")
+        ax[0].plot(zmy, bmy, label="my moment backcalc from forces ")
+        ax[0].plot(z, my, "o", label="my moment target ")
+        ax[0].plot(zmx, bmx, label="mx moment backcalc from forces ")
+        ax[0].plot(z, mx, "o", label="mx moment target ")
+        ax[0].legend(loc="best")
+        ax[1].plot(nz, fx, label="fx, sum=%.2f" % fx.sum())
+        ax[1].plot(nz, fy, label="fy, sum=%.2f" % fy.sum())
+        ax[1].legend(loc="best")
 
         force_vector = np.zeros_like(grid.points)
         force_vector[loaded_node_ids, 0] = fx
