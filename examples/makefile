@@ -29,8 +29,10 @@ loads: ## assign nodal forces to the joined mesh for use in FEA
 
 ccx: ## export a grid to ccx format, solve and postprocess (requires ccx to be installed and be in PATH)
 	b3p_export_ccx temp/joinedup_mesh.vtu --out temp/ccxmodel.inp	
-	ccx temp/ccxmodel 
-	b3p_frd2vtu temp/ccxmodel.frd --out temp/ccx_results.vtu
+	ccx temp/ccxmodel_lc_forward_flap
+	ccx temp/ccxmodel_lc_forward_edge
+	b3p_frd2vtu temp/ccxmodel_lc_forward_edge.frd --out temp/ccx_fe.vtu
+	b3p_frd2vtu temp/ccxmodel_lc_forward_flap.frd --out temp/ccx_ff.vtu
 
 
 all: geom mesh plybook drape combine mesh2d loads ccx ## run all targets in sequence

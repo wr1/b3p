@@ -157,29 +157,11 @@ def main():
     toc = time.perf_counter()
     print("time spent creating shell sections %f" % (toc - tic))
 
-    # unique_laminates = np.unique(blx)
-
     comps = ""
     for n, i in enumerate(blx):
         comps += "*shell section, composite, elset=e%i,offset=-.5\n%s" % (n + 1, i)
 
     buf += comps
-
-    ## this minimizes the number of different composite sections, however this is not a big factor,
-    ## what causes the model size explosion is the number of layers in the composite cards
-    # elset = ""
-    # comps = ""
-    # for n, i in enumerate(unique_laminates):
-    #     occ = np.where(np.array(blx) == i)[0]
-    #     elset += "*elset,elset=e%i\n" % (n + 1)
-    #     for m, j in enumerate(occ):
-    #         elset += "%i" % (j + 1)
-    #         if m % 16 == 15 or j == occ[-1]:
-    #             elset += "\n"
-    #         else:
-    #             elset += ","
-    #     comps += "*shell section, composite, elset=e%i,offset=0\n%s" % (n + 1, i)
-    # buf += elset + comps
 
     buf += "*step\n*static\n"
 
@@ -202,19 +184,24 @@ def main():
 
             loadcases[i] = "*cload\n" + lbuf
 
-    for i in loadcases:
-        buf += loadcases[i]
-        break  # only add the first loadcase
-
     root = np.where(g.points[:, 2] == g.points[:, 2].min())
     bcs = "*boundary,op=new\n"
     for i in root[0]:
         bcs += "%i,1,3\n" % (i + 1)
 
-    buf += bcs + "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n" + "*end step\n"
+    endfile = (
+        bcs
+        + "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n*node print,nset=nall\nrf\n"
+        + "*end step\n"
+    )
 
-    open(args.out, "w").write(buf)
-    print("written ccx input file to %s" % args.out)
+    # write a full ccx file for each loadcase, assuming parallel execution
+    for i in loadcases:
+        print(i)
+        output = buf + loadcases[i] + endfile
+        of = args.out.replace(".inp", "_" + i + ".inp")
+        open(of, "w").write(output)
+        print("written ccx input file to %s" % of)
 
 
 if __name__ == "__main__":

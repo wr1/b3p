@@ -17,11 +17,17 @@ def compute_nodal_forces(nz, target_z, target_moment, fmult=1.0):
     loaded = np.zeros_like(nz).astype(bool)
     force = np.zeros_like(nz)
     for i in reversed(list(zip(target_z, target_moment))):
+        # compute the moment coming from the previously applied forces
         initial_moment = ((nz - i[0]) * fmult * force * loaded).sum()
+        # get the nodes that are outboard from this point, but have not had a load applied yet 
         rel_nodes = (nz > i[0]) & (loaded == 0)
+        # compute distance for these nodes
         dz = (nz - i[0]) * rel_nodes
-        fx_l = (i[1] - initial_moment) / dz.sum()
+        # compute force needed to match moment curve
+        fx_l = fmult * (i[1] - initial_moment) / dz.sum()
+        # apply force
         force[np.where(rel_nodes)] = fx_l
+        # register nodes as loaded
         loaded += rel_nodes
 
     zpl = np.unique(nz)
@@ -46,6 +52,7 @@ def main():
 
     lds = config["loads"]
     for i in lds:
+        print("loadcase %s" % i)
         # get applicable nodes
         for n, j in enumerate(config["loads"][i]["apply"]):
             key, [mn, mx] = j, config["loads"][i]["apply"][j]
@@ -81,6 +88,7 @@ def main():
         force_vector = np.zeros_like(grid.points)
         force_vector[loaded_node_ids, 0] = fx
         force_vector[loaded_node_ids, 1] = fy
+        print(i)
         grid.point_data["lc_%s" % i] = force_vector
 
     print("writing loadcases to grid %s" % gridname)

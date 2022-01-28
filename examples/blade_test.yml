@@ -132,3 +132,12 @@ loads:
     apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
       d_w0: [-0.5, 0.1]
       is_web: [-0.5,0.5]
+  forward_edge:
+    z: [10., 26., 42., 58., 74.]
+    mx: [7225., 4761., 2809., 1369.,  441.]
+    my: [0, 0, 0, 0,0]
+    apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
+      d_w0: [-0.5, 0.1]
+      is_web: [-0.5,0.5]
+
+
