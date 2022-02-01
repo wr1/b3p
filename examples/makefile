@@ -34,5 +34,9 @@ ccx: ## export a grid to ccx format, solve and postprocess (requires ccx to be i
 	b3p_frd2vtu temp/ccxmodel_lc_forward_edge.frd --out temp/ccx_fe.vtu
 	b3p_frd2vtu temp/ccxmodel_lc_forward_flap.frd --out temp/ccx_ff.vtu
 
+anbasolve:
+	python3 ../b3p/anba4_solve.py msec_35000.xdmf material_map.json --debug
+
+
 
 all: geom mesh plybook drape combine mesh2d loads ccx ## run all targets in sequence
