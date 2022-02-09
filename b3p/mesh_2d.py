@@ -624,7 +624,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     #         material_map[mkeys.index(mat.GetTuple1(i))] = int(mat.GetTuple1(i))
     #         c += 1
 
-    return dirname
+    # return dirname
 
 
 def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False):

@@ -34,8 +34,9 @@ ccx: ## export a grid to ccx format, solve and postprocess (requires ccx to be i
 	b3p_frd2vtu temp/ccxmodel_lc_forward_edge.frd --out temp/ccx_fe.vtu
 	b3p_frd2vtu temp/ccxmodel_lc_forward_flap.frd --out temp/ccx_ff.vtu
 
-anbasolve:
-	python3 ../b3p/anba4_solve.py msec_35000.xdmf material_map.json --debug
+anbasolve: ## solve using anba4
+	python3 ../b3p/anba4_prep.py temp/msec_65000.vtp
+	python3 ../b3p/anba4_solve.py temp/msec_65000.xdmf temp/material_map.json --debug
 
 
 
