@@ -155,7 +155,7 @@ def web_link(web_links, epid, stacks, sec, poly):
 
 
 def create_bondline(y, epid, stacks, sec, poly, bondline_material=20):
-    ""
+    """"""
     lst = []
 
     bnds = sec.GetBounds()
@@ -508,8 +508,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
 
     transform = vtk.vtkTransform()
     transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
-
     transformfilter = vtk.vtkTransformFilter()
+
     transformfilter.SetTransform(transform)
     transformfilter.SetInputData(rotated_section)
     transformfilter.Update()
@@ -557,6 +557,44 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     mat.SetComponent(i, 0, mat.GetTuple1(j))
                     ang.SetComponent(i, 0, ang.GetTuple1(j))
 
+    ang2 = vtk.vtkFloatArray()
+    ang2.SetName("angle2")
+    ang2.SetNumberOfTuples(out.GetNumberOfCells())
+    angle_lookup = {}
+    c = 1
+    for i in range(out.GetNumberOfCells()):
+        cl = out.GetCell(i)
+        order = [
+            cl.GetPointId(0) + 1,
+            cl.GetPointId(1) + 1,
+            cl.GetPointId(2) + 1,
+            cl.GetPointId(2) + 1
+            if cl.GetNumberOfPoints() == 3
+            else cl.GetPointId(3) + 1,
+        ]
+
+        [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
+
+        vec = np.array([pt2[j] - pt1[j] for j in range(3)])
+        vec /= np.linalg.norm(vec)
+        dot = vtk.vtkMath.Dot([1, 0, 0], vec)
+
+        angle = math.degrees(math.acos(dot))
+
+        if pt2[1] < pt1[1]:
+            angle *= -1
+
+        if cl.GetNumberOfPoints() == 3:  # if
+            for jj in range(3):
+                if cl.GetPointId(jj) in angle_lookup:
+                    angle = angle_lookup[cl.GetPointId(jj)]
+        else:
+            angle_lookup[cl.GetPointId(0)] = angle
+
+        ang2.SetComponent(i, 0, angle)
+
+    out.GetCellData().AddArray(ang2)
+
     mkeys = sorted(set([mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())]))
 
     if verbose:
@@ -573,58 +611,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
     )
-
-    # eb = ""
-    # em = ""
-    # c = 1
-    # angle_lookup = {}
-    # material_map = {}
-    # for i in range(out.GetNumberOfCells()):
-    #     cl = out.GetCell(i)
-    #     npo = cl.GetNumberOfPoints()
-    #     if npo > 2:
-    #         order = [
-    #             cl.GetPointId(0) + 1,
-    #             cl.GetPointId(1) + 1,
-    #             cl.GetPointId(2) + 1,
-    #             cl.GetPointId(2) + 1
-    #             if cl.GetNumberOfPoints() == 3
-    #             else cl.GetPointId(3) + 1,
-    #         ]
-
-    #         [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
-
-    #         vec = np.array([pt2[j] - pt1[j] for j in range(3)])
-    #         vec /= np.linalg.norm(vec)
-    #         dot = vtk.vtkMath.Dot([1, 0, 0], vec)
-
-    #         angle = math.degrees(math.acos(dot))
-
-    #         if pt2[1] < pt1[1]:
-    #             angle *= -1
-
-    #         # this logic looks up the angle from a connected node (that was assigned
-    #         # to it by the nearest quad)
-    #         if cl.GetNumberOfPoints() == 3:  # if
-    #             for jj in range(3):
-    #                 if cl.GetPointId(jj) in angle_lookup:
-    #                     angle = angle_lookup[cl.GetPointId(jj)]
-    #         else:
-    #             angle_lookup[cl.GetPointId(0)] = angle
-    #         order.reverse()
-
-    #         eb += "%i %i %i %i %i 0 0 0 0\n" % tuple([c] + order)
-    #         matnum = mkeys.index(mat.GetTuple1(i)) + 1
-    #         em += "%i %i %f %f \n" % (
-    #             c,
-    #             mkeys.index(mat.GetTuple1(i)) + 1,
-    #             ang.GetTuple1(i),
-    #             angle,
-    #         )
-    #         material_map[mkeys.index(mat.GetTuple1(i))] = int(mat.GetTuple1(i))
-    #         c += 1
-
-    # return dirname
 
 
 def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False):
