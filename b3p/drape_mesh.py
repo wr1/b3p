@@ -1,13 +1,15 @@
 #! /usr/bin/env python3
 
 import argparse
-import vedo
+
+# import vedo
 import pandas as pd
 import multiprocessing
 import pickle
 import vtk
 import numpy as np
 import time
+import pyvista
 
 
 def get_ply_cover(inp):
@@ -58,26 +60,27 @@ def main():
     p.add_argument("--out", default="__draped.vtu")
     args = p.parse_args()
 
-    x = vedo.load(args.vtp)
+    x = pyvista.read(args.vtp)
 
     # translate the coordinates from nodes to cell centers
-    centers = vtk.vtkPointDataToCellData()
-    centers.SetInputData(x.polydata())
-    centers.PassPointDataOn()
-    centers.Update()
-    poly = centers.GetOutput()
+    # centers = vtk.vtkPointDataToCellData()
+    # centers.SetInputData(x.polydata())
+    # centers.PassPointDataOn()
+    # centers.Update()
+    o = x.point_data_to_cell_data()  # centers.GetOutput()
 
-    o = vedo.Mesh(poly)
+    # o = vedo.Mesh(poly)
 
     df = pd.DataFrame()
-    for i in o.celldata.keys():
-        df[i] = o.celldata[i]
+    for i in o.cell_data.keys():
+        df[i] = o.cell_data[i]
 
     stck = pickle.load(open(args.pck, "rb"))
 
     lst = []
     for i in stck:  # make a list of datasets for each ply
         name, grid, cover, stack_numbering, stack = i
+        print(cover)
         if args.key.strip() == grid:
             for j in enumerate(zip(stack_numbering, stack)):
                 lst.append((name, cover, j, df))
@@ -94,24 +97,25 @@ def main():
     n_plies = np.zeros(len(dsets[0][2][:, 0]), dtype=int)
     for i in dsets:
         name, material, data = i
-        o.celldata[name] = data
+        o.cell_data[name] = data
         if material not in mtarr:  # create a thickness array for each material
             mtarr[material] = data[:, 1].astype(np.float32)
         else:
             mtarr[material] += data[:, 1].astype(np.float32)
         n_plies += data[:, 1] > 0
 
-    o.celldata["n_plies"] = n_plies
+    o.cell_data["n_plies"] = n_plies
 
     thickness = np.zeros(
         len(data[:, 1]), dtype=np.float32
     )  # add a total thickness array
     for i in mtarr:
-        o.celldata["mat_%i_thickness" % i] = mtarr[i]
+        o.cell_data["mat_%i_thickness" % i] = mtarr[i]
         thickness += mtarr[i]
 
-    o.celldata["thickness"] = thickness  # addCellArray(thickness, "thickness")
+    o.cell_data["thickness"] = thickness  # addCellArray(thickness, "thickness")
 
+    """
     o.reverse()
 
     pdnorm = vtk.vtkPolyDataNormals()
@@ -152,6 +156,7 @@ def main():
     wr.Update()
 
     print("written to %s" % args.out)
+    """
 
 
 if __name__ == "__main__":
