@@ -32,15 +32,25 @@ def get_material_db(material_map):
             matdb_entry = mat_db[mm_inv[i]]
             if "vf" in matdb_entry:  # ortho material
                 matMechanicProp = np.zeros((3, 3))
-                matMechanicProp[0, 0] = matdb_entry["tEx"] * 1e6  # e_xx
+                matMechanicProp[0, 0] = matdb_entry["tEz"] * 1e6  # e_xx
                 matMechanicProp[0, 1] = matdb_entry["tEy"] * 1e6  # e_yy
-                matMechanicProp[0, 2] = matdb_entry["tEz"] * 1e6  # e_zz
-                matMechanicProp[1, 0] = matdb_entry["tGyz"] * 1e6  # g_yz
-                matMechanicProp[1, 1] = matdb_entry["tGxz"] * 1e6  # g_xz
-                matMechanicProp[1, 2] = matdb_entry["tGxy"] * 1e6  # g_xy
-                matMechanicProp[2, 0] = matdb_entry["tnuyz"]  # nu_zy
-                matMechanicProp[2, 1] = matdb_entry["tnuxz"]  # nu_zx
-                matMechanicProp[2, 2] = matdb_entry["tnuxy"]  # nu_xy
+                matMechanicProp[0, 2] = matdb_entry["tEx"] * 1e6  # e_zz
+                # matMechanicProp[1, 0] = matdb_entry["tGyz"] * 1e6  # g_yz
+                # matMechanicProp[1, 1] = matdb_entry["tGxz"] * 1e6  # g_xz
+                # matMechanicProp[1, 2] = matdb_entry["tGxy"] * 1e6  # g_xy
+
+                matMechanicProp[1, 0] = matdb_entry["tGxz"] * 1e6  # g_yz
+                matMechanicProp[1, 1] = matdb_entry["tGxy"] * 1e6  # g_xz
+                matMechanicProp[1, 2] = matdb_entry["tGyz"] * 1e6  # g_xy
+
+                # matMechanicProp[2, 0] = matdb_entry["tnuyz"]  # nu_zy
+                # matMechanicProp[2, 1] = matdb_entry["tnuxz"]  # nu_zx
+                # matMechanicProp[2, 2] = matdb_entry["tnuxy"]  # nu_xy
+
+                matMechanicProp[2, 0] = matdb_entry["tnuxz"]  # nu_zy
+                matMechanicProp[2, 1] = matdb_entry["tnuxy"]  # nu_zx
+                matMechanicProp[2, 2] = matdb_entry["tnuyz"]  # nu_xy
+
                 # print(matdb_entry)
                 materials[i] = material.OrthotropicMaterial(
                     matMechanicProp, matdb_entry["rho"]
@@ -54,7 +64,7 @@ def get_material_db(material_map):
                         else matdb_entry["Ex"] * 1e6,
                         matdb_entry["nu"],
                     ],
-                    1.0,
+                    matdb_entry["rho"],
                 )
 
     return materials
@@ -68,17 +78,13 @@ def run_mesh(meshname, matdb):
 
     pvmesh = pv.read(meshname)
 
+    # print(pvmesh.cell_data[])
+
     matid = MeshFunction("size_t", mesh, mesh.topology().dim())
 
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
-    E = 1.0
-    nu = 0.33
-    # Assmble into material mechanical property Matrix.
-
-    matMechanicProp = [E, nu]
     # Meshing domain.
-    # CompiledSubDomain
     materials = MeshFunction("size_t", mesh, mesh.topology().dim())
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
@@ -90,14 +96,17 @@ def run_mesh(meshname, matdb):
 
     matids = [mat_map_0[i] for i in pvmesh.cell_data["mat"].tolist()]
 
+    plane_angles = list(pvmesh.cell_data["angle2"])
+
     materials.set_values(matids)
 
     fiber_orientations.set_all(0.0)
-    plane_orientations.set_all(90.0)
+
+    # transverse orientations
+    plane_orientations.set_values(plane_angles)
+    # plane_orientations.set_all(0.0)
 
     # Build material property library.
-    mat1 = material.IsotropicMaterial(matMechanicProp, 1.0)
-
     matLibrary = [matdb[i] for i in matuniq]
 
     anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
