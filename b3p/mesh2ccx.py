@@ -109,14 +109,18 @@ def main():
     re.SetFileName(grid)
     re.Update()
     gr = re.GetOutput()
+    glin = pyvista.UnstructuredGrid(gr)
 
     lf = vtk.vtkLinearToQuadraticCellsFilter()
     lf.SetInputData(re.GetOutput())
     lf.Update()
-
     quad = lf.GetOutput()
-
     g = pyvista.UnstructuredGrid(quad)
+
+    # for i in range(len(glin.points)):
+    #     print(glin.points[i], g.points[i])
+    # # print((glin.points -  g.points[:4800,:]).sum())
+    # exit()
 
     # export the nodes
     buf = "*node,nset=nall\n"
@@ -174,14 +178,17 @@ def main():
 
     for i in g.point_data:
         if i.startswith("lc_"):
+            # forces are interpolated to midside nodes, causing the sum of forces to be off, 
+            # compute a multiplier from the sum of the forces in the linear model here 
+            multiplier = glin.point_data[i].sum()/g.point_data[i].sum()
             lbuf = ""
-            ld = g.point_data[i]
+            ld = g.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
                     lbuf += "%i,1,%f\n" % (n + 1, j[0])
                 if j[1] ** 2 > 1e-8:
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
-
+       
             loadcases[i] = "*cload\n" + lbuf
 
     root = np.where(g.points[:, 2] == g.points[:, 2].min())

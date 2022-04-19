@@ -15,14 +15,14 @@ plybook: ## create a plybook out of slab definition
 	b3p_plybook blade_test.yml --out temp/plybook.pck
 
 drape: ## drape the shell and the shear web
-	b3p_drape temp/plybook.pck temp/test_blade_web.vtp --key shell  --out temp/test_blade_shell.vtu 
-	b3p_drape temp/plybook.pck temp/test_blade_w0.vtp --key web0  --out temp/test_blade_w0.vtu 
+	b3p_drape temp/plybook.pck temp/test_blade_web.vtp --key shell  --out temp/test_blade_shell1.vtu 
+	b3p_drape temp/plybook.pck temp/test_blade_w0.vtp --key web0  --out temp/test_blade_w01.vtu 
 
 combine: ## add the meshes together 
 	b3p_meshcombine temp/test_blade_shell.vtu  temp/test_blade_w0.vtu --out temp/joinedup_mesh.vtu
 
 mesh2d: ## extract 2D meshes 
-	b3p_2dmesh --vtu temp/joinedup_mesh.vtu --r "[5,20,35,50,65,80,90]" --var temp/test_blade.var
+	b3p_2dmesh --vtu temp/joinedup_mesh.vtu --r "[2,10,20,30,40,50,60,70,80,90]" --var temp/test_blade.var
 
 loads: ## assign nodal forces to the joined mesh for use in FEA
 	b3p_add_load blade_test.yml temp/joinedup_mesh.vtu
@@ -35,9 +35,7 @@ ccx: ## export a grid to ccx format, solve and postprocess (requires ccx to be i
 	b3p_frd2vtu temp/ccxmodel_lc_forward_flap.frd --out temp/ccx_ff.vtu
 
 anbasolve: ## solve using anba4
-	python3 ../b3p/anba4_prep.py temp/msec_65000.vtp
-	python3 ../b3p/anba4_solve.py temp/msec_65000.xdmf temp/material_map.json --debug
-
-
+	python3 ../b3p/anba4_prep.py temp/msec_*.vtp
+	python3 ../b3p/anba4_solve.py temp/msec_*.xdmf temp/material_map.json --debug
 
 all: geom mesh plybook drape combine mesh2d loads ccx ## run all targets in sequence
