@@ -81,9 +81,8 @@ def number_stack(stack, splitstack, key, increment):
     st, sb = np.array(range(ss[0])), np.array(range(ss[1]))
     stt = ky[0] + st * inc[0]
     sbt = ky[1] + sb * inc[1]
-    seq = np.array(
-        [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
-    ).astype(int)
+    seq = [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
+
     return seq
 
 
@@ -157,7 +156,7 @@ def lamplan2plies(blade):
         r *= scale
         t *= ply_thickness
 
-        cover = get_coverage(coverage, parameters, rr)
+        # cover = get_coverage(coverage, parameters, rr)
         if draping == "blocks":
             stack = coreblock(r, t, material=material_map[material])
         elif draping == "plies":
@@ -169,7 +168,16 @@ def lamplan2plies(blade):
         # what increment the ply keys are stacked with (non-1 increment allowing interleaving of plies)
         # print(splitstack, key)
         stack_numbering = number_stack(stack, splitstack, key, increment)
-        allstacks.append((name.strip(), grid.strip(), cover, stack_numbering, stack))
+        allstacks.append(
+            {
+                "name": name.strip(),
+                "grid": grid.strip(),
+                "cover": coverage,
+                "numbering": stack_numbering,
+                "stack": stack,
+                "r": rr,
+            }
+        )
 
     print("material map ", material_map)
     if "materials" in blade:
