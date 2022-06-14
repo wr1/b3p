@@ -36,20 +36,20 @@ import pyvista
 #     return ("ply_%.8i_%s" % (ply_key, name), material, out)
 
 
-def get_area_array(grid):
-    "get array for cell area"
-    m = grid.polydata()
-    cell_area = []
-    for i in range(m.GetNumberOfCells()):
-        ids = m.GetCell(i).GetPointIds()
-        a1 = vtk.vtkTriangle.TriangleArea(
-            m.GetPoint(ids.GetId(0)), m.GetPoint(ids.GetId(1)), m.GetPoint(ids.GetId(2))
-        )
-        a2 = vtk.vtkTriangle.TriangleArea(
-            m.GetPoint(ids.GetId(0)), m.GetPoint(ids.GetId(2)), m.GetPoint(ids.GetId(3))
-        )
-        cell_area.append(a1 + a2)
-    return np.array(cell_area)
+# def get_area_array(grid):
+#     "get array for cell area"
+#     m = grid.polydata()
+#     cell_area = []
+#     for i in range(m.GetNumberOfCells()):
+#         ids = m.GetCell(i).GetPointIds()
+#         a1 = vtk.vtkTriangle.TriangleArea(
+#             m.GetPoint(ids.GetId(0)), m.GetPoint(ids.GetId(1)), m.GetPoint(ids.GetId(2))
+#         )
+#         a2 = vtk.vtkTriangle.TriangleArea(
+#             m.GetPoint(ids.GetId(0)), m.GetPoint(ids.GetId(2)), m.GetPoint(ids.GetId(3))
+#         )
+#         cell_area.append(a1 + a2)
+#     return np.array(cell_area)
 
 
 def get_slab_cover(inp):
@@ -143,6 +143,7 @@ def main():
 
     print("** assigning ply data to grid")
     total_thickness = np.zeros_like(df.radius)
+    n_plies = np.zeros_like(df.radius).astype(int)
     for i in slab_data:
         slabname, ply_names, dat = i
         for n, j in enumerate(ply_names):
@@ -151,102 +152,121 @@ def main():
         s_thick = dat[1, :, :].sum(axis=1)
         o.cell_data["slab_thickness_%s" % slabname] = s_thick
         total_thickness += s_thick
+        n_plies += s_thick > 0.0
 
+    o.cell_data["n_plies"] = n_plies
     o.cell_data["is_web"] = args.key.lower().find("web") != -1
 
     o.cell_data["thickness"] = total_thickness
 
-    print("** writing to file")
-
-    o.save("gaai.vtp")
-
-    exit()
-
-    lst = []
-    for i in stck:  # for each slab stack
-        # name, grid, cover, stack_numbering, stack = i
-        if args.key.strip() == i["grid"]:  # if the key corresponds to this grid's key
-
-            for j in enumerate(
-                zip(stack_numbering, stack)
-            ):  # for all plies in the slab
-                lst.append((name, cover, j, df))
-
-    # only for the incremented plies (i.e. plies that are offset between each ply in the stack)
-    # do you need to recalculate cover, so it's faster to precalculate cover
-
-    p = multiprocessing.Pool()  # create the coverage arrays in parallel
-    dsets = p.map(get_ply_cover, lst)
-    p.close()
-
-    print("# compute ply cell coverage")
-
-    # add the coverage arrays to the mesh
-    print("# add ply arrays to grid")
-    mtarr = {}
-    n_plies = np.zeros(len(dsets[0][2][:, 0]), dtype=int)
-    for i in dsets:
-        name, material, data = i
-        o.cell_data[name] = data
-        if material not in mtarr:  # create a thickness array for each material
-            mtarr[material] = data[:, 1].astype(np.float32)
-        else:
-            mtarr[material] += data[:, 1].astype(np.float32)
-        n_plies += data[:, 1] > 0
-
-    o.cell_data["n_plies"] = n_plies
-
-    thickness = np.zeros(
-        len(data[:, 1]), dtype=np.float32
-    )  # add a total thickness array
-    for i in mtarr:
-        o.cell_data["mat_%i_thickness" % i] = mtarr[i]
-        thickness += mtarr[i]
-
-    o.cell_data["thickness"] = thickness  # addCellArray(thickness, "thickness")
-
-    """
-    o.reverse()
-
-    pdnorm = vtk.vtkPolyDataNormals()
-    pdnorm.SetInputData(o.polydata())
-    pdnorm.ComputePointNormalsOn()
-    pdnorm.ComputeCellNormalsOn()
-    pdnorm.FlipNormalsOff()
-    pdnorm.ConsistencyOn()
-    pdnorm.Update()
-    o._update(pdnorm.GetOutput())
-
-    # compute x and y fiber directions
-    n = o.normals(cells=True)
+    o.compute_normals(cell_normals=True, inplace=True)
+    o = o.compute_cell_sizes()
+    n = o.cell_data["Normals"]
     z = np.stack([np.zeros(len(n)), np.zeros(len(n)), -np.ones(len(n))]).T
     y = np.cross(n, z)
     x = np.cross(n, y)
 
-    o.addCellArray(y, "y_dir")
-    o.addCellArray(x, "x_dir")
+    o.cell_data["y_dir"] = y
+    o.cell_data["x_dir"] = x
 
-    # add cell area array
-    o.addCellArray(get_area_array(o), "area")
+    # o.addCellArray(y, "y_dir")
+    # o.addCellArray(x, "x_dir")
 
-    if args.key.lower().find("web") == -1:
-        o.addCellArray(np.zeros(len(n)), "is_web")
-    else:
-        o.addCellArray(np.ones(len(n)), "is_web")
+    # # add cell area array
+    # o.addCellArray(get_area_array(o), "area")
 
-    # translate to unstructuredgrid
-    tous = vtk.vtkAppendFilter()
-    tous.SetInputData(o.polydata())
-    tous.Update()
+    pyvista.UnstructuredGrid(o).save(args.out)
+    print("** written to %s" % args.out)
 
-    # write to vtu
-    wr = vtk.vtkXMLUnstructuredGridWriter()
-    wr.SetFileName(args.out)
-    wr.SetInputData(tous.GetOutput())
-    wr.Update()
+    # o.save("gaai.vtp")
 
-    print("written to %s" % args.out)
-    """
+    # exit()
+
+    # lst = []
+    # for i in stck:  # for each slab stack
+    #     # name, grid, cover, stack_numbering, stack = i
+    #     if args.key.strip() == i["grid"]:  # if the key corresponds to this grid's key
+
+    #         for j in enumerate(
+    #             zip(stack_numbering, stack)
+    #         ):  # for all plies in the slab
+    #             lst.append((name, cover, j, df))
+
+    # # only for the incremented plies (i.e. plies that are offset between each ply in the stack)
+    # # do you need to recalculate cover, so it's faster to precalculate cover
+
+    # p = multiprocessing.Pool()  # create the coverage arrays in parallel
+    # dsets = p.map(get_ply_cover, lst)
+    # p.close()
+
+    # print("# compute ply cell coverage")
+
+    # # add the coverage arrays to the mesh
+    # print("# add ply arrays to grid")
+    # mtarr = {}
+    # n_plies = np.zeros(len(dsets[0][2][:, 0]), dtype=int)
+    # for i in dsets:
+    #     name, material, data = i
+    #     o.cell_data[name] = data
+    #     if material not in mtarr:  # create a thickness array for each material
+    #         mtarr[material] = data[:, 1].astype(np.float32)
+    #     else:
+    #         mtarr[material] += data[:, 1].astype(np.float32)
+    #     n_plies += data[:, 1] > 0
+
+    # o.cell_data["n_plies"] = n_plies
+
+    # thickness = np.zeros(
+    #     len(data[:, 1]), dtype=np.float32
+    # )  # add a total thickness array
+    # for i in mtarr:
+    #     o.cell_data["mat_%i_thickness" % i] = mtarr[i]
+    #     thickness += mtarr[i]
+
+    # o.cell_data["thickness"] = thickness  # addCellArray(thickness, "thickness")
+
+    # """
+    # o.reverse()
+
+    # pdnorm = vtk.vtkPolyDataNormals()
+    # pdnorm.SetInputData(o.polydata())
+    # pdnorm.ComputePointNormalsOn()
+    # pdnorm.ComputeCellNormalsOn()
+    # pdnorm.FlipNormalsOff()
+    # pdnorm.ConsistencyOn()
+    # pdnorm.Update()
+    # o._update(pdnorm.GetOutput())
+
+    # # compute x and y fiber directions
+    # n = o.normals(cells=True)
+    # z = np.stack([np.zeros(len(n)), np.zeros(len(n)), -np.ones(len(n))]).T
+    # y = np.cross(n, z)
+    # x = np.cross(n, y)
+
+    # o.addCellArray(y, "y_dir")
+    # o.addCellArray(x, "x_dir")
+
+    # # add cell area array
+    # o.addCellArray(get_area_array(o), "area")
+
+    # if args.key.lower().find("web") == -1:
+    #     o.addCellArray(np.zeros(len(n)), "is_web")
+    # else:
+    #     o.addCellArray(np.ones(len(n)), "is_web")
+
+    # # translate to unstructuredgrid
+    # tous = vtk.vtkAppendFilter()
+    # tous.SetInputData(o.polydata())
+    # tous.Update()
+
+    # # write to vtu
+    # wr = vtk.vtkXMLUnstructuredGridWriter()
+    # wr.SetFileName(args.out)
+    # wr.SetInputData(tous.GetOutput())
+    # wr.Update()
+
+    # print("written to %s" % args.out)
+    # """
 
 
 if __name__ == "__main__":
