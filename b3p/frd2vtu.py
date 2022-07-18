@@ -114,14 +114,21 @@ def main():
     el = o["elements"]
     # hex elements
     nna = el.isna().sum(axis=1).values
-    hx = el.loc[nna == 0, :].values.astype(int) - 1
+    hx = el.loc[nna == 0, :].values.astype(int)
     hx = np.hstack([hx[:, :12], hx[:, 16:], hx[:, 12:16]])
 
     # wedge elements
-    wd = el.loc[nna == 5, :].values[:, :-5].astype(int) - 1
+    wd = el.loc[nna == 5, :].values[:, :-5].astype(int)
     wd = np.hstack([wd[:, :9], wd[:, 12:], wd[:, 9:12]])
 
+    hshape = hx.shape
+    hx = idmap.loc[hx.flatten()].values.reshape(hshape)
+
+    wshape = wd.shape
+    wd = idmap.loc[wd.flatten()].values.reshape(wshape)
+
     # use the pyvista dict mesh build interface
+    print(vtk.VTK_QUADRATIC_HEXAHEDRON, hx.shape)
     ogrid = pyvista.UnstructuredGrid(
         {vtk.VTK_QUADRATIC_HEXAHEDRON: hx, vtk.VTK_QUADRATIC_WEDGE: wd},
         o["nodes"][["x", "y", "z"]].values,
