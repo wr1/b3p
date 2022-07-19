@@ -308,7 +308,8 @@ class section:
             datums[i] = web_datums[i]
 
         for i in added_datums.items():
-            offs = interp(self.r, i[1][1], i[1][2])
+            offs = np.interp(self.r, i[1][1], i[1][2])
             datums[i[0]] = list(np.array(datums[i[1][0]]) + offs)
+
 
         return out, datums

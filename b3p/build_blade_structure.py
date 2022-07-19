@@ -25,6 +25,12 @@ def build_rectangle_blade_mesh_with_webs(configfile):
     # compute the locations where the webs intersect with the blade mesh
     web_shell_intersections = webs.build_webs(base_vtp, config_webs, prefix=wdp)
 
+    # rejoggle the datums format from the yaml file into dict
+    ad = config["mesh"]["datums"]
+    added_datums = dict(
+        [(i, [ad[i]["base"]] + list(zip(*ad[i]["points"]))) for i in ad]
+    )
+
     # remesh the blade, but now making sure there are nodes at the web intersections
     mesh_from_loft.build_mesh(
         pckfile,
@@ -35,7 +41,7 @@ def build_rectangle_blade_mesh_with_webs(configfile):
         config["mesh"]["n_web_points"],
         config["mesh"]["n_chordwise_points"],
         outfile=web_vtp,
-        added_datums={},
+        added_datums=added_datums,
         panel_mesh_scale=panel_mesh_scale,
     )
 

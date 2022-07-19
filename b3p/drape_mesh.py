@@ -72,7 +72,7 @@ def main():
 
     x = pyvista.read(args.vtp)
 
-    o = x.point_data_to_cell_data()  # centers.GetOutput()
+    o = x.point_data_to_cell_data(pass_point_data=True)  # centers.GetOutput()
 
     o = o.compute_cell_sizes(length=False, volume=False)
 

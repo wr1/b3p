@@ -43,6 +43,10 @@ mesh:
       z_end : 105
   n_web_points : 10
   n_chordwise_points : 40
+  datums:
+    d_te_offset:
+      base: d_te
+      points: [[0,0.1],[30,0.1],[100,.3]]
 
 materials: materials_iso.yml
 
@@ -60,7 +64,7 @@ laminates:
     trailing_edge_ud:
       material: glass_ud
       cover:
-        d_te: [.02,.25,0.02]
+        d_te_offset: [.02,.25,0.02]
       slab: [[.05,0],[.2,20],[.7,15],[.9,0]]
       key: [300,3000]
       increment: [1,-1]
