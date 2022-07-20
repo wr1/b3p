@@ -26,6 +26,7 @@ def write_web(
     rd.Update()
     poly = rd.GetOutput()
 
+    # print(loc, normal)
     plane = vtk.vtkPlane()
     plane.SetOrigin(loc)
     plane.SetNormal(normal)
@@ -96,9 +97,11 @@ def build_webs(mesh, webs, prefix="__dum"):
     web_meshes = {}
     for i in webs:
         name = prefix + "_" + i
+
         normal = (0, 1, 0)
-        if len(i) == 6:
-            normal = i[5]
+
+        if "orientation" in webs[i]:
+            normal = webs[i]["orientation"]
 
         fea_web = write_web(
             np.array(webs[i]["origin"]),

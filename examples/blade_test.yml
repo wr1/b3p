@@ -27,20 +27,36 @@ mesh:
   radii: np.linspace(0,100, 100) 
   webs:
     "w0": 
-      origin: [0,0,0]
+      origin: [0,0.,0]
+      orientation: [.02,1,0]
       z_start: 0 
       z_follow_blade: 100
       z_end : 105
     "w1": 
       origin: [0,0.5,0]
+      orientation: [.02,1,0]
       z_start: 0 
       z_follow_blade: 100
       z_end : 105
     "w2": 
       origin: [0,-0.5,0]
+      orientation: [.02,1,0]
       z_start: 0 
       z_follow_blade: 100
       z_end : 105
+    "w3": 
+      origin: [0,-0.3,0]
+      orientation: [.02,1,0]
+      z_start: 0 
+      z_follow_blade: 100
+      z_end : 105  
+    "w4": 
+      origin: [0,0.3,0]
+      orientation: [.02,1,0]
+      z_start: 0 
+      z_follow_blade: 100
+      z_end : 105  
+
   n_web_points : 10
   n_chordwise_points : 40
   datums:
@@ -108,25 +124,47 @@ laminates:
       draping: blocks
       key: [1100,0]
       grid: shell
-    web0_biax:
+    web3_biax:
       material: biax
       cover: 
-        d_w0_r: [0,1,0]
+        d_w3_r: [0,1,0]
       slab: [[.0,4],[1.,4]]
       ply_thickness: 1.2
       key: [0,8000]
       splitstack: [.5,.5]
-      grid: web0
+      grid: web3
       draping: plies
-    web0_core:
+    web3_core:
       material: pet80
       cover: 
-        d_w0_r: [0,1,0]
+        d_w3_r: [0,1,0]
       slab: [[.0,25],[1.,25]]
       ply_thickness: 1.
       key: [100,8000]
-      grid: web0
+      grid: web3
       draping: blocks
+    web4_biax:
+      material: biax
+      cover: 
+        d_w4_r: [0,1,0]
+      slab: [[.0,4],[1.,4]]
+      ply_thickness: 1.2
+      key: [0,8000]
+      splitstack: [.5,.5]
+      grid: web4
+      draping: plies
+    web4_core:
+      material: pet80
+      cover: 
+        d_w4_r: [0,1,0]
+      slab: [[.0,25],[1.,25]]
+      ply_thickness: 1.
+      key: [100,8000]
+      grid: web4
+      draping: blocks
+
+
+
 
 loads:
   forward_flap:
