@@ -10,15 +10,13 @@ import multiprocessing
 # meshes = []
 
 
-# def add_points(inp):
-#     global meshes
-#     # print(len(meshes), inp[1])
-#     if inp[0] == 0:
-#         # print(inp[:2])
-#         meshes[inp[1]].point_data[inp[2]] = inp[3]
-#     elif inp[0] == 1:
-#         print(inp[:3])
-#         meshes[inp[1]].cell_data[inp[2]] = inp[3]
+def add_missing_data(inp):
+    mesh, pd, cd = inp
+    for i in pd:
+        mesh.point_data.set_array(i[1], i[0])
+    for i in cd:
+        mesh.cell_data.set_array(i[1], i[0])
+    return mesh
 
 
 def main():
@@ -47,82 +45,33 @@ def main():
 
     tic = time.time()
 
-    join = []
-
-    for i in range(len(meshes)):
-        m = meshes[i]
+    # for each mesh, find the missing point and cell arrays and create zero arrays
+    dist = []
+    for m in meshes:
+        da = [m, [], []]
         for j in all_pd:
             if j[0] not in m.point_data:
                 a = np.zeros((m.n_points, j[1][1] if len(j[1]) > 1 else 1), dtype=j[2])
-                m.point_data[j[0]] = a
-                # join.append((0, i, j[0], a))
+                da[1].append((j[0], a))
         for j in all_cd:
             if j[0] not in m.cell_data:
                 a = np.zeros((m.n_cells, j[1][1] if len(j[1]) > 1 else 1), dtype=j[2])
-                m.cell_data[j[0]] = a
-                # join.append((1, i, j[0], a))
+                da[2].append((j[0], a))
+        dist.append(da)
 
-    # pool = multiprocessing.Pool()
-    # pool.map(add_points, join)
-    # pool.join()
-
+    # add the zero arrays in parallel
+    pool = multiprocessing.Pool()
+    cmeshes = pool.map(add_missing_data, dist)
     toc = time.time()
 
-    out = meshes[0].merge(meshes[1:])
+    out = cmeshes[0].merge(cmeshes[1:])
 
     toc2 = time.time()
 
-    print(toc - tic, toc2 - toc)
+    print("time adding missing arrays: ", toc - tic, "\ntime merging:", toc2 - toc)
 
     out.save(args.out)
     print("written mesh to %s" % args.out)
-
-    """
-    append = vtk.vtkAppendFilter()
-    append.MergePointsOn()
-    append.ToleranceIsAbsoluteOn()
-    append.SetTolerance(1e-3)
-
-    allcellarrays = []
-    meshes = []
-    # loop over all meshes and get associated arrays
-    for i in args.meshes:
-        reader = vtk.vtkXMLUnstructuredGridReader()
-        reader.SetFileName(i)
-        reader.Update()
-        meshes.append(reader.GetOutput())
-
-        for j in range(meshes[-1].GetCellData().GetNumberOfArrays()):
-            allcellarrays.append(
-                (
-                    meshes[-1].GetCellData().GetArrayName(j),
-                    meshes[-1].GetCellData().GetArray(j).GetNumberOfComponents(),
-                )
-            )
-
-    # make sure all meshes have all arrays (add zero arrays) so that they show up after the merge
-    for i in meshes:
-        for j in allcellarrays:
-            if not i.GetCellData().HasArray(j[0]):
-                arr = vtk.vtkFloatArray()
-                arr.SetNumberOfComponents(j[1])
-                arr.SetNumberOfTuples(i.GetNumberOfCells())
-                for k in range(j[1]):
-                    arr.FillComponent(k, 0.0)
-                arr.SetName(j[0])
-                i.GetCellData().AddArray(arr)
-
-    for i in meshes:
-        append.AddInputData(i)
-    append.Update()
-    append = append.GetOutput()
-
-    writer = vtk.vtkXMLUnstructuredGridWriter()
-    writer.SetFileName(args.out)
-    writer.SetInputData(append)
-    writer.Update()
-    writer.Write()
-    print("written mesh to %s" % args.out)"""
 
 
 if __name__ == "__main__":
