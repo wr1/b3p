@@ -7,8 +7,6 @@ import pyvista as pv
 import time
 import multiprocessing
 
-# meshes = []
-
 
 def add_missing_data(inp):
     mesh, pd, cd = inp
