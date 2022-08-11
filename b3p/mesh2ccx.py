@@ -31,16 +31,16 @@ def make_shell_section(inp):
     return comp
 
 
-def material_db_to_ccx(grid, materials):
+def material_db_to_ccx(grid, materials, matmap=None):
     "find the material db and write properties to a ccx block"
-    gdir = os.path.dirname(grid)
-    mm_name = os.path.join(gdir, "material_map.json")
+
     # 2 files are relevant, a material map that maps the material ID (integer)
     # in the VTK file to a key (string) in the material database and the material
     # database itself
     mat_db = None
-    if os.path.isfile(mm_name):  # check if the material map file is there
-        mm = json.load(open(mm_name, "r"))
+    if os.path.isfile(matmap):  # check if the material map file is there
+        gdir = os.path.dirname(matmap)
+        mm = json.load(open(matmap, "r"))
         if "matdb" in mm:  # check if the material map file points to a material db
             mat_db = yaml.load(
                 open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader
@@ -101,6 +101,7 @@ def main():
         help="Grid file (vtu) including shear web(s) and shell (assuming you want to simulate a blade)",
     )
     p.add_argument("--out", default="test.inp", help="Output file name (input for ccx)")
+    p.add_argument("--matmap", default="temp/material_map.json")
     args = p.parse_args()
 
     grid = args.grid
@@ -116,11 +117,6 @@ def main():
     lf.Update()
     quad = lf.GetOutput()
     g = pyvista.UnstructuredGrid(quad)
-
-    # for i in range(len(glin.points)):
-    #     print(glin.points[i], g.points[i])
-    # # print((glin.points -  g.points[:4800,:]).sum())
-    # exit()
 
     # export the nodes
     buf = "*node,nset=nall\n"
@@ -148,7 +144,7 @@ def main():
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
-    matblock = material_db_to_ccx(grid, materials)
+    matblock = material_db_to_ccx(grid, materials, matmap=args.matmap)
 
     buf += matblock
 
@@ -178,9 +174,9 @@ def main():
 
     for i in g.point_data:
         if i.startswith("lc_"):
-            # forces are interpolated to midside nodes, causing the sum of forces to be off, 
-            # compute a multiplier from the sum of the forces in the linear model here 
-            multiplier = glin.point_data[i].sum()/g.point_data[i].sum()
+            # forces are interpolated to midside nodes, causing the sum of forces to be off,
+            # compute a multiplier from the sum of the forces in the linear model here
+            multiplier = glin.point_data[i].sum() / g.point_data[i].sum()
             lbuf = ""
             ld = g.point_data[i] * multiplier
             for n, j in enumerate(ld):
@@ -188,7 +184,7 @@ def main():
                     lbuf += "%i,1,%f\n" % (n + 1, j[0])
                 if j[1] ** 2 > 1e-8:
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
-       
+
             loadcases[i] = "*cload\n" + lbuf
 
     root = np.where(g.points[:, 2] == g.points[:, 2].min())
