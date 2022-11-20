@@ -13,6 +13,7 @@ from numpy import array
 from scipy.spatial import distance
 import math
 import copy
+import pyvista as pv
 
 
 def get_eids(sec, n):
@@ -94,6 +95,7 @@ def web_link(web_links, epid, stacks, sec, poly):
     cells = poly.GetPolys()
 
     for i in web_links:
+        # print(i)
         to1 = i[2][0]  # connected element 1
         to2 = i[2][1]  # connected element 2
         s1 = stacks[to1]  # stack of element 1
@@ -393,9 +395,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
         ) != thickness.GetTuple1(e1[1]):
             x1 = 0.9
 
-        if (
-            wn0 != None and i == e0b[wn0]
-        ):  # if the web attachment is happening in node 0
+        if wn0 != None and i == e0b[wn0]:
             x0, x1 = 0, 1.0
             fact = 1.1
             cell_length = sec.GetCell(i).GetLength2() ** 0.5
@@ -410,9 +410,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     break
             x0 = min(fact * th / cell_length, 0.97)
 
-        if (
-            wn1 != None and i == e1b[wn1]
-        ):  # if the web attachment is happening in node 0
+        if wn1 != None and i == e1b[wn1]:
             x0, x1 = 0, 1.0
             fact = 1.1
             cell_length = sec.GetCell(i).GetLength2() ** 0.5
@@ -483,6 +481,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     # join up the plydrop elements
     join_up(join_nodes, epid, stacks, sec, poly)
 
+    # print(web_links)
+
     # join up the webs with the shell
     web_link(web_links, epid, stacks, sec, poly)
 
@@ -529,7 +529,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     ang = out.GetCellData().GetArray("angle")
 
     # get material and angle properties for the triangle elements
-
+    # pv.UnstructuredGrid(out).save("gaai.vtu")
     for i in range(out.GetNumberOfCells()):
         c = out.GetCell(i)
         npts = c.GetNumberOfPoints()
@@ -561,37 +561,41 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     ang2.SetName("angle2")
     ang2.SetNumberOfTuples(out.GetNumberOfCells())
     angle_lookup = {}
+
     c = 1
     for i in range(out.GetNumberOfCells()):
         cl = out.GetCell(i)
-        order = [
-            cl.GetPointId(0) + 1,
-            cl.GetPointId(1) + 1,
-            cl.GetPointId(2) + 1,
-            cl.GetPointId(2) + 1
-            if cl.GetNumberOfPoints() == 3
-            else cl.GetPointId(3) + 1,
-        ]
 
-        [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
+        # print(cl.GetNumberOfPoints())
 
-        vec = np.array([pt2[j] - pt1[j] for j in range(3)])
-        vec /= np.linalg.norm(vec)
-        dot = vtk.vtkMath.Dot([1, 0, 0], vec)
+        # order = [
+        #     cl.GetPointId(0) + 1,
+        #     cl.GetPointId(1) + 1,
+        #     cl.GetPointId(2) + 1,
+        #     cl.GetPointId(2) + 1
+        #     if cl.GetNumberOfPoints() == 3
+        #     else cl.GetPointId(3) + 1,
+        # ]
+        if cl.GetNumberOfPoints() > 2:
+            [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
 
-        angle = math.degrees(math.acos(dot))
+            vec = np.array([pt2[j] - pt1[j] for j in range(3)])
+            vec /= np.linalg.norm(vec)
+            dot = vtk.vtkMath.Dot([1, 0, 0], vec)
 
-        if pt2[1] < pt1[1]:
-            angle *= -1
+            angle = math.degrees(math.acos(dot))
 
-        if cl.GetNumberOfPoints() == 3:  # if
-            for jj in range(3):
-                if cl.GetPointId(jj) in angle_lookup:
-                    angle = angle_lookup[cl.GetPointId(jj)]
-        else:
-            angle_lookup[cl.GetPointId(0)] = angle
+            if pt2[1] < pt1[1]:
+                angle *= -1
 
-        ang2.SetComponent(i, 0, angle)
+            if cl.GetNumberOfPoints() == 3:  # if
+                for jj in range(3):
+                    if cl.GetPointId(jj) in angle_lookup:
+                        angle = angle_lookup[cl.GetPointId(jj)]
+            else:
+                angle_lookup[cl.GetPointId(0)] = angle
+
+            ang2.SetComponent(i, 0, angle)
 
     out.GetCellData().AddArray(ang2)
 
