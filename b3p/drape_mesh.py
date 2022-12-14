@@ -129,16 +129,20 @@ def main():
     y = np.cross(n, z)
     x = np.cross(n, y)
 
-    o.addCellArray(y, "y_dir")
-    o.addCellArray(x, "x_dir")
+    o.celldata["y_dir"] = y  # addCellArray(y, "y_dir")
+    o.celldata["x_dir"] = x  # addCellArray(x, "x_dir")
 
     # add cell area array
-    o.addCellArray(get_area_array(o), "area")
+    o.celldata["area"] = get_area_array(o)  # addCellArray(get_area_array(o), "area")
 
     if args.key.lower().find("web") == -1:
-        o.addCellArray(np.zeros(len(n)), "is_web")
+        o.celldata["is_web"] = np.zeros(
+            len(n)
+        )  # addCellArray(np.zeros(len(n)), "is_web")
     else:
-        o.addCellArray(np.ones(len(n)), "is_web")
+        o.celldata["is_web"] = np.ones(
+            len(n)
+        )  # addCellArray(np.ones(len(n)), "is_web")
 
     # translate to unstructuredgrid
     tous = vtk.vtkAppendFilter()
