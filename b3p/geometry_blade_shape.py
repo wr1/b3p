@@ -1,6 +1,7 @@
 import vtk
 from b3p import geometry_section
 import numpy
+from b3p import geom_utils
 
 
 class blade_shape:
@@ -20,7 +21,7 @@ class blade_shape:
         self.sections = sections
 
     def set_section_resolution(self, n_points):
-        " set the number of points used to sample the airfoil section "
+        "set the number of points used to sample the airfoil section"
         self.n_points = n_points
 
     def build_interpolated_sections(self, radii, interpolation_type=1):

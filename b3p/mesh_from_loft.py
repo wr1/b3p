@@ -59,6 +59,7 @@ def build_mesh(
     )
 
     for i in weblist:
+        # print(i.name)
         blade.set_web(i)
 
     blade.build_interpolated_sections(radii=radii, interpolation_type=2)

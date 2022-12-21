@@ -25,6 +25,8 @@ def get_slab_cover(inp):
     # compute radius coverage
     rcover = (rrt >= rmin) & (rrt <= rmax)
 
+    # print(d)
+
     if d.abs().max(axis=1)[2] == 0:
         # no increment, so the chordwise cover for each ply is the same
         # create one cover vector
@@ -90,14 +92,22 @@ def main():
     slab_data = []
     for i in stck:  # for each slab
         if args.key.strip() == i["grid"]:  # if the key corresponds to this grid key
-            slab_data.append(
-                [i["name"]]
-                + list(
-                    get_slab_cover(
-                        (i["name"], i["cover"], i["numbering"], i["r"], i["stack"], df)
+            if i["stack"] != []:
+                slab_data.append(
+                    [i["name"]]
+                    + list(
+                        get_slab_cover(
+                            (
+                                i["name"],
+                                i["cover"],
+                                i["numbering"],
+                                i["r"],
+                                i["stack"],
+                                df,
+                            )
+                        )
                     )
                 )
-            )
 
     print("** assigning ply data to grid")
     total_thickness = np.zeros_like(df.radius)

@@ -146,6 +146,7 @@ def lamplan2plies(blade):
             if "increment" not in slabs[i]
             else np.array(slabs[i]["increment"])
         )
+        # - root_radius
         scale = (
             tip_radius - root_radius if "rscale" not in slabs[i] else slabs[i]["rscale"]
         )
