@@ -17,7 +17,11 @@ def build_rectangle_blade_mesh_with_webs(configfile):
     web_vtp = "%s_web.vtp" % wdp
     radii = eval(str(config["mesh"]["radii"]))
     config_webs = config["mesh"]["webs"]
-    panel_mesh_scale = []
+    panel_mesh_scale = (
+        config["mesh"]["panel_mesh_scale"]
+        if "panel_mesh_scale" in config["mesh"]
+        else []
+    )
 
     # build the plain blade mesh
     mesh_from_loft.build_mesh(pckfile, radii, [], [], wdp, outfile=base_vtp)
