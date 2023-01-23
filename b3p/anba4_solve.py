@@ -28,9 +28,10 @@ def get_material_db(material_map):
 
     materials = {}
     for i in mm_inv:
+        print(i, mm_inv[i])
         if i != mm["matdb"]:
             matdb_entry = mat_db[mm_inv[i]]
-            if "vf" in matdb_entry:  # ortho material
+            if "tEx" in matdb_entry:  # ortho material
                 matMechanicProp = np.zeros((3, 3))
                 matMechanicProp[0, 0] = matdb_entry["tEz"] * 1e6  # e_xx
                 matMechanicProp[0, 1] = matdb_entry["tEy"] * 1e6  # e_yy
@@ -56,7 +57,7 @@ def get_material_db(material_map):
                     matMechanicProp, matdb_entry["rho"]
                 )
             else:
-                print(matdb_entry)
+                # print(matdb_entry)
                 materials[i] = material.IsotropicMaterial(
                     [
                         matdb_entry["E"] * 1e6
@@ -71,6 +72,7 @@ def get_material_db(material_map):
 
 
 def run_mesh(meshname, matdb):
+    print("run %s" % meshname)
 
     infile = XDMFFile(meshname)
     mesh = Mesh()
@@ -107,6 +109,7 @@ def run_mesh(meshname, matdb):
     # plane_orientations.set_all(0.0)
 
     # Build material property library.
+
     matLibrary = [matdb[i] for i in matuniq]
 
     anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
@@ -148,7 +151,6 @@ def main():
     args = p.parse_args()
 
     mdb = get_material_db(args.matdb)
-    # exit()
 
     part = partial(run_mesh, matdb=mdb)
     if args.debug:
