@@ -129,7 +129,9 @@ def lamplan2plies(blade):
     for i in slabs:
 
         name = i
-        material = "glass_biax" if "material" not in slabs[i] else slabs[i]["material"]
+
+        material = slabs[i]["material"]
+
         if material not in material_map:
             material_map[material] = len(material_map) + 1
 
