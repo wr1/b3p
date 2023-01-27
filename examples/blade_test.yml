@@ -59,7 +59,7 @@ mesh:
 
   n_web_points : 10
   n_chordwise_points : 40
-  datums:
+  coordinates:
     d_te_offset:
       base: d_te
       points: [[0,0.1],[30,0.1],[100,.3]]

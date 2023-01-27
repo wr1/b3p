@@ -13,7 +13,9 @@ import pyvista
 def get_slab_cover(inp):
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
-    d = pd.DataFrame(cover)
+    # d = pd.DataFrame(cover)
+    # print(d)
+    # exit()
     one = np.ones_like(rr)
 
     names = ["ply_%.8i_%s" % (i, name) for i in numbering]
@@ -25,19 +27,17 @@ def get_slab_cover(inp):
     # compute radius coverage
     rcover = (rrt >= rmin) & (rrt <= rmax)
 
-    # print(d)
+    ply_increments = [cover[i][-1] for i in cover]
 
-    if d.abs().max(axis=1)[2] == 0:
+    if not any(ply_increments):
         # no increment, so the chordwise cover for each ply is the same
         # create one cover vector
         cov = np.ones_like(df.radius, dtype=bool)
         for i in cover:
             start, end, __ = cover[i]
-            cov = (
-                cov
-                & (np.interp(df.radius, rr, one * start) <= df[i].values)
-                & (np.interp(df.radius, rr, one * end) >= df[i].values)
-            )
+            over_start = np.interp(df.radius, rr, one * start) <= df[i].values
+            under_end = np.interp(df.radius, rr, one * end) >= df[i].values
+            cov = cov & over_start & under_end
 
         rccov = np.array([cov]).T & rcover
     else:
@@ -114,6 +114,7 @@ def main():
     n_plies = np.zeros_like(df.radius).astype(int)
     for i in slab_data:
         slabname, ply_names, dat = i
+        # print(slabname, ply_names)
         for n, j in enumerate(ply_names):
             o.cell_data[j] = dat[:, :, n].T
 

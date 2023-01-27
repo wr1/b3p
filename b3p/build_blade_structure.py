@@ -30,11 +30,13 @@ def build_rectangle_blade_mesh_with_webs(configfile):
     web_shell_intersections = webs.build_webs(base_vtp, config_webs, prefix=wdp)
 
     # rejoggle the datums format from the yaml file into dict
-    ad = config["mesh"]["datums"]
-    added_datums = dict(
-        [(i, [ad[i]["base"]] + list(zip(*ad[i]["points"]))) for i in ad]
-    )
+    if "coordinates" in config["mesh"]:
+        ad = config["mesh"]["coordinates"]
+        added_datums = dict(
+            [(i, [ad[i]["base"]] + list(zip(*ad[i]["points"]))) for i in ad]
+        )
 
+        print(added_datums)
     # remesh the blade, but now making sure there are nodes at the web intersections
     mesh_from_loft.build_mesh(
         pckfile,

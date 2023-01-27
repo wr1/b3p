@@ -80,8 +80,6 @@ def run_mesh(meshname, matdb):
 
     pvmesh = pv.read(meshname)
 
-    # print(pvmesh.cell_data[])
-
     matid = MeshFunction("size_t", mesh, mesh.topology().dim())
 
     # Basic material parameters. 9 is needed for orthotropic materials.
