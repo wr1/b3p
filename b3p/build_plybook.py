@@ -115,7 +115,7 @@ def lamplan2plies(blade):
 
     slabs = blade["laminates"]["slabs"]
 
-    datums = blade["mesh"]["datums"] if "datums" in blade["mesh"] else {}
+    datums = blade["laminates"]["datums"] if "datums" in blade["laminates"] else {}
 
     allstacks = []
 
