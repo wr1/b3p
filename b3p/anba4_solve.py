@@ -39,9 +39,6 @@ def get_material_db(material_map):
                 matMechanicProp[0, 0] = matdb_entry["tEz"] * 1e6  # e_xx
                 matMechanicProp[0, 1] = matdb_entry["tEy"] * 1e6  # e_yy
                 matMechanicProp[0, 2] = matdb_entry["tEx"] * 1e6  # e_zz
-                # matMechanicProp[1, 0] = matdb_entry["tGyz"] * 1e6  # g_yz
-                # matMechanicProp[1, 1] = matdb_entry["tGxz"] * 1e6  # g_xz
-                # matMechanicProp[1, 2] = matdb_entry["tGxy"] * 1e6  # g_xy
 
                 matMechanicProp[1, 0] = matdb_entry["tGxz"] * 1e6  # g_yz
                 matMechanicProp[1, 1] = matdb_entry["tGxy"] * 1e6  # g_xz
