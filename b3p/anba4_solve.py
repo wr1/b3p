@@ -20,6 +20,9 @@ def get_material_db(material_map):
     if "matdb" in mm:  # check if the material map file points to a material db
         mat_db = yaml.load(open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader)
 
+        # check if there is a -1 material in the matdb, and assign it
+        # this material ID is used by the section mesher for the bondlines
+        # that connect the webs to the shell
         if "-1" in mat_db:
             mm["-1"] = -1
     else:
@@ -31,7 +34,6 @@ def get_material_db(material_map):
 
     materials = {}
     for i in mm_inv:
-        print(i, mm_inv[i])
         if i != mm["matdb"]:
             matdb_entry = mat_db[mm_inv[i]]
             if "tEx" in matdb_entry:  # ortho material
@@ -44,20 +46,14 @@ def get_material_db(material_map):
                 matMechanicProp[1, 1] = matdb_entry["tGxy"] * 1e6  # g_xz
                 matMechanicProp[1, 2] = matdb_entry["tGyz"] * 1e6  # g_xy
 
-                # matMechanicProp[2, 0] = matdb_entry["tnuyz"]  # nu_zy
-                # matMechanicProp[2, 1] = matdb_entry["tnuxz"]  # nu_zx
-                # matMechanicProp[2, 2] = matdb_entry["tnuxy"]  # nu_xy
-
                 matMechanicProp[2, 0] = matdb_entry["tnuxz"]  # nu_zy
                 matMechanicProp[2, 1] = matdb_entry["tnuxy"]  # nu_zx
                 matMechanicProp[2, 2] = matdb_entry["tnuyz"]  # nu_xy
 
-                # print(matdb_entry)
                 materials[i] = material.OrthotropicMaterial(
                     matMechanicProp, matdb_entry["rho"]
                 )
             else:
-                # print(matdb_entry)
                 materials[i] = material.IsotropicMaterial(
                     [
                         matdb_entry["E"] * 1e6
@@ -80,7 +76,7 @@ def run_mesh(meshname, matdb):
 
     pvmesh = pv.read(meshname)
 
-    matid = MeshFunction("size_t", mesh, mesh.topology().dim())
+    # matid = MeshFunction("size_t", mesh, mesh.topology().dim())
 
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
@@ -100,11 +96,11 @@ def run_mesh(meshname, matdb):
 
     materials.set_values(matids)
 
+    # TODO, doesn't work for off axis laminates for now
     fiber_orientations.set_all(0.0)
 
     # transverse orientations
     plane_orientations.set_values(plane_angles)
-    # plane_orientations.set_all(0.0)
 
     # Build material property library.
 

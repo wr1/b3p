@@ -1,8 +1,6 @@
 #! /usr/bin/env python3
 
 import argparse
-
-# import pandas as pd
 import numpy as np
 import yaml
 import os
@@ -127,7 +125,6 @@ def lamplan2plies(blade):
     material_map = {}
 
     for i in slabs:
-
         name = i
 
         material = slabs[i]["material"]
@@ -153,7 +150,6 @@ def lamplan2plies(blade):
             if "increment" not in slabs[i]
             else np.array(slabs[i]["increment"])
         )
-        # - root_radius
         scale = (
             tip_radius - root_radius if "rscale" not in slabs[i] else slabs[i]["rscale"]
         )
@@ -164,7 +160,6 @@ def lamplan2plies(blade):
         r *= scale
         t *= ply_thickness
 
-        # cover = get_coverage(coverage, parameters, rr)
         if draping == "blocks":
             stack = coreblock(r, t, material=material_map[material])
         elif draping == "plies":
@@ -174,7 +169,6 @@ def lamplan2plies(blade):
 
         # assigns keys to the plies in the stack depending on how the stack is split up
         # what increment the ply keys are stacked with (non-1 increment allowing interleaving of plies)
-        # print(splitstack, key)
         stack_numbering = number_stack(stack, splitstack, key, increment)
         allstacks.append(
             {
@@ -187,7 +181,6 @@ def lamplan2plies(blade):
             }
         )
 
-    # print("material map ", material_map)
     if "materials" in blade:
         mdb = blade["materials"]
         assert (os.path.isfile(mdb), "mdb {mdb} not a file")
