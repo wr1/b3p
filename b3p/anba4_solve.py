@@ -19,6 +19,9 @@ def get_material_db(material_map):
     mat_db = None
     if "matdb" in mm:  # check if the material map file points to a material db
         mat_db = yaml.load(open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader)
+
+        if "-1" in mat_db:
+            mm["-1"] = -1
     else:
         exit(
             "material map available, but no link to material db, need matdb definition to do FEA"
