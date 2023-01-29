@@ -36,7 +36,6 @@ def build_rectangle_blade_mesh_with_webs(configfile):
             [(i, [ad[i]["base"]] + list(zip(*ad[i]["points"]))) for i in ad]
         )
 
-        print(added_datums)
     # remesh the blade, but now making sure there are nodes at the web intersections
     mesh_from_loft.build_mesh(
         pckfile,

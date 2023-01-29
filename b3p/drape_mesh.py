@@ -25,7 +25,7 @@ def get_slab_cover(inp):
     rrt = np.array([df.radius.values]).T
 
     # compute radius coverage
-    rcover = (rrt >= rmin) & (rrt <= rmax)
+    rcover = (rrt >= rmin) & (rrt < rmax)
 
     ply_increments = [cover[i][-1] for i in cover]
 
