@@ -17,6 +17,13 @@ def add_missing_data(inp):
     return mesh
 
 
+def is_nonzero_array(arr):
+    # check if there is any nonzero entry in the 1 column (thickness)
+    if len(arr.shape) == 2 and arr.shape[1] == 3:
+        return np.count_nonzero(arr[:, 1]) > 0
+    return True
+
+
 def main():
     # global meshes
     p = argparse.ArgumentParser(
@@ -39,6 +46,7 @@ def main():
         (j, x.cell_data[j].shape, x.cell_data[j].dtype)
         for x in meshes
         for j in x.cell_data.keys()
+        if is_nonzero_array(x.cell_data[j])
     ]
 
     tic = time.time()

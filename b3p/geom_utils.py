@@ -34,4 +34,3 @@ def spline_interp_k(x, y, newx):
 
 def distance(point1, point2):
     return math.sqrt(sum((i[1] - i[0]) ** 2 for i in zip(point1, point2)))
-

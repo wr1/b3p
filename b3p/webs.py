@@ -95,7 +95,6 @@ def build_webs(mesh, webs, prefix="__dum"):
     web_meshes = {}
     for i in webs:
         name = prefix + "_" + i
-
         normal = (0, 1, 0)
 
         if "orientation" in webs[i]:

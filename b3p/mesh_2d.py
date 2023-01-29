@@ -157,7 +157,6 @@ def web_link(web_links, epid, stacks, sec, poly):
 
 
 def create_bondline(y, epid, stacks, sec, poly, bondline_material=20):
-    """"""
     lst = []
 
     bnds = sec.GetBounds()
@@ -453,8 +452,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     stack.append(tup[1] + stack[-1])
                     mstack.append(int(tup[0]))
                     astack.append(tup[2])
-                    p0o = p0
-                    p1o = p1
+                    # p0o = p0
+                    # p1o = p1
                     p0 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p0, nr0)]
                     p1 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p1, nr1)]
                     points.InsertNextPoint(tuple(p0))
@@ -529,7 +528,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     ang = out.GetCellData().GetArray("angle")
 
     # get material and angle properties for the triangle elements
-    # pv.UnstructuredGrid(out).save("gaai.vtu")
     for i in range(out.GetNumberOfCells()):
         c = out.GetCell(i)
         npts = c.GetNumberOfPoints()
