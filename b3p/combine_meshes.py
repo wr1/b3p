@@ -1,11 +1,8 @@
 #! /usr/bin/env python3
-
-# import vtk
 import argparse
 import numpy as np
 import pyvista as pv
 import time
-import multiprocessing
 
 
 def add_missing_data(inp):
@@ -37,6 +34,7 @@ def main():
     for i in args.meshes:
         meshes.append(pv.read(i))
 
+    # find all the point and cell data arrays
     all_pd = [
         (j, x.point_data[j].shape, x.point_data[j].dtype)
         for x in meshes
@@ -65,16 +63,21 @@ def main():
                 da[2].append((j[0], a))
         dist.append(da)
 
-    # add the zero arrays in parallel
-    pool = multiprocessing.Pool()
-    cmeshes = pool.map(add_missing_data, dist)
-    toc = time.time()
+    toc0 = time.time()
+
+    # this is faster than using multiprocessing,
+    # prob because serializing the meshes is slow
+    cmeshes = [add_missing_data(i) for i in dist]
+
+    toc1 = time.time()
 
     out = cmeshes[0].merge(cmeshes[1:])
 
     toc2 = time.time()
 
-    print("time adding missing arrays: ", toc - tic, "\ntime merging:", toc2 - toc)
+    print(
+        f"timing: \n\tcreate 0 arrays: { toc0 - tic:.3f} \n\ttime adding: {toc1-toc0:.3f}\n\ttime merging: {toc2-toc1:.3f}"
+    )
 
     out.save(args.out)
     print("written mesh to %s" % args.out)
