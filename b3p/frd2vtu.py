@@ -43,7 +43,13 @@ def load(inp):
             skiprows=lambda x: (x % 3) != 2,
             names=range(11),
         )
-        return ("elements", pd.concat([e2.iloc[:, 1:], e1.iloc[:, 1:]], axis=1))
+
+        # print(pd.concat([e1, e2], axis=1).dropna(axis=1))
+
+        return (
+            "elements",
+            pd.concat([e2.iloc[:, 1:], e1.iloc[:, 1:]], axis=1),
+        )
     elif inp.find("DISP") != -1:  # displacements
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -105,18 +111,31 @@ def main():
     idmap = pd.DataFrame(o["nodes"].index, o["nodes"]["index"])
 
     # create new connectivity table
-    conn = idmap.loc[o["elements"].values.flatten()].values
-    conn.resize(o["elements"].shape)
+    el = o["elements"]
+    # hex elements
+    nna = el.isna().sum(axis=1).values
+    hx = el.loc[nna == 0, :].values.astype(int)
+    hx = np.hstack([hx[:, :12], hx[:, 16:], hx[:, 12:16]])
 
-    # renumber the hex20 element nodes according to vtk definition
-    conn = np.concatenate([conn[:, :12], conn[:, 16:], conn[:, 12:16]], axis=1)
+    # wedge elements
+    wd = el.loc[nna == 5, :].values[:, :-5].astype(int)
+    wd = np.hstack([wd[:, :9], wd[:, 12:], wd[:, 9:12]])
+
+    hshape = hx.shape
+    hx = idmap.loc[hx.flatten()].values.reshape(hshape)
+
+    wshape = wd.shape
+    wd = idmap.loc[wd.flatten()].values.reshape(wshape)
 
     # use the pyvista dict mesh build interface
+    print(vtk.VTK_QUADRATIC_HEXAHEDRON, hx.shape)
     ogrid = pyvista.UnstructuredGrid(
-        {vtk.VTK_QUADRATIC_HEXAHEDRON: conn}, o["nodes"][["x", "y", "z"]].values
+        {vtk.VTK_QUADRATIC_HEXAHEDRON: hx, vtk.VTK_QUADRATIC_WEDGE: wd},
+        o["nodes"][["x", "y", "z"]].values,
     )
     for i in ["disp", "force", "stress", "strain"]:
-        ogrid.point_data[i] = o[i].values[:, 1:]
+        if i in o:
+            ogrid.point_data[i] = o[i].values[:, 1:]
 
     # add mises strain and stress
     for s in [("stress", "s"), ("strain", "e")]:
@@ -124,11 +143,11 @@ def main():
         xx, yy, zz, xy, yz, zx = [
             ss["%s%s" % (s[1], i)] for i in ["xx", "yy", "zz", "xy", "yz", "zx"]
         ]
-        ogrid.point_data["mises_%s" % s[0]] = (1.0 / 2.0 ** 0.5) * (
+        ogrid.point_data["mises_%s" % s[0]] = (1.0 / 2.0**0.5) * (
             (xx - yy) ** 2
             + (yy - zz) ** 2
             + (zz - xx) ** 2
-            + 6.0 * (xy ** 2 + yz ** 2 + zx ** 2)
+            + 6.0 * (xy**2 + yz**2 + zx**2)
         ) ** 0.5
 
     ogrid.save(args.output)

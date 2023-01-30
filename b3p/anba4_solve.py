@@ -19,6 +19,12 @@ def get_material_db(material_map):
     mat_db = None
     if "matdb" in mm:  # check if the material map file points to a material db
         mat_db = yaml.load(open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader)
+
+        # check if there is a -1 material in the matdb, and assign it
+        # this material ID is used by the section mesher for the bondlines
+        # that connect the webs to the shell
+        if "-1" in mat_db:
+            mm["-1"] = -1
     else:
         exit(
             "material map available, but no link to material db, need matdb definition to do FEA"
@@ -30,23 +36,24 @@ def get_material_db(material_map):
     for i in mm_inv:
         if i != mm["matdb"]:
             matdb_entry = mat_db[mm_inv[i]]
-            if "vf" in matdb_entry:  # ortho material
+            if "tEx" in matdb_entry:  # ortho material
                 matMechanicProp = np.zeros((3, 3))
-                matMechanicProp[0, 0] = matdb_entry["tEx"] * 1e6  # e_xx
+                matMechanicProp[0, 0] = matdb_entry["tEz"] * 1e6  # e_xx
                 matMechanicProp[0, 1] = matdb_entry["tEy"] * 1e6  # e_yy
-                matMechanicProp[0, 2] = matdb_entry["tEz"] * 1e6  # e_zz
-                matMechanicProp[1, 0] = matdb_entry["tGyz"] * 1e6  # g_yz
-                matMechanicProp[1, 1] = matdb_entry["tGxz"] * 1e6  # g_xz
-                matMechanicProp[1, 2] = matdb_entry["tGxy"] * 1e6  # g_xy
-                matMechanicProp[2, 0] = matdb_entry["tnuyz"]  # nu_zy
-                matMechanicProp[2, 1] = matdb_entry["tnuxz"]  # nu_zx
-                matMechanicProp[2, 2] = matdb_entry["tnuxy"]  # nu_xy
-                # print(matdb_entry)
+                matMechanicProp[0, 2] = matdb_entry["tEx"] * 1e6  # e_zz
+
+                matMechanicProp[1, 0] = matdb_entry["tGxz"] * 1e6  # g_yz
+                matMechanicProp[1, 1] = matdb_entry["tGxy"] * 1e6  # g_xz
+                matMechanicProp[1, 2] = matdb_entry["tGyz"] * 1e6  # g_xy
+
+                matMechanicProp[2, 0] = matdb_entry["tnuxz"]  # nu_zy
+                matMechanicProp[2, 1] = matdb_entry["tnuxy"]  # nu_zx
+                matMechanicProp[2, 2] = matdb_entry["tnuyz"]  # nu_xy
+
                 materials[i] = material.OrthotropicMaterial(
                     matMechanicProp, matdb_entry["rho"]
                 )
             else:
-                print(matdb_entry)
                 materials[i] = material.IsotropicMaterial(
                     [
                         matdb_entry["E"] * 1e6
@@ -54,13 +61,14 @@ def get_material_db(material_map):
                         else matdb_entry["Ex"] * 1e6,
                         matdb_entry["nu"],
                     ],
-                    1.0,
+                    matdb_entry["rho"],
                 )
 
     return materials
 
 
 def run_mesh(meshname, matdb):
+    print("run %s" % meshname)
 
     infile = XDMFFile(meshname)
     mesh = Mesh()
@@ -68,17 +76,11 @@ def run_mesh(meshname, matdb):
 
     pvmesh = pv.read(meshname)
 
-    matid = MeshFunction("size_t", mesh, mesh.topology().dim())
+    # matid = MeshFunction("size_t", mesh, mesh.topology().dim())
 
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
-    E = 1.0
-    nu = 0.33
-    # Assmble into material mechanical property Matrix.
-
-    matMechanicProp = [E, nu]
     # Meshing domain.
-    # CompiledSubDomain
     materials = MeshFunction("size_t", mesh, mesh.topology().dim())
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
@@ -90,13 +92,17 @@ def run_mesh(meshname, matdb):
 
     matids = [mat_map_0[i] for i in pvmesh.cell_data["mat"].tolist()]
 
+    plane_angles = list(pvmesh.cell_data["angle2"])
+
     materials.set_values(matids)
 
+    # TODO, doesn't work for off axis laminates for now
     fiber_orientations.set_all(0.0)
-    plane_orientations.set_all(90.0)
+
+    # transverse orientations
+    plane_orientations.set_values(plane_angles)
 
     # Build material property library.
-    mat1 = material.IsotropicMaterial(matMechanicProp, 1.0)
 
     matLibrary = [matdb[i] for i in matuniq]
 
@@ -139,7 +145,6 @@ def main():
     args = p.parse_args()
 
     mdb = get_material_db(args.matdb)
-    # exit()
 
     part = partial(run_mesh, matdb=mdb)
     if args.debug:

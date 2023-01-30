@@ -1,62 +1,82 @@
 #! /usr/bin/env python3
 
-import vtk
+# import vtk
 import argparse
 import numpy as np
+import pyvista as pv
+import time
+import multiprocessing
+
+
+def add_missing_data(inp):
+    mesh, pd, cd = inp
+    for i in pd:
+        mesh.point_data.set_array(i[1], i[0])
+    for i in cd:
+        mesh.cell_data.set_array(i[1], i[0])
+    return mesh
+
+
+def is_nonzero_array(arr):
+    # check if there is any nonzero entry in the 1 column (thickness)
+    if len(arr.shape) == 2 and arr.shape[1] == 3:
+        return np.count_nonzero(arr[:, 1]) > 0
+    return True
 
 
 def main():
+    # global meshes
     p = argparse.ArgumentParser(
         description="Join a series of meshes, i.e. a shell and n web meshes together into a single vtu"
     )
     p.add_argument("meshes", nargs="*")
-    p.add_argument("--out", default="__joined_mesh.vtu", help="output file name ")
+    p.add_argument("--out", default="__joined_mesh.vtu", help="output file name")
     args = p.parse_args()
 
-    append = vtk.vtkAppendFilter()
-    append.MergePointsOn()
-    append.ToleranceIsAbsoluteOn()
-    append.SetTolerance(1e-3)
-
-    allcellarrays = []
     meshes = []
-    # loop over all meshes and get associated arrays
     for i in args.meshes:
-        reader = vtk.vtkXMLUnstructuredGridReader()
-        reader.SetFileName(i)
-        reader.Update()
-        meshes.append(reader.GetOutput())
+        meshes.append(pv.read(i))
 
-        for j in range(meshes[-1].GetCellData().GetNumberOfArrays()):
-            allcellarrays.append(
-                (
-                    meshes[-1].GetCellData().GetArrayName(j),
-                    meshes[-1].GetCellData().GetArray(j).GetNumberOfComponents(),
-                )
-            )
+    all_pd = [
+        (j, x.point_data[j].shape, x.point_data[j].dtype)
+        for x in meshes
+        for j in x.point_data.keys()
+    ]
+    all_cd = [
+        (j, x.cell_data[j].shape, x.cell_data[j].dtype)
+        for x in meshes
+        for j in x.cell_data.keys()
+        if is_nonzero_array(x.cell_data[j])
+    ]
 
-    # make sure all meshes have all arrays (add zero arrays) so that they show up after the merge
-    for i in meshes:
-        for j in allcellarrays:
-            if not i.GetCellData().HasArray(j[0]):
-                arr = vtk.vtkFloatArray()
-                arr.SetNumberOfComponents(j[1])
-                arr.SetNumberOfTuples(i.GetNumberOfCells())
-                for k in range(j[1]):
-                    arr.FillComponent(k, 0.0)
-                arr.SetName(j[0])
-                i.GetCellData().AddArray(arr)
+    tic = time.time()
 
-    for i in meshes:
-        append.AddInputData(i)
-    append.Update()
-    append = append.GetOutput()
+    # for each mesh, find the missing point and cell arrays and create zero arrays
+    dist = []
+    for m in meshes:
+        da = [m, [], []]
+        for j in all_pd:
+            if j[0] not in m.point_data:
+                a = np.zeros((m.n_points, j[1][1] if len(j[1]) > 1 else 1), dtype=j[2])
+                da[1].append((j[0], a))
+        for j in all_cd:
+            if j[0] not in m.cell_data:
+                a = np.zeros((m.n_cells, j[1][1] if len(j[1]) > 1 else 1), dtype=j[2])
+                da[2].append((j[0], a))
+        dist.append(da)
 
-    writer = vtk.vtkXMLUnstructuredGridWriter()
-    writer.SetFileName(args.out)
-    writer.SetInputData(append)
-    writer.Update()
-    writer.Write()
+    # add the zero arrays in parallel
+    pool = multiprocessing.Pool()
+    cmeshes = pool.map(add_missing_data, dist)
+    toc = time.time()
+
+    out = cmeshes[0].merge(cmeshes[1:])
+
+    toc2 = time.time()
+
+    print("time adding missing arrays: ", toc - tic, "\ntime merging:", toc2 - toc)
+
+    out.save(args.out)
     print("written mesh to %s" % args.out)
 
 

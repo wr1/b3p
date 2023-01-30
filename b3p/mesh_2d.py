@@ -13,6 +13,7 @@ from numpy import array
 from scipy.spatial import distance
 import math
 import copy
+import pyvista as pv
 
 
 def get_eids(sec, n):
@@ -94,6 +95,7 @@ def web_link(web_links, epid, stacks, sec, poly):
     cells = poly.GetPolys()
 
     for i in web_links:
+        # print(i)
         to1 = i[2][0]  # connected element 1
         to2 = i[2][1]  # connected element 2
         s1 = stacks[to1]  # stack of element 1
@@ -155,7 +157,6 @@ def web_link(web_links, epid, stacks, sec, poly):
 
 
 def create_bondline(y, epid, stacks, sec, poly, bondline_material=20):
-    ""
     lst = []
 
     bnds = sec.GetBounds()
@@ -393,9 +394,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
         ) != thickness.GetTuple1(e1[1]):
             x1 = 0.9
 
-        if (
-            wn0 != None and i == e0b[wn0]
-        ):  # if the web attachment is happening in node 0
+        if wn0 != None and i == e0b[wn0]:
             x0, x1 = 0, 1.0
             fact = 1.1
             cell_length = sec.GetCell(i).GetLength2() ** 0.5
@@ -410,9 +409,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     break
             x0 = min(fact * th / cell_length, 0.97)
 
-        if (
-            wn1 != None and i == e1b[wn1]
-        ):  # if the web attachment is happening in node 0
+        if wn1 != None and i == e1b[wn1]:
             x0, x1 = 0, 1.0
             fact = 1.1
             cell_length = sec.GetCell(i).GetLength2() ** 0.5
@@ -455,8 +452,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     stack.append(tup[1] + stack[-1])
                     mstack.append(int(tup[0]))
                     astack.append(tup[2])
-                    p0o = p0
-                    p1o = p1
+                    # p0o = p0
+                    # p1o = p1
                     p0 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p0, nr0)]
                     p1 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p1, nr1)]
                     points.InsertNextPoint(tuple(p0))
@@ -483,6 +480,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     # join up the plydrop elements
     join_up(join_nodes, epid, stacks, sec, poly)
 
+    # print(web_links)
+
     # join up the webs with the shell
     web_link(web_links, epid, stacks, sec, poly)
 
@@ -508,8 +507,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
 
     transform = vtk.vtkTransform()
     transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
-
     transformfilter = vtk.vtkTransformFilter()
+
     transformfilter.SetTransform(transform)
     transformfilter.SetInputData(rotated_section)
     transformfilter.Update()
@@ -529,7 +528,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     ang = out.GetCellData().GetArray("angle")
 
     # get material and angle properties for the triangle elements
-
     for i in range(out.GetNumberOfCells()):
         c = out.GetCell(i)
         npts = c.GetNumberOfPoints()
@@ -557,6 +555,48 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                     mat.SetComponent(i, 0, mat.GetTuple1(j))
                     ang.SetComponent(i, 0, ang.GetTuple1(j))
 
+    ang2 = vtk.vtkFloatArray()
+    ang2.SetName("angle2")
+    ang2.SetNumberOfTuples(out.GetNumberOfCells())
+    angle_lookup = {}
+
+    c = 1
+    for i in range(out.GetNumberOfCells()):
+        cl = out.GetCell(i)
+
+        # print(cl.GetNumberOfPoints())
+
+        # order = [
+        #     cl.GetPointId(0) + 1,
+        #     cl.GetPointId(1) + 1,
+        #     cl.GetPointId(2) + 1,
+        #     cl.GetPointId(2) + 1
+        #     if cl.GetNumberOfPoints() == 3
+        #     else cl.GetPointId(3) + 1,
+        # ]
+        if cl.GetNumberOfPoints() > 2:
+            [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
+
+            vec = np.array([pt2[j] - pt1[j] for j in range(3)])
+            vec /= np.linalg.norm(vec)
+            dot = vtk.vtkMath.Dot([1, 0, 0], vec)
+
+            angle = math.degrees(math.acos(dot))
+
+            if pt2[1] < pt1[1]:
+                angle *= -1
+
+            if cl.GetNumberOfPoints() == 3:  # if
+                for jj in range(3):
+                    if cl.GetPointId(jj) in angle_lookup:
+                        angle = angle_lookup[cl.GetPointId(jj)]
+            else:
+                angle_lookup[cl.GetPointId(0)] = angle
+
+            ang2.SetComponent(i, 0, angle)
+
+    out.GetCellData().AddArray(ang2)
+
     mkeys = sorted(set([mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())]))
 
     if verbose:
@@ -573,58 +613,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
     )
-
-    # eb = ""
-    # em = ""
-    # c = 1
-    # angle_lookup = {}
-    # material_map = {}
-    # for i in range(out.GetNumberOfCells()):
-    #     cl = out.GetCell(i)
-    #     npo = cl.GetNumberOfPoints()
-    #     if npo > 2:
-    #         order = [
-    #             cl.GetPointId(0) + 1,
-    #             cl.GetPointId(1) + 1,
-    #             cl.GetPointId(2) + 1,
-    #             cl.GetPointId(2) + 1
-    #             if cl.GetNumberOfPoints() == 3
-    #             else cl.GetPointId(3) + 1,
-    #         ]
-
-    #         [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
-
-    #         vec = np.array([pt2[j] - pt1[j] for j in range(3)])
-    #         vec /= np.linalg.norm(vec)
-    #         dot = vtk.vtkMath.Dot([1, 0, 0], vec)
-
-    #         angle = math.degrees(math.acos(dot))
-
-    #         if pt2[1] < pt1[1]:
-    #             angle *= -1
-
-    #         # this logic looks up the angle from a connected node (that was assigned
-    #         # to it by the nearest quad)
-    #         if cl.GetNumberOfPoints() == 3:  # if
-    #             for jj in range(3):
-    #                 if cl.GetPointId(jj) in angle_lookup:
-    #                     angle = angle_lookup[cl.GetPointId(jj)]
-    #         else:
-    #             angle_lookup[cl.GetPointId(0)] = angle
-    #         order.reverse()
-
-    #         eb += "%i %i %i %i %i 0 0 0 0\n" % tuple([c] + order)
-    #         matnum = mkeys.index(mat.GetTuple1(i)) + 1
-    #         em += "%i %i %f %f \n" % (
-    #             c,
-    #             mkeys.index(mat.GetTuple1(i)) + 1,
-    #             ang.GetTuple1(i),
-    #             angle,
-    #         )
-    #         material_map[mkeys.index(mat.GetTuple1(i))] = int(mat.GetTuple1(i))
-    #         c += 1
-
-    # return dirname
 
 
 def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False):

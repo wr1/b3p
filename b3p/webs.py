@@ -19,8 +19,8 @@ def write_web(
     coordinate of top and bottom lines. This is used to represent geometrically straight entities
     in 3D as coordinates in local systems defined per section
     """
-    mesh = mesh
-
+    # mesh = mesh
+    print("reading", name)
     rd = vtk.vtkXMLPolyDataReader()
     rd.SetFileName(mesh)
     rd.Update()
@@ -35,13 +35,12 @@ def write_web(
     clip.SetInputData(poly)
 
     clip.Update()
-
     out = clip.GetOutput()
-
+    # print(zone)
     points = []
+
     c = out.GetPointData().GetArray("d_rel_dist_from_te")
     cc = out.GetPointData().GetArray("d_abs_dist_from_te")
-
     p = out.GetPointData().GetArray(zone)
 
     lw, ww = [], []
@@ -97,14 +96,15 @@ def build_webs(mesh, webs, prefix="__dum"):
     for i in webs:
         name = prefix + "_" + i
         normal = (0, 1, 0)
-        if len(i) == 6:
-            normal = i[5]
+
+        if "orientation" in webs[i]:
+            normal = webs[i]["orientation"]
 
         fea_web = write_web(
             np.array(webs[i]["origin"]),
             normal,
             mesh,
-            name,
+            name=name,
             rootcut=webs[i]["z_start"],
             tipcut=webs[i]["z_follow_blade"],
             tip=webs[i]["z_end"],

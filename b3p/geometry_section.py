@@ -267,8 +267,8 @@ class section:
                 )
                 datum_r.append((j[0] - splits[j[1]]) * (-1 if j[1] else 1))
 
-            web_datums["d_w%i" % counter] = datum
-            web_datums["d_w%i_r" % counter] = datum_r
+            web_datums["d_%s" % i.coordinate] = datum
+            web_datums["d_%s_r" % i.coordinate] = datum_r
 
             counter += 1
 
@@ -308,7 +308,7 @@ class section:
             datums[i] = web_datums[i]
 
         for i in added_datums.items():
-            offs = interp(self.r, i[1][1], i[1][2])
+            offs = np.interp(self.r, i[1][1], i[1][2])
             datums[i[0]] = list(np.array(datums[i[1][0]]) + offs)
 
         return out, datums

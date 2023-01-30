@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import argparse
-import pandas as pd
 import numpy as np
 import yaml
 import os
@@ -9,6 +8,7 @@ from itertools import chain, zip_longest
 import pickle
 import json
 import shutil
+from numpy import array
 
 
 def plyify(r, t, ply_thickness, reverse=False):
@@ -51,20 +51,23 @@ def ply_stack(r, t, t_ply=1.0, reverse=False, subdivisions=5000, material=11):
 
 def coreblock(r, t, subdivisions=200, material=11):
     """Make a thickness distribution into a block divisions."""
-
+    assert len(r) == len(t)
+    lr = len(r)
     x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
     y = np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
 
-    if type(material) == str and material.startswith(
-        "["
-    ):  # deal with multi-material cores here, parse the multi-material distribution
-        mat = list(zip(*eval(material)))
-        mm = np.interp(np.linspace(0, 1, len(x)), mat[1], mat[0])
-        mm = [min(mat[0], key=lambda x: abs(i - x)) for i in mm]
-    elif type(material) == int or type(eval(material)) == int:
-        mm = np.ones(len(x)) * int(material)
+    stack = []
+    for i in range(lr - 1):
+        rmin, rmax = r[i], r[i + 1]
+        tmin, tmax = t[i], t[i + 1]
+        if tmin == tmax:
+            tt = tmin
+        else:  # TODO this assumes only short rampups of core in the spanwise direction
+            tt = 0.5 * (tmin + tmax)
 
-    stack = [i for i in list(zip(mm, y, x[:-1], x[1:])) if i[1] != 0]
+        if tt > 0:
+            stack.append([material, tt, rmin, rmax])
+
     return stack
 
 
@@ -81,58 +84,58 @@ def number_stack(stack, splitstack, key, increment):
     st, sb = np.array(range(ss[0])), np.array(range(ss[1]))
     stt = ky[0] + st * inc[0]
     sbt = ky[1] + sb * inc[1]
-    seq = np.array(
-        [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
-    ).astype(int)
+    seq = [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
+
     return seq
 
 
-def get_coverage(coverage, parameters, rr):
-    # replace the parameter names by array
-    for p in parameters:
-        if coverage.find(p) != -1:
-            coverage = coverage.replace(p, repr(parameters[p]))
+def get_coverage(slab, datums, rr):
+    assert "cover" in slab
+    cov = slab["cover"]
+    if type(cov) == str:
+        for i in datums:
+            if cov.find(i) != -1:
+                xy = np.array(datums[i]["xy"])
+                dst = np.interp(
+                    rr, xy[:, 0] / datums[i]["scalex"], xy[:, 1] * datums[i]["scaley"]
+                )
+                cov = cov.replace(i, "np.array(%s)" % dst.tolist())
 
-    o = []
-    for i in coverage:
-        out = [
-            i,
-            np.ones(len(rr)) * coverage[i][0],
-            np.ones(len(rr)) * coverage[i][1],
-            np.ones(len(rr)) * coverage[i][2],
-        ] + [rr]
-        o.append(out)
-
-    return o
+        return dict([(i[0], i[1:]) for i in eval(cov)])
+    else:
+        return cov
 
 
 def lamplan2plies(blade):
     root_radius = blade["planform"]["z"][0][1]
+
     tip_radius = blade["planform"]["z"][-1][1]
 
     slabs = blade["laminates"]["slabs"]
 
+    datums = blade["laminates"]["datums"] if "datums" in blade["laminates"] else {}
+
     allstacks = []
-    parameters = {}  # parameters defined in the laminate plan csv file
 
     # use a multiple of lamplan length as radius grid to interpolate geometric variables to
     n_s = round(tip_radius * 4)
 
-    rr = np.linspace(root_radius, tip_radius, n_s)
-
+    radius = np.linspace(0, tip_radius - root_radius, n_s)
+    radius_relative = np.linspace(0, 1, n_s)
     material_map = {}
 
     for i in slabs:
         name = i
-        material = "glass_biax" if "material" not in slabs[i] else slabs[i]["material"]
+
+        material = slabs[i]["material"]
+
         if material not in material_map:
             material_map[material] = len(material_map) + 1
+
         grid = "lamplan" if "grid" not in slabs[i] else slabs[i]["grid"]
-        coverage = (
-            slabs[i]["cover"]
-            if "cover" in slabs[i]
-            else exit("no cover defined for slab %s" % i)
-        )
+
+        cover = get_coverage(slabs[i], datums, radius_relative)
+
         draping = "plies" if "draping" not in slabs[i] else slabs[i]["draping"]
         splitstack = (
             np.array([1, 0])
@@ -157,7 +160,6 @@ def lamplan2plies(blade):
         r *= scale
         t *= ply_thickness
 
-        cover = get_coverage(coverage, parameters, rr)
         if draping == "blocks":
             stack = coreblock(r, t, material=material_map[material])
         elif draping == "plies":
@@ -167,11 +169,18 @@ def lamplan2plies(blade):
 
         # assigns keys to the plies in the stack depending on how the stack is split up
         # what increment the ply keys are stacked with (non-1 increment allowing interleaving of plies)
-        # print(splitstack, key)
         stack_numbering = number_stack(stack, splitstack, key, increment)
-        allstacks.append((name.strip(), grid.strip(), cover, stack_numbering, stack))
+        allstacks.append(
+            {
+                "name": name.strip(),
+                "grid": grid.strip(),
+                "cover": cover,
+                "numbering": stack_numbering,
+                "stack": stack,
+                "r": radius,
+            }
+        )
 
-    print("material map ", material_map)
     if "materials" in blade:
         mdb = blade["materials"]
         assert (os.path.isfile(mdb), "mdb {mdb} not a file")

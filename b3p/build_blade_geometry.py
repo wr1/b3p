@@ -30,7 +30,9 @@ def run_loft(configfile, verbose=False):
         interpolate_method=0,
         flatten_lw=False,
         offset_optimal=True,
-        offset_clamp_points=[-0.001, 0.04, 0.2, 0.45, 0.7, 0.8, 0.9, 0.97],
+        offset_clamp_points=config["planform"]["offset_clamp_points"]
+        if "offset_clamp_points" in config["planform"]
+        else [-0.001, 0.04, 0.2, 0.45, 0.7, 0.8, 0.9, 0.97],
     )
 
     wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
