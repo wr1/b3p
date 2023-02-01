@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 import pickle
 import math
 import vtk
+import json
 
 
 class blade:
@@ -130,13 +131,18 @@ class blade:
         """
         self.airfoils = {}
         for i in sorted(airfoils):
-            if airfoils[i].find("du") != -1:
-                print("load %s normalised" % airfoils[i])
-                t = loft_utils.load(airfoils[i], normalise=True)
+            if type(airfoils[i]) == str:
+                if airfoils[i].find("du") != -1:
+                    print(f"load {airfoils[i]} normalised")
+                    t = loft_utils.load(airfoils[i], normalise=True)
+                else:
+                    print(f"load {airfoils[i]} unnormalised")
+                    t = loft_utils.load(airfoils[i], normalise=False)  # fix so we don't
+                    # normalise flatback root
             else:
-                print("load %s unnormalised" % airfoils[i])
-                t = loft_utils.load(airfoils[i], normalise=False)  # fix so we don't
-                # normalise flatback root
+                # load an airfoil from the self-contained format, which is a dict with keys xy
+                t = airfoils[i]["xy"]
+
             self.airfoils[i] = loft_utils.interp(x, t)[:2]
 
     def _interpolate_planform(
@@ -395,11 +401,12 @@ class blade:
             "thickness": self.thickness,
             "absolute_thickness": self.absolute_thickness,
         }
-        open(fname, "w").write(str(var))
+        json.dump(var, open(fname, "w"))
+        # open(fname, "w").write(str(var))
         return var
 
     def dump(self, fname="__sections.txt", z_rotation=0.0):
-        " dump to a sections list for use in FEA (with webs) "
+        "dump to a sections list for use in FEA (with webs)"
         lst = []
         for i in self.sections:
             lst.append(i.get_pointlist(z_rotation=z_rotation))
