@@ -6,6 +6,21 @@ __pycache__/
 # C extensions
 *.so
 
+# data files 
+*.vtp
+*.vtu
+*.12d
+*.csv
+*.frd
+*.inp
+*.dat
+*.cvg
+*.xdmf*
+*.txt
+*.png
+
+
+
 # Distribution / packaging
 .Python
 build/
