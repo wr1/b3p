@@ -228,7 +228,7 @@ class blade:
         plt.subplot(3, 3, 1)
         plt.title("chord rotor_diam=%.3f" % (2.0 * max(self.z[1])))
         plt.plot(self.x, self.chord[1], label=name)
-        plt.plot(self.input_chord[0], self.input_chord[1], "o", label=name + "_input")
+        plt.plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
         plt.xlabel("rel span (-)")
         plt.ylabel("chord (m)")
         plt.grid(True)
@@ -236,34 +236,25 @@ class blade:
 
         plt.subplot(3, 3, 8)
         plt.plot(self.x, self.chord[1], label=name)
-        plt.plot(self.input_chord[0], self.input_chord[1], "o", label="%s_input" % name)
+        plt.plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
         plt.grid(True)
         plt.xlim(0.9, 1)
 
         plt.title("tip chord")
         plt.subplot(3, 3, 2)
         plt.plot(self.x, self.twist[1], label=name)
-        plt.plot(self.input_twist[0], self.input_twist[1], "o", label="%s_input" % name)
-        plt.title("twist")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 3)
+        plt.plot(self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input")
+        self._extracted_from_plot_31("twist", 3)
         plt.plot(self.x, self.thickness[1], label=name)
         plt.plot(
             self.input_thickness[0],
             self.input_thickness[1],
             "o",
-            label="%s_input" % name,
+            label=f"{name}_input",
         )
-        plt.title("rel thickness")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 4)
+        self._extracted_from_plot_31("rel thickness", 4)
         plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        plt.title("abs thickness")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 7)
+        self._extracted_from_plot_31("abs thickness", 7)
         plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
         plt.title("abs thickness")
         plt.grid(True)
@@ -271,14 +262,11 @@ class blade:
 
         plt.subplot(3, 3, 5)
         plt.plot(self.dx[0], self.dx[1], label="%s_x" % name)
-        plt.plot(self.input_dx[0], self.input_dx[1], "o", label="%s_input" % name)
+        plt.plot(self.input_dx[0], self.input_dx[1], "o", label=f"{name}_input")
         plt.plot(self.dy[0], self.dy[1], label="%s_y" % name)
-        plt.plot(self.input_dy[0], self.input_dy[1], "o", label="%s_input" % name)
+        plt.plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
         plt.legend(loc="best").get_frame().set_alpha(0.5)
-        plt.title("xy offsets")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 6)
+        self._extracted_from_plot_31("xy offsets", 6)
         plt.plot(
             list(zip(*self.mx_thickness_loc))[0],
             list(zip(*self.mx_thickness_loc))[1],
@@ -292,6 +280,13 @@ class blade:
         plt.grid(True)
 
         plt.savefig(fname, dpi=100)
+
+    # TODO Rename this here and in `plot`
+    def _extracted_from_plot_31(self, arg0, arg1):
+        plt.title(arg0)
+        plt.grid(True)
+
+        plt.subplot(3, 3, arg1)
 
     def _interpolate_airfoils(
         self,
