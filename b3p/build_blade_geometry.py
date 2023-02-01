@@ -40,17 +40,17 @@ def run_loft(configfile, verbose=False):
     if not os.path.isdir(config["general"]["workdir"]):
         os.makedirs(config["general"]["workdir"])
 
-    blade.mesh("%s.stl" % wdp)
-    blade.dump("%s.pck" % (wdp), z_rotation=0)
-    blade.export_variables("%s.var" % (wdp))
+    blade.mesh(f"{wdp}.stl")
+    blade.dump(f"{wdp}.pck", z_rotation=0)
+    blade.export_variables(f"{wdp}_var.json")
     blade.export_xfoil(
         prefix=os.path.join(
             config["general"]["workdir"],
             "airfoil_out",
-            "xs_%s" % config["general"]["prefix"],
+            f'xs_{config["general"]["prefix"]}',
         )
     )
-    blade.plot("%s" % wdp, fname="%s.png" % wdp)
+    blade.plot(f"{wdp}", fname=f"{wdp}.png")
     n_sections = 50
     blade.to_table("%s_sca_%i" % (wdp, n_sections), np.linspace(0, 1, n_sections))
 
