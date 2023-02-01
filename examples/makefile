@@ -5,14 +5,16 @@ help: ## Show this help
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 
+YML = blade_test_portable.yml
+
 geom: ## create blade shell geometry (no shearwebs)
-	b3p_blade_geometry blade_test.yml
+	b3p_blade_geometry $(YML) 
 
 mesh: ## create blade structure 
-	b3p_blade_structure blade_test.yml
+	b3p_blade_structure $(YML)
 
 plybook: ## create a plybook out of slab definition
-	b3p_plybook blade_test.yml --out temp/plybook.pck
+	b3p_plybook $(YML) --out temp/plybook.pck
 
 drape: ## drape the shell and the shear web
 	b3p_drape temp/plybook.pck temp/test_blade_web.vtp --key shell  --out temp/test_blade_shell1.vtu 

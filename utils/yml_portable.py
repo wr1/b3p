@@ -44,8 +44,7 @@ def load_airfoils(afs):
     dct = {}
     for i in afs:
         name, xy = load_airfoil(afs[i])
-        dct[i] = {}
-        dct[i]["xy"] = flowlist(xy)
+        dct[i] = {"xy": flowlist(xy)}
         dct[i]["name"] = name
         dct[i]["path"] = afs[i]
 

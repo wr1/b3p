@@ -111,10 +111,9 @@ class section:
     def to_xfoil(self, fname):
         if not os.path.isdir(os.path.dirname(fname)):
             os.makedirs(os.path.dirname(fname))
-        f = open(fname, "w")
-        for i in zip(self.x, self.y):
-            f.write("%f      %f\n" % (i[0], i[1]))
-        f.close()
+        with open(fname, "w") as f:
+            for i in zip(self.x, self.y):
+                f.write("%f      %f\n" % (i[0], i[1]))
 
     def get_te(self):
         te1 = self.polydata.GetPoint(0)

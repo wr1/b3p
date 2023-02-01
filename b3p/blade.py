@@ -95,30 +95,32 @@ class blade:
         if x == []:
             x = self.dy[0]
 
-        f = open("%s.csv" % prefix, "w")
-        f.write(
-            "relative_r;z;prebend;chord;relative_thickness;absolute_thickness;twist;dx\n"
-        )
+        with open(f"{prefix}.csv", "w") as f:
+            f.write(
+                "relative_r;z;prebend;chord;relative_thickness;absolute_thickness;twist;dx\n"
+            )
 
-        z, dy, ch, th, thr, tw, dxf = [
-            np.interp(x, i[0], i[1])
-            for i in [
-                self.z,
-                self.dx,
-                self.chord,
-                self.thickness,
-                self.absolute_thickness,
-                self.twist,
-                (
-                    self.dy[0],
-                    [i[1] - i[2] for i in zip(self.chord[1], self.dxf[1], self.dy[1])],
-                ),
+            z, dy, ch, th, thr, tw, dxf = [
+                np.interp(x, i[0], i[1])
+                for i in [
+                    self.z,
+                    self.dx,
+                    self.chord,
+                    self.thickness,
+                    self.absolute_thickness,
+                    self.twist,
+                    (
+                        self.dy[0],
+                        [
+                            i[1] - i[2]
+                            for i in zip(self.chord[1], self.dxf[1], self.dy[1])
+                        ],
+                    ),
+                ]
             ]
-        ]
 
-        for i in zip(x, z, dy, ch, th, thr, tw, dxf):
-            f.write("%f;%f;%f;%f;%f;%f;%f;%f\n" % i)
-        f.close()
+            for i in zip(x, z, dy, ch, th, thr, tw, dxf):
+                f.write("%f;%f;%f;%f;%f;%f;%f;%f\n" % i)
 
     def _load_airfoils(self, airfoils, x=[]):
         """
@@ -188,31 +190,30 @@ class blade:
         ]
 
         if flatten_lw:
-            mid_offset = dy_flat[1][int(len(dy_flat[1]) / 2)]
-            dy_flat[1] = [
-                i[1] - 2.0 * i[0] * mid_offset for i in zip(dy_flat[0], dy_flat[1])
-            ]
+            self.flatten_lw(dy_flat, dy)
 
-            dynew = list(zip(dy_flat[0], dy_flat[1]))[: int(len(self.x) / 2)]
+    def flatten_lw(self, dy_flat, dy):
+        mid_offset = dy_flat[1][len(dy_flat[1]) // 2]
+        dy_flat[1] = [
+            i[1] - 2.0 * i[0] * mid_offset for i in zip(dy_flat[0], dy_flat[1])
+        ]
 
-            for i in dy:
-                if i[0] > 0.7:
-                    dynew.append(i)
+        dynew = list(zip(dy_flat[0], dy_flat[1]))[: len(self.x) // 2]
 
-            if self.barrel_length > 0.00001:
-                bpnts = []
-                xm = 0.0
+        for i in dy:
+            if i[0] > 0.7:
+                dynew.append(i)
+
+        if self.barrel_length > 0.00001:
+            bpnts = [
+                (i, 0)
                 for i in np.linspace(
                     0, self.barrel_length / (self.z[1][-1] - self.z[1][0]), 20
-                ):
-                    bpnts.append((i, 0))
-                    xm = i
-
-                for i in dynew:
-                    if i[0] > 0.2:
-                        bpnts.append(i)
-                dynew = bpnts
-            self.dy = splining.intp_c(self.x, dynew)
+                )
+            ]
+            bpnts.extend(i for i in dynew if i[0] > 0.2)
+            dynew = bpnts
+        self.dy = splining.intp_c(self.x, dynew)
 
     def plot(self, name="_dum", fname="_out.png"):
         """
@@ -244,7 +245,10 @@ class blade:
         plt.subplot(3, 3, 2)
         plt.plot(self.x, self.twist[1], label=name)
         plt.plot(self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input")
-        self._extracted_from_plot_31("twist", 3)
+        plt.title("twist")
+        plt.grid(True)
+
+        plt.subplot(3, 3, 3)
         plt.plot(self.x, self.thickness[1], label=name)
         plt.plot(
             self.input_thickness[0],
@@ -252,21 +256,30 @@ class blade:
             "o",
             label=f"{name}_input",
         )
-        self._extracted_from_plot_31("rel thickness", 4)
+        plt.title("rel thickness")
+        plt.grid(True)
+
+        plt.subplot(3, 3, 4)
         plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        self._extracted_from_plot_31("abs thickness", 7)
+        plt.title("abs thickness")
+        plt.grid(True)
+
+        plt.subplot(3, 3, 7)
         plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
         plt.title("abs thickness")
         plt.grid(True)
         plt.xlim(0, 0.2)
 
         plt.subplot(3, 3, 5)
-        plt.plot(self.dx[0], self.dx[1], label="%s_x" % name)
+        plt.plot(self.dx[0], self.dx[1], label=f"{name}_x")
         plt.plot(self.input_dx[0], self.input_dx[1], "o", label=f"{name}_input")
-        plt.plot(self.dy[0], self.dy[1], label="%s_y" % name)
+        plt.plot(self.dy[0], self.dy[1], label=f"{name}_y")
         plt.plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
         plt.legend(loc="best").get_frame().set_alpha(0.5)
-        self._extracted_from_plot_31("xy offsets", 6)
+        plt.title("xy offsets")
+        plt.grid(True)
+
+        plt.subplot(3, 3, 6)
         plt.plot(
             list(zip(*self.mx_thickness_loc))[0],
             list(zip(*self.mx_thickness_loc))[1],
@@ -280,13 +293,6 @@ class blade:
         plt.grid(True)
 
         plt.savefig(fname, dpi=100)
-
-    # TODO Rename this here and in `plot`
-    def _extracted_from_plot_31(self, arg0, arg1):
-        plt.title(arg0)
-        plt.grid(True)
-
-        plt.subplot(3, 3, arg1)
 
     def _interpolate_airfoils(
         self,
@@ -334,8 +340,6 @@ class blade:
         # build the blade up out of sections in two loops
         # first, scale and twist the section
         mx_thickness_loc = []
-        c = 0
-
         # a variable is created, analogous to focus, which represents the
         # fraction of the chord around which the twist is defined
         twist_center = 0.3
@@ -353,8 +357,6 @@ class blade:
                     mx_thickness_loc.append((i[0], mxt))
                     offset_clamp_points.remove(j)
                     break
-            c += 1
-
         mx_thickness_loc.append((i[0], i[3].get_max_thickness()))
 
         dxf = list(splining.intp_c(self.x, mx_thickness_loc))
@@ -396,8 +398,8 @@ class blade:
             "thickness": self.thickness,
             "absolute_thickness": self.absolute_thickness,
         }
-        json.dump(var, open(fname, "w"))
-        # open(fname, "w").write(str(var))
+        # json.dump(dict([(i, var[i].tolist()) for i in var]), open(fname, "w"))
+        open(fname, "w").write(str(var))
         return var
 
     def dump(self, fname="__sections.txt", z_rotation=0.0):

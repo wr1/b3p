@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+import contextlib
 import os
 import numpy as np
 import vtk
@@ -21,14 +21,12 @@ def load(fl, normalise=False):
 
     """
     d = []
-    print("loading airfoil %s" % fl)
-    for i in open(fl, "r").readlines():
-        try:
+    print(f"loading airfoil {fl}")
+    for i in open(fl, "r"):
+        with contextlib.suppress(Exception):
             xy = [float(j) for j in i.split()]
-            if len(xy) in [2, 3]:
+            if len(xy) in {2, 3}:
                 d.append(xy)
-        except:
-            pass
     x, y = list(zip(*d))
     if normalise:
         mx = min(x)
