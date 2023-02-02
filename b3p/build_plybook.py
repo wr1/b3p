@@ -12,7 +12,15 @@ from numpy import array
 
 
 def plyify(r, t, ply_thickness, reverse=False):
-    """Fill thickness distribution using plies."""
+    """Fill thickness distribution using plies.
+
+    params:
+        r (list): radius distribution
+        t (list): thickness distribution
+        ply_thickness (float): thickness of the plies
+        reverse (bool): flag determining whether the plies are numbered from the
+            top or bottom of the stack
+            returns:    list of plies in the form [rmin, rmax]"""
     active = []
     done = []
     np = len(r)
@@ -96,6 +104,32 @@ def get_coverage(slab, datums, rr):
     return dict([(i[0], i[1:]) for i in eval(cov)])
 
 
+def export_matdb(blade, material_map):
+    if "materials" in blade:
+        if type(blade["materials"]) == str:
+            mdb = blade["materials"]
+            assert os.path.isfile(mdb)
+            material_map["matdb"] = mdb
+            # copy the material db over to the working directory, this means that rerunning
+            # a model in a workdir is not affected by changes in the source matdb, this is
+            # the desired behaviour
+            shutil.copyfile(
+                blade["materials"], os.path.join(blade["general"]["workdir"], mdb)
+            )
+        else:
+            mdbname = "__matdb.yml"
+            material_map["matdb"] = mdbname
+            yaml.dump(
+                blade["materials"],
+                open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
+            )
+    else:
+        print("no material db defined in blade file")
+    matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
+    json.dump(material_map, open(matmap, "w"))
+    print(f"written material map to {matmap}")
+
+
 def lamplan2plies(blade):
     root_radius = blade["planform"]["z"][0][1]
 
@@ -115,54 +149,55 @@ def lamplan2plies(blade):
     material_map = {}
 
     for i in slabs:
-        name = i
-
         material = slabs[i]["material"]
-
         if material not in material_map:
             material_map[material] = len(material_map) + 1
 
-        grid = "lamplan" if "grid" not in slabs[i] else slabs[i]["grid"]
+        grid = slabs[i]["grid"]
 
         cover = get_coverage(slabs[i], datums, radius_relative)
 
         draping = "plies" if "draping" not in slabs[i] else slabs[i]["draping"]
-        splitstack = (
-            np.array([1, 0])
-            if "splitstack" not in slabs[i]
-            else np.array(slabs[i]["splitstack"])
-        )
-        key = (
-            np.array([0, 4000]) if "key" not in slabs[i] else np.array(slabs[i]["key"])
-        )
-        increment = (
-            np.array([1, -1])
-            if "increment" not in slabs[i]
-            else np.array(slabs[i]["increment"])
-        )
-        scale = (
-            tip_radius - root_radius if "rscale" not in slabs[i] else slabs[i]["rscale"]
-        )
-        ply_thickness = (
+
+        ply_thickness = float(
             1.0 if "ply_thickness" not in slabs[i] else slabs[i]["ply_thickness"]
         )
+
         r, t = np.array(slabs[i]["slab"]).T
-        r *= scale
+
+        r *= (
+            tip_radius - root_radius if "rscale" not in slabs[i] else slabs[i]["rscale"]
+        )
         t *= ply_thickness
 
         if draping == "blocks":
             stack = coreblock(r, t, material=material_map[material])
         elif draping == "plies":
-            stack = ply_stack(
-                r, t, float(ply_thickness), material=material_map[material]
-            )
+            stack = ply_stack(r, t, ply_thickness, material=material_map[material])
 
         # assigns keys to the plies in the stack depending on how the stack is split up
         # what increment the ply keys are stacked with (non-1 increment allowing interleaving of plies)
-        stack_numbering = number_stack(stack, splitstack, key, increment)
+        stack_numbering = number_stack(
+            stack,
+            (
+                np.array([1, 0])
+                if "splitstack" not in slabs[i]
+                else np.array(slabs[i]["splitstack"])
+            ),
+            (
+                np.array([0, 4000])
+                if "key" not in slabs[i]
+                else np.array(slabs[i]["key"])
+            ),
+            (
+                np.array([1, -1])
+                if "increment" not in slabs[i]
+                else np.array(slabs[i]["increment"])
+            ),
+        )
         allstacks.append(
             {
-                "name": name.strip(),
+                "name": i.strip(),
                 "grid": grid.strip(),
                 "cover": cover,
                 "numbering": stack_numbering,
@@ -170,22 +205,7 @@ def lamplan2plies(blade):
                 "r": radius,
             }
         )
-
-    if "materials" in blade:
-        mdb = blade["materials"]
-        assert (os.path.isfile(mdb), "mdb {mdb} not a file")
-        material_map["matdb"] = mdb
-        # copy the material db over to the working directory, this means that rerunning
-        # a model in a workdir is not affected by changes in the source matdb, this is
-        # the desired behaviour
-        shutil.copyfile(
-            blade["materials"], os.path.join(blade["general"]["workdir"], mdb)
-        )
-    else:
-        print("no material db defined in blade file")
-    matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
-    json.dump(material_map, open(matmap, "w"))
-    print(f"written material map to {matmap}")
+    export_matdb(blade, material_map)
     return allstacks
 
 

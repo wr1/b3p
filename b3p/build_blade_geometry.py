@@ -27,7 +27,7 @@ def run_loft(configfile, verbose=False):
         chordwise_sampling=b3p.loft_utils.optspace(config["planform"]["npchord"]),
         np_spanwise=config["planform"]["npspan"],
         barrel_length=2,
-        interpolate_method=0,
+        # interpolate_method=0,
         flatten_lw=False,
         offset_optimal=True,
         offset_clamp_points=config["planform"]["offset_clamp_points"]
@@ -40,9 +40,9 @@ def run_loft(configfile, verbose=False):
     if not os.path.isdir(config["general"]["workdir"]):
         os.makedirs(config["general"]["workdir"])
 
-    blade.mesh(f"{wdp}.stl")
+    blade.mesh(f"{wdp}.vtp")
     blade.dump(f"{wdp}.pck", z_rotation=0)
-    blade.export_variables(f"{wdp}_var.json")
+    blade.export_variables(f"{wdp}.var")
     blade.export_xfoil(
         prefix=os.path.join(
             config["general"]["workdir"],
@@ -52,7 +52,7 @@ def run_loft(configfile, verbose=False):
     )
     blade.plot(f"{wdp}", fname=f"{wdp}.png")
     n_sections = 50
-    blade.to_table("%s_sca_%i" % (wdp, n_sections), np.linspace(0, 1, n_sections))
+    blade.to_table(np.linspace(0, 1, n_sections), "%s_sca_%i" % (wdp, n_sections))
 
 
 def main():

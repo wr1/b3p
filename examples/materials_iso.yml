@@ -87,3 +87,9 @@ triax_30:
   name: triax30_e-glas_Epikote04908_60
   nu: 0.3
   rho: 1984.0
+adhesive:
+  E: 5000.0
+  G: 1500.0
+  name: adhesive
+  nu: 0.3
+  rho: 1200.0

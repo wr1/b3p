@@ -2,18 +2,32 @@ from b3p import splining
 from b3p import loft_utils
 from b3p import blade_section
 
-
+import pandas as pd
 import numpy as np
 from copy import deepcopy as dc
 from matplotlib import pyplot as plt
 import pickle
 import math
-import vtk
-import json
+import pyvista as pv
 
 
 class blade:
-    def __init__(self, chord, thickness, twist, dx, dy, z, airfoils, np_spanwise=100, chordwise_sampling=None, offset_optimal=True, interpolate_method=1, flatten_lw=True, barrel_length=0.0, offset_clamp_points=None):
+    def __init__(
+        self,
+        chord,
+        thickness,
+        twist,
+        dx,
+        dy,
+        z,
+        airfoils,
+        chordwise_sampling,
+        np_spanwise=100,
+        offset_optimal=True,
+        flatten_lw=True,
+        barrel_length=0.0,
+        offset_clamp_points=None,
+    ):
         """
         sequence of what needs to be done:
 
@@ -61,8 +75,6 @@ class blade:
                 the optimal offsetting points are taken
 
         """
-        if chordwise_sampling is None:
-            chordwise_sampling = []
         if offset_clamp_points is None:
             offset_clamp_points = [0.32, 0.55, 0.7]
         self.np_spanwise = np_spanwise
@@ -73,46 +85,45 @@ class blade:
         self._interpolate_planform(
             chord, thickness, twist, dx, dy, z, flatten_lw=flatten_lw
         )
-        self._interpolate_airfoils(
+        self._place_airfoils(
             offset_optimal=offset_optimal,
-            interpolate_method=interpolate_method,
             offset_clamp_points=offset_clamp_points,
         )
 
-    def to_table(self, prefix="prebend_out", x=None):
-        if x is None:
-            x = []
-        if x == []:
-            x = self.dy[0]
+    def to_table(self, x, prefix="prebend_out"):
+        dxx = (self.dy[0], self.dxf[1] - self.dy[1])
 
-        with open(f"{prefix}.csv", "w") as f:
-            f.write(
-                "relative_r;z;prebend;chord;relative_thickness;absolute_thickness;twist;dx\n"
-            )
-
-            z, dy, ch, th, thr, tw, dxf = [
-                np.interp(x, i[0], i[1])
-                for i in [
-                    self.z,
-                    self.dx,
-                    self.chord,
-                    self.thickness,
-                    self.absolute_thickness,
-                    self.twist,
-                    (
-                        self.dy[0],
-                        [
-                            i[1] - i[2]
-                            for i in zip(self.chord[1], self.dxf[1], self.dy[1])
-                        ],
-                    ),
+        cols = [
+            "relative_r",
+            "z",
+            "prebend",
+            "chord",
+            "relative_thickness",
+            "absolute_thickness",
+            "twist",
+            "dx",
+        ]
+        df = pd.DataFrame(
+            np.array(
+                [x]
+                + [
+                    np.interp(x, i[0], i[1])
+                    for i in [
+                        self.z,
+                        self.dx,
+                        self.chord,
+                        self.thickness,
+                        self.absolute_thickness,
+                        self.twist,
+                        dxx,
+                    ]
                 ]
-            ]
+            ).T,
+            columns=cols,
+        )
+        df.to_csv(f"{prefix}.csv", index=False, sep=";")
 
-            for i in zip(x, z, dy, ch, th, thr, tw, dxf):
-                f.write("%f;%f;%f;%f;%f;%f;%f;%f\n" % i)
-
-    def _load_airfoils(self, airfoils, x=None):
+    def _load_airfoils(self, airfoils, x):
         """
         fill self.airfoil by interpolating from input airfoil set
 
@@ -121,8 +132,6 @@ class blade:
 
             x (list) : list of sections where airfoils are to be interpolated
         """
-        if x is None:
-            x = []
         self.airfoils = {}
         for i in sorted(airfoils):
             if type(airfoils[i]) == str:
@@ -237,10 +246,7 @@ class blade:
         plt.subplot(3, 3, 2)
         plt.plot(self.x, self.twist[1], label=name)
         plt.plot(self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input")
-        plt.title("twist")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 3)
+        self.title_plot("twist", 3)
         plt.plot(self.x, self.thickness[1], label=name)
         plt.plot(
             self.input_thickness[0],
@@ -248,15 +254,9 @@ class blade:
             "o",
             label=f"{name}_input",
         )
-        plt.title("rel thickness")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 4)
+        self.title_plot("rel thickness", 4)
         plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        plt.title("abs thickness")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 7)
+        self.title_plot("abs thickness", 7)
         plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
         plt.title("abs thickness")
         plt.grid(True)
@@ -268,10 +268,7 @@ class blade:
         plt.plot(self.dy[0], self.dy[1], label=f"{name}_y")
         plt.plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
         plt.legend(loc="best").get_frame().set_alpha(0.5)
-        plt.title("xy offsets")
-        plt.grid(True)
-
-        plt.subplot(3, 3, 6)
+        self.title_plot("xy offsets", 6)
         plt.plot(
             list(zip(*self.mx_thickness_loc))[0],
             list(zip(*self.mx_thickness_loc))[1],
@@ -283,48 +280,45 @@ class blade:
         plt.ylabel("dist to 0.3 x chord (m)")
         plt.legend(loc="best")
         plt.grid(True)
-
         plt.savefig(fname, dpi=100)
 
-    def _interpolate_airfoils(self, interpolate_method=1, offset_optimal=True, offset_clamp_points=None):
-        if offset_clamp_points is None:
-            offset_clamp_points = [0.32, 0.55, 0.7]
-        v = []
-        for i in sorted(self.airfoils):
-            v.append(
-                list(
-                    zip(
-                        [i for _ in self.airfoils[i][0]],
-                        self.airfoils[i][0],
-                        self.airfoils[i][1],
-                    )
+    # TODO Rename this here and in `plot`
+    def title_plot(self, arg0, arg1):
+        plt.title(arg0)
+        plt.grid(True)
+
+        plt.subplot(3, 3, arg1)
+
+    def _interpolate_airfoils(self):
+        v = [
+            list(
+                zip(
+                    [i for _ in self.airfoils[i][0]],
+                    self.airfoils[i][0],
+                    self.airfoils[i][1],
                 )
             )
-
+            for i in sorted(self.airfoils)
+        ]
         nv = []
         for i in zip(*v):
             t, x, y = zip(*i)
-            if interpolate_method == 0:
-                nx = np.interp(self.thickness[1], t, x)
-                ny = np.interp(self.thickness[1], t, y)
-            elif interpolate_method == 1:
-                # interpolate along the length of the blade using a splining.intp_k
-                dum, nx = splining.intp_k(self.thickness[1], zip(t, x))
-                dum, ny = splining.intp_k(self.thickness[1], zip(t, y))
-            elif interpolate_method == 2:
-                dum, nx = splining.intp_c(self.thickness[1], zip(t, x))
-                dum, ny = splining.intp_c(self.thickness[1], zip(t, y))
-            elif interpolate_method == 3:
-                dum, nx = splining.intp_sc(self.thickness[1], zip(t, x))
-                dum, ny = splining.intp_sc(self.thickness[1], zip(t, y))
-            else:
-                exit("%i is not a valid interpolate_method" % i)
+            nx = np.interp(self.thickness[1], t, x)
+            ny = np.interp(self.thickness[1], t, y)
             nv.append(list(zip(nx, ny)))
 
-        self.sections = []
+        sections = []
         for i in zip(*nv):
             x, y = list(zip(*i))
-            self.sections.append(blade_section.section(x, y))
+            sections.append(blade_section.section(x, y))
+
+        return sections
+
+    def _place_airfoils(self, offset_optimal=True, offset_clamp_points=None):
+        if offset_clamp_points is None:
+            offset_clamp_points = [0.32, 0.55, 0.7]
+
+        self.sections = self._interpolate_airfoils()
 
         # build the blade up out of sections in two loops
         # first, scale and twist the section
@@ -387,7 +381,6 @@ class blade:
             "thickness": self.thickness,
             "absolute_thickness": self.absolute_thickness,
         }
-        # json.dump(dict([(i, var[i].tolist()) for i in var]), open(fname, "w"))
         open(fname, "w").write(str(var))
         return var
 
@@ -400,70 +393,44 @@ class blade:
             pickle.dump(lst, open(fname, "wb"))
 
     def export_xfoil(self, prefix="airfoil_out/_xf"):
+        """Export the sections to xfoil format
+
+        parameters
+        ----------
+        prefix : str
+            prefix to use for the filenames
+        """
         for i in zip(self.sections, self.thickness[1], self.z[1]):
             nm = prefix + "_t_%.3f_r_%.3f" % (i[1], i[2])
             i[0].to_xfoil(nm.replace(".", "_") + ".dat")
 
     def mesh(self, fname=None):
-        "join up the sections"
+        """Join up the sections to make a polydata object and save it to a file
+
+        parameters
+        ----------
+        fname : str
+            filename to save the polydata to.  If None, don't save to file.
+        """
         n_points = self.np_chordwise
-        vp = vtk.vtkPoints()
+        points = []
         for i in self.sections:
             for j in range(i.polydata.GetNumberOfPoints()):
                 pt = i.polydata.GetPoint(j)
-                vp.InsertNextPoint((pt[0], pt[1], pt[2]))
+                points.append([pt[0], pt[1], pt[2]])
 
-        self.poly = vtk.vtkPolyData()
-        self.poly.SetPoints(vp)
+        points = np.array(points)
 
-        cells = vtk.vtkCellArray()
+        cells = []
         for i in range(1, len(self.sections)):
             s0 = range((i - 1) * n_points, i * n_points)
             s1 = range(i * n_points, (i + 1) * n_points)
-            for j in range(n_points):
-                cells.InsertNextCell(3)
-                cells.InsertCellPoint(s0[j])
-                cells.InsertCellPoint(s1[j])
-                cells.InsertCellPoint(s1[(j + 1) % n_points])
+            cells.extend(
+                [4, s0[j], s1[j], s1[(j + 1) % n_points], s0[(j + 1) % n_points]]
+                for j in range(n_points)
+            )
 
-                cells.InsertNextCell(3)
-                cells.InsertCellPoint(s0[j])
-                cells.InsertCellPoint(s1[(j + 1) % n_points])
-                cells.InsertCellPoint(s0[(j + 1) % n_points])
-
-        # bottom and top caps
-        s0 = range(n_points)
-        for i in range(int(math.ceil(0.5 * n_points) - 1)):
-            t1 = (s0[i], s0[n_points - i - 2], s0[n_points - i - 1])
-            t2 = (s0[i], s0[i + 1], s0[n_points - i - 2])
-
-            for j in [t1, t2]:
-                if j[1] != j[2]:
-                    cells.InsertNextCell(3)
-                    for k in j:
-                        cells.InsertCellPoint(k)
-
-        s0 = s1
-        for i in range(int(math.ceil(0.5 * n_points) - 1)):
-            t1 = (s0[i], s0[n_points - i - 1], s0[n_points - i - 2])
-            t2 = (s0[i], s0[n_points - i - 2], s0[i + 1])
-
-            for j in [t1, t2]:
-                if j[1] != j[2]:
-                    cells.InsertNextCell(3)
-                    for k in j:
-                        cells.InsertCellPoint(k)
-
-        self.poly.SetPolys(cells)
-
-        if fname != "":
-            wr = vtk.vtkSTLWriter()
-            wr.SetFileTypeToBinary()
-            wr.SetFileName(fname)
-            wr.SetInputData(self.poly)
-            wr.Write()
-
-            wr = vtk.vtkXMLPolyDataWriter()
-            wr.SetFileName(fname.replace(".stl", ".vtp"))
-            wr.SetInputData(self.poly)
-            wr.Write()
+        self.poly = pv.PolyData(points, np.hstack(cells))
+        if fname != None:
+            print("saving to", fname)
+            self.poly.save(fname)
