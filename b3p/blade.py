@@ -404,7 +404,7 @@ class blade:
             nm = prefix + "_t_%.3f_r_%.3f" % (i[1], i[2])
             i[0].to_xfoil(nm.replace(".", "_") + ".dat")
 
-    def mesh(self, fname=""):
+    def mesh(self, fname=None):
         "join up the sections"
         n_points = self.np_chordwise
         vp = vtk.vtkPoints()
