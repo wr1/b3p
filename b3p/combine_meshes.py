@@ -30,10 +30,7 @@ def main():
     p.add_argument("--out", default="__joined_mesh.vtu", help="output file name")
     args = p.parse_args()
 
-    meshes = []
-    for i in args.meshes:
-        meshes.append(pv.read(i))
-
+    meshes = [pv.read(i) for i in args.meshes]
     # find all the point and cell data arrays
     all_pd = [
         (j, x.point_data[j].shape, x.point_data[j].dtype)
@@ -80,7 +77,7 @@ def main():
     )
 
     out.save(args.out)
-    print("written mesh to %s" % args.out)
+    print(f"written mesh to {args.out}")
 
 
 if __name__ == "__main__":

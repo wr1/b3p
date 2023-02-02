@@ -20,15 +20,12 @@ def make_shell_section(inp):
     # for multidirectional fibre mats at angle==0 for now
     for j in plyarray[np.where(plyarray[:, 1] > 1e-6)]:
         # ply_dat = g.cell_data[j][n, :]
-        if len(plies) > 0 and plies[-1][1] == j[0]:
+        if plies and plies[-1][1] == j[0]:
             plies[-1][0] += j[1] * 1e-3
         else:
             plies.append([j[1] * 1e-3, j[0]])
 
-    comp = ""
-    for i in plies:
-        comp += "%f,,m%i,or%i\n" % tuple(i + [elem_id + 1])
-    return comp
+    return "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies)
 
 
 def material_db_to_ccx(grid, materials, matmap=None):
@@ -157,10 +154,10 @@ def main():
     toc = time.perf_counter()
     print("time spent creating shell sections %f" % (toc - tic))
 
-    comps = ""
-    for n, i in enumerate(blx):
-        comps += "*shell section, composite, elset=e%i,offset=-.5\n%s" % (n + 1, i)
-
+    comps = "".join(
+        "*shell section, composite, elset=e%i,offset=-.5\n%s" % (n + 1, i)
+        for n, i in enumerate(blx)
+    )
     buf += comps
 
     buf += "*step\n*static\n"
@@ -202,9 +199,9 @@ def main():
     for i in loadcases:
         print(i)
         output = buf + loadcases[i] + endfile
-        of = args.out.replace(".inp", "_" + i + ".inp")
+        of = args.out.replace(".inp", f"_{i}.inp")
         open(of, "w").write(output)
-        print("written ccx input file to %s" % of)
+        print(f"written ccx input file to {of}")
 
 
 if __name__ == "__main__":

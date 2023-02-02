@@ -13,23 +13,7 @@ import json
 
 
 class blade:
-    def __init__(
-        self,
-        chord,
-        thickness,
-        twist,
-        dx,
-        dy,
-        z,
-        airfoils,
-        np_spanwise=100,
-        chordwise_sampling=[],
-        offset_optimal=True,
-        interpolate_method=1,
-        flatten_lw=True,
-        barrel_length=0.0,
-        offset_clamp_points=[0.32, 0.55, 0.7],
-    ):
+    def __init__(self, chord, thickness, twist, dx, dy, z, airfoils, np_spanwise=100, chordwise_sampling=None, offset_optimal=True, interpolate_method=1, flatten_lw=True, barrel_length=0.0, offset_clamp_points=None):
         """
         sequence of what needs to be done:
 
@@ -77,6 +61,10 @@ class blade:
                 the optimal offsetting points are taken
 
         """
+        if chordwise_sampling is None:
+            chordwise_sampling = []
+        if offset_clamp_points is None:
+            offset_clamp_points = [0.32, 0.55, 0.7]
         self.np_spanwise = np_spanwise
         self.barrel_length = barrel_length
         self.np_chordwise = len(chordwise_sampling)
@@ -91,7 +79,9 @@ class blade:
             offset_clamp_points=offset_clamp_points,
         )
 
-    def to_table(self, prefix="prebend_out", x=[]):
+    def to_table(self, prefix="prebend_out", x=None):
+        if x is None:
+            x = []
         if x == []:
             x = self.dy[0]
 
@@ -122,7 +112,7 @@ class blade:
             for i in zip(x, z, dy, ch, th, thr, tw, dxf):
                 f.write("%f;%f;%f;%f;%f;%f;%f;%f\n" % i)
 
-    def _load_airfoils(self, airfoils, x=[]):
+    def _load_airfoils(self, airfoils, x=None):
         """
         fill self.airfoil by interpolating from input airfoil set
 
@@ -131,6 +121,8 @@ class blade:
 
             x (list) : list of sections where airfoils are to be interpolated
         """
+        if x is None:
+            x = []
         self.airfoils = {}
         for i in sorted(airfoils):
             if type(airfoils[i]) == str:
@@ -294,18 +286,15 @@ class blade:
 
         plt.savefig(fname, dpi=100)
 
-    def _interpolate_airfoils(
-        self,
-        interpolate_method=1,
-        offset_optimal=True,
-        offset_clamp_points=[0.32, 0.55, 0.7],
-    ):
+    def _interpolate_airfoils(self, interpolate_method=1, offset_optimal=True, offset_clamp_points=None):
+        if offset_clamp_points is None:
+            offset_clamp_points = [0.32, 0.55, 0.7]
         v = []
         for i in sorted(self.airfoils):
             v.append(
                 list(
                     zip(
-                        [i for j in self.airfoils[i][0]],
+                        [i for _ in self.airfoils[i][0]],
                         self.airfoils[i][0],
                         self.airfoils[i][1],
                     )
@@ -404,10 +393,7 @@ class blade:
 
     def dump(self, fname="__sections.txt", z_rotation=0.0):
         "dump to a sections list for use in FEA (with webs)"
-        lst = []
-        for i in self.sections:
-            lst.append(i.get_pointlist(z_rotation=z_rotation))
-
+        lst = [i.get_pointlist(z_rotation=z_rotation) for i in self.sections]
         if fname.endswith(".txt"):
             open(fname, "wb").write(str(lst).encode("utf-8"))
         elif fname.endswith(".pck"):
@@ -446,8 +432,8 @@ class blade:
                 cells.InsertCellPoint(s0[(j + 1) % n_points])
 
         # bottom and top caps
-        s0 = range(0, n_points)
-        for i in range(0, int(math.ceil(0.5 * n_points) - 1)):
+        s0 = range(n_points)
+        for i in range(int(math.ceil(0.5 * n_points) - 1)):
             t1 = (s0[i], s0[n_points - i - 2], s0[n_points - i - 1])
             t2 = (s0[i], s0[i + 1], s0[n_points - i - 2])
 
@@ -458,7 +444,7 @@ class blade:
                         cells.InsertCellPoint(k)
 
         s0 = s1
-        for i in range(0, int(math.ceil(0.5 * n_points) - 1)):
+        for i in range(int(math.ceil(0.5 * n_points) - 1)):
             t1 = (s0[i], s0[n_points - i - 1], s0[n_points - i - 2])
             t2 = (s0[i], s0[n_points - i - 2], s0[i + 1])
 

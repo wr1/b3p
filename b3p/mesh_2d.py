@@ -78,9 +78,9 @@ def join_up(nodes, epid, stacks, sec, poly):
 def align_normals(align):
     for i in range(align.GetNumberOfCells()):
         c = align.GetCell(i)
-        normal = [0, 0, 0]
         p = c.GetPoints()
         if p.GetNumberOfPoints() > 2:
+            normal = [0, 0, 0]
             vtk.vtkTriangle().ComputeNormal(
                 p.GetPoint(0), p.GetPoint(1), p.GetPoint(2), normal
             )
@@ -121,10 +121,7 @@ def web_link(web_links, epid, stacks, sec, poly):
         p2 = poly.GetPoint(nds[4])
 
         if linkto[0] == n11:
-            if p1[0] < p2[0]:
-                dx = -1
-            else:
-                dx = 1
+            dx = -1 if p1[0] < p2[0] else 1
         else:
             dx = 0
 
@@ -210,7 +207,7 @@ def write_vtp(section, vtp):
     wr.SetInputData(section)
     wr.Update()
     wr.Write()
-    print("writing to {}".format(vtp))
+    print(f"writing to {vtp}")
 
 
 def get_avg_normal(normals):
@@ -223,22 +220,23 @@ def get_node_avg_normal(connected_cell_normals):
     s = connected_cell_normals.shape
     if s[0] < 3:
         return get_avg_normal(connected_cell_normals), None
-    elif s[0] >= 3:
-        corr = np.zeros((s[0], s[0]))
-        for i in range(s[0]):
-            for j in range(i + 1, s[0]):
-                corr[i, j] = np.abs(
-                    np.dot(connected_cell_normals[i, :], connected_cell_normals[j, :])
-                )
-        if corr[0, 1] > np.mean([corr[0, 2], corr[1, 2]]):
-            return get_avg_normal(connected_cell_normals[:2, :]), 2
-        elif corr[0, 2] > np.mean([corr[0, 1], corr[1, 2]]):
-            return get_avg_normal(connected_cell_normals[::2, :]), 1
-        else:
-            return get_avg_normal(connected_cell_normals[1:, :]), 0
+    corr = np.zeros((s[0], s[0]))
+    for i in range(s[0]):
+        for j in range(i + 1, s[0]):
+            corr[i, j] = np.abs(
+                np.dot(connected_cell_normals[i, :], connected_cell_normals[j, :])
+            )
+    if corr[0, 1] > np.mean([corr[0, 2], corr[1, 2]]):
+        return get_avg_normal(connected_cell_normals[:2, :]), 2
+    elif corr[0, 2] > np.mean([corr[0, 1], corr[1, 2]]):
+        return get_avg_normal(connected_cell_normals[::2, :]), 1
+    else:
+        return get_avg_normal(connected_cell_normals[1:, :]), 0
 
 
-def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=False):
+def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=False):
+    if var is None:
+        var = {}
     print("# creating cross section mesh from %s at r=%.3f" % (vtu, r))
     workdir = os.path.dirname(vtu)
     # read in the mesh
@@ -439,7 +437,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                 # ones used for puck postprocessing)
                 # if the material and angle are the same as the last, don't put in a new ply,
                 # but increase the previous ply thickness, this greatly reduces element count in e.g. sparcaps
-                if len(mstack) > 0 and (
+                if mstack and (
                     mstack[-1] == int(tup[0]) and astack[-1] == tup[2]
                 ):
                     stack[-1] += tup[1]
@@ -543,9 +541,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
                 idl = vtk.vtkIdList()
                 out.GetCellNeighbors(i, t, idl)
 
-                for k in range(idl.GetNumberOfIds()):
-                    nb.append(idl.GetId(k))
-
+                nb.extend(idl.GetId(k) for k in range(idl.GetNumberOfIds()))
             mat.SetComponent(i, 0, -1)
             ang.SetComponent(i, 0, 0)
 
@@ -597,7 +593,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
 
     out.GetCellData().AddArray(ang2)
 
-    mkeys = sorted(set([mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())]))
+    mkeys = sorted({mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())})
 
     if verbose:
         write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
@@ -609,7 +605,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var={}, is2d=False, verbose=Fals
     wrt.SetInputData(out)
     wrt.SetFileName(of)
     wrt.Write()
-    print("# written vtk to %s" % of)
+    print(f"# written vtk to {of}")
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
     )

@@ -89,26 +89,23 @@ def main():
 
     print("** computing ply coverage")
 
-    slab_data = []
-    for i in stck:  # for each slab
-        if args.key.strip() == i["grid"]:  # if the key corresponds to this grid key
-            if i["stack"] != []:
-                slab_data.append(
-                    [i["name"]]
-                    + list(
-                        get_slab_cover(
-                            (
-                                i["name"],
-                                i["cover"],
-                                i["numbering"],
-                                i["r"],
-                                i["stack"],
-                                df,
-                            )
-                        )
-                    )
+    slab_data = [
+        [i["name"]]
+        + list(
+            get_slab_cover(
+                (
+                    i["name"],
+                    i["cover"],
+                    i["numbering"],
+                    i["r"],
+                    i["stack"],
+                    df,
                 )
-
+            )
+        )
+        for i in stck
+        if args.key.strip() == i["grid"] and i["stack"] != []
+    ]
     print("** assigning ply data to grid")
     total_thickness = np.zeros_like(df.radius)
     n_plies = np.zeros_like(df.radius).astype(int)
@@ -119,7 +116,7 @@ def main():
             o.cell_data[j] = dat[:, :, n].T
 
         s_thick = dat[1, :, :].sum(axis=1)
-        o.cell_data["slab_thickness_%s" % slabname] = s_thick
+        o.cell_data[f"slab_thickness_{slabname}"] = s_thick
         total_thickness += s_thick
         n_plies += s_thick > 0.0
 
@@ -139,7 +136,7 @@ def main():
     o.cell_data["x_dir"] = x
 
     pyvista.UnstructuredGrid(o).save(args.out)
-    print("** written to %s" % args.out)
+    print(f"** written to {args.out}")
 
 
 if __name__ == "__main__":

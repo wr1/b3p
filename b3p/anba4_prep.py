@@ -23,7 +23,7 @@ def vtp2xdmf(vtp):
     xd = vtp.replace(".vtp", ".xdmf")
     pv.save_meshio(xd, tri, data_format="XML")
     conv3d_2d(xd)
-    print("converted %s to %s" % (vtp, xd))
+    print(f"converted {vtp} to {xd}")
 
 
 def main():

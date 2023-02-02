@@ -12,9 +12,9 @@ import numpy as np
 def build_rectangle_blade_mesh_with_webs(configfile):
     config = yaml.load(open(configfile, "r"), Loader=yaml.CLoader)
     wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
-    pckfile = wdp + ".pck"
-    base_vtp = "%s_base.vtp" % wdp
-    web_vtp = "%s_web.vtp" % wdp
+    pckfile = f"{wdp}.pck"
+    base_vtp = f"{wdp}_base.vtp"
+    web_vtp = f"{wdp}_web.vtp"
     radii = eval(str(config["mesh"]["radii"]))
     config_webs = config["mesh"]["webs"]
     panel_mesh_scale = (

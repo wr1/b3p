@@ -6,40 +6,25 @@ from b3p import geometry_web
 import pickle
 
 
-def build_mesh(
-    pckfile,
-    radii,
-    web_inputs,
-    web_intersections,
-    prefix,
-    n_web_points=10,
-    n_ch_points=120,
-    outfile="out.vtp",
-    added_datums={},
-    panel_mesh_scale=[],
-):
+def build_mesh(pckfile, radii, web_inputs, web_intersections, prefix, n_web_points=10, n_ch_points=120, outfile="out.vtp", added_datums=None, panel_mesh_scale=None):
 
+    if added_datums is None:
+        added_datums = {}
+    if panel_mesh_scale is None:
+        panel_mesh_scale = []
     sections = pickle.load(open(pckfile, "rb"))
 
-    # create webs, using parametric coordinates, the point lists are
-    # (rel_coordinate_along_web,first_rel_chordwise_point,second_rel_chordwise_point)
-    # web_root is the lowest r location of the web, web_tip is the highest
-
-    weblist = []
-    c = 0
-    for i in web_inputs:
-        weblist.append(
-            geometry_web.web(
-                points=web_intersections[i],
-                web_root=web_inputs[i]["z_start"],
-                web_tip=web_inputs[i]["z_end"],
-                web_name="%s_%s.txt" % (prefix, i),
-                coordinate=i,
-                flip_normal=(web_inputs[i]["origin"][1] > 0),
-            )
+    weblist = [
+        geometry_web.web(
+            points=web_intersections[i],
+            web_root=web_inputs[i]["z_start"],
+            web_tip=web_inputs[i]["z_end"],
+            web_name=f"{prefix}_{i}.txt",
+            coordinate=i,
+            flip_normal=(web_inputs[i]["origin"][1] > 0),
         )
-        c += 1
-
+        for i in web_inputs
+    ]
     nsec = []
     z = [i[0][2] for i in sections]
 
@@ -66,6 +51,6 @@ def build_mesh(
 
     # mesh with a given number of points around the circumference
     blade.mesh(n_ch_points, panel_mesh_scale=panel_mesh_scale)
-    print("# writing to %s" % outfile)
+    print(f"# writing to {outfile}")
     blade.write_mesh(outfile)
     print("# writing mesh done")

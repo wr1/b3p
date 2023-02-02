@@ -52,7 +52,7 @@ def main():
 
     lds = config["loads"]
     for i in lds:
-        print("loadcase %s" % i)
+        print(f"loadcase {i}")
         # get applicable nodes
         for n, j in enumerate(config["loads"][i]["apply"]):
             key, [mn, mx] = j, config["loads"][i]["apply"][j]
@@ -89,9 +89,9 @@ def main():
         force_vector[loaded_node_ids, 0] = fx
         force_vector[loaded_node_ids, 1] = fy
         print(i)
-        grid.point_data["lc_%s" % i] = force_vector
+        grid.point_data[f"lc_{i}"] = force_vector
 
-    print("writing loadcases to grid %s" % gridname)
+    print(f"writing loadcases to grid {gridname}")
     grid.save(gridname)
     pyplot.savefig("load_output.png")
 

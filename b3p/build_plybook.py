@@ -30,10 +30,7 @@ def plyify(r, t, ply_thickness, reverse=False):
         i[0] = round(i[0] * 1e3, -1) * 1e-3
         i[1] = round(i[1] * 1e3, -1) * 1e-3
     # reverse the stack so that longest plies get the lowest ply numbers
-    if reverse:
-        return done
-    else:
-        return [i for i in reversed(done)]
+    return done if reverse else list(reversed(done))
 
 
 def ply_stack(r, t, t_ply=1.0, reverse=False, subdivisions=5000, material=11):
@@ -60,11 +57,7 @@ def coreblock(r, t, subdivisions=200, material=11):
     for i in range(lr - 1):
         rmin, rmax = r[i], r[i + 1]
         tmin, tmax = t[i], t[i + 1]
-        if tmin == tmax:
-            tt = tmin
-        else:  # TODO this assumes only short rampups of core in the spanwise direction
-            tt = 0.5 * (tmin + tmax)
-
+        tt = tmin if tmin == tmax else 0.5 * (tmin + tmax)
         if tt > 0:
             stack.append([material, tt, rmin, rmax])
 
@@ -75,7 +68,7 @@ def number_stack(stack, splitstack, key, increment):
     """Create ply numbering for the plies in the stack, depends on the start key and increment as well as the above/below ratio (splitstack)."""
     sp = np.nan_to_num(splitstack.astype(float))
     if sp.sum() != 1.0:
-        exit("sum %s not 1." % splitstack)
+        exit(f"sum {splitstack} not 1.")
 
     ky = np.nan_to_num(key.astype(float)).astype(int)
     inc = np.nan_to_num(increment.astype(float), nan=1).astype(int)
@@ -84,26 +77,23 @@ def number_stack(stack, splitstack, key, increment):
     st, sb = np.array(range(ss[0])), np.array(range(ss[1]))
     stt = ky[0] + st * inc[0]
     sbt = ky[1] + sb * inc[1]
-    seq = [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
-
-    return seq
+    return [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
 
 
 def get_coverage(slab, datums, rr):
     assert "cover" in slab
     cov = slab["cover"]
-    if type(cov) == str:
-        for i in datums:
-            if cov.find(i) != -1:
-                xy = np.array(datums[i]["xy"])
-                dst = np.interp(
-                    rr, xy[:, 0] / datums[i]["scalex"], xy[:, 1] * datums[i]["scaley"]
-                )
-                cov = cov.replace(i, "np.array(%s)" % dst.tolist())
-
-        return dict([(i[0], i[1:]) for i in eval(cov)])
-    else:
+    if type(cov) != str:
         return cov
+    for i in datums:
+        if cov.find(i) != -1:
+            xy = np.array(datums[i]["xy"])
+            dst = np.interp(
+                rr, xy[:, 0] / datums[i]["scalex"], xy[:, 1] * datums[i]["scaley"]
+            )
+            cov = cov.replace(i, f"np.array({dst.tolist()})")
+
+    return dict([(i[0], i[1:]) for i in eval(cov)])
 
 
 def lamplan2plies(blade):
@@ -195,7 +185,7 @@ def lamplan2plies(blade):
         print("no material db defined in blade file")
     matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
     json.dump(material_map, open(matmap, "w"))
-    print("written material map to %s" % matmap)
+    print(f"written material map to {matmap}")
     return allstacks
 
 
@@ -214,7 +204,7 @@ def main():
     of = args.out
     pickle.dump(allstacks, open(of, "wb"))
 
-    print("written plydrape to %s" % of)
+    print(f"written plydrape to {of}")
 
 
 if __name__ == "__main__":

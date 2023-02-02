@@ -21,8 +21,7 @@ def plot_planform(bl, prefix):
 
     ax[c][0].plot(bl["chord"]["grid"], abs)
 
-    c = 0
-    for i in bl["reference_axis"]:
+    for c, i in enumerate(bl["reference_axis"]):
         ax[c][1].plot(
             bl["reference_axis"][i]["grid"], bl["reference_axis"][i]["values"]
         )
@@ -33,11 +32,9 @@ def plot_planform(bl, prefix):
                 bl["reference_axis"][i]["grid"], bl["reference_axis"][i]["values"]
             )
         ]
-        c += 1
-
-    of = prefix + "_planform"
+    of = f"{prefix}_planform"
     plt.savefig(of)
-    print("written plot to %s" % of)
+    print(f"written plot to {of}")
 
     odct["thickness"] = odct["rthick"]
     del odct["rthick"]
@@ -49,7 +46,7 @@ def export_airfoils(af, prefix):
 
     af_dict = {}
     for i in af:
-        fn = "airfoils/af_%s.dat" % i["name"]
+        fn = f'airfoils/af_{i["name"]}.dat'
         buf = "%s\n" % i["name"]
         for j in zip(i["coordinates"]["x"], i["coordinates"]["y"]):
             buf += "%s %s\n" % j
@@ -59,7 +56,7 @@ def export_airfoils(af, prefix):
 
         af_dict[i["relative_thickness"]] = fn
     ax.legend(loc="best")
-    plt.savefig(prefix + "_airfoils.png")
+    plt.savefig(f"{prefix}_airfoils.png")
 
     return af_dict
 
@@ -67,7 +64,7 @@ def export_airfoils(af, prefix):
 def add_rthick_if_absent(x):
     shp = x["components"]["blade"]["outer_shape_bem"]
 
-    if not "rthick" in shp:
+    if "rthick" not in shp:
         af = x["airfoils"]
 
         thick = dict([(i["name"], i["relative_thickness"]) for i in af])
@@ -94,7 +91,7 @@ def plot_laminates(model, prefix):
 
     ax.legend(loc="best")
 
-    fig.savefig(prefix + "_lams")
+    fig.savefig(f"{prefix}_lams")
 
 
 if __name__ == "__main__":
@@ -127,7 +124,7 @@ if __name__ == "__main__":
 
     yaml.dump(
         dict(template),
-        open(args.o + ".yml", "w"),
+        open(f"{args.o}.yml", "w"),
         Dumper=yaml.RoundTripDumper,
         default_flow_style=None,
     )

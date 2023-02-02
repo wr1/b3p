@@ -3,7 +3,7 @@ import vtk
 import numpy as np
 import math
 
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 import copy
 
 
@@ -61,22 +61,21 @@ class section:
 
             for i in reversed(points):
                 d = vtk.vtkMath.Distance2BetweenPoints(points[-1], i) ** 0.5
-                if d < 0.1:
-                    if i != points[-1]:
-                        points.remove(i)
-                else:
+                if d >= 0.1:
                     break
 
+                if i != points[-1]:
+                    points.remove(i)
         return points
 
-    def plot(self, prefix):
-        cla()
-        x_in = zip(*self.base_points)
-        plot(x_in[0], x_in[1], "-")
-        title("R=%f,R_rel=%f,t_te=%f" % (self.r, self.r_relative, self.te_thickness))
-        grid(True)
-        axis("equal")
-        savefig(prefix + "_%i.png" % self.r)
+    # def plot(self, prefix):
+    #     cla()
+    #     x_in = zip(*self.base_points)
+    #     plot(x_in[0], x_in[1], "-")
+    #     title("R=%f,R_rel=%f,t_te=%f" % (self.r, self.r_relative, self.te_thickness))
+    #     grid(True)
+    #     axis("equal")
+    #     savefig(prefix + "_%i.png" % self.r)
 
     def set_twist(self, twist):
         self.twist = twist
@@ -106,67 +105,72 @@ class section:
         transformfilter.Update()
         self.poly = transformfilter.GetOutput()
 
-    def _create_evaluations(
-        self, n_points, webs, mult=True, make_plots=False, panel_mesh_scale=[]
-    ):
+    def _create_evaluations(self, n_points, webs, mult=True, make_plots=False, panel_mesh_scale=None):
+        if panel_mesh_scale is None:
+            panel_mesh_scale = []
         tol = 1e-9
         if webs == []:
             return np.linspace(0.0, 1.0, n_points)
-        else:
-            # compute where the web splits are on average (assuming they don't
-            # cross)
-            avspl = []
-            for i in webs:
-                avspl.extend(i.average_splits())
+        # compute where the web splits are on average (assuming they don't
+        # cross)
+        avspl = []
+        for i in webs:
+            avspl.extend(i.average_splits())
 
-            # compute spacing between the splits
-            intervals = sorted([0, 1] + list(avspl))
-            isize = [intervals[i + 1] - intervals[i] for i in range(len(intervals) - 1)]
+        # compute spacing between the splits
+        intervals = sorted([0, 1] + list(avspl))
+        isize = [intervals[i + 1] - intervals[i] for i in range(len(intervals) - 1)]
 
-            # print(isize)
-            for ps in panel_mesh_scale:
-                if ps[0] < len(isize):
-                    isize[ps[0]] *= ps[1]
+        # print(isize)
+        for ps in panel_mesh_scale:
+            if ps[0] < len(isize):
+                isize[ps[0]] *= ps[1]
 
-            # compute the number of cells there should be between each web split
-            inum = [int(round(n_points * i / sum(isize))) for i in isize]
+        # compute the number of cells there should be between each web split
+        inum = [int(round(n_points * i / sum(isize))) for i in isize]
 
-            if mult:
-                isize[0] *= 2
-                isize[-1] *= 2
+        if mult:
+            isize[0] *= 2
+            isize[-1] *= 2
 
-            for i in range(5):  # fix the number of points in a pragmatic yet
-                # consistent manner
-                if (
-                    sum(inum) < n_points
-                ):  # if not enough points, add one to the section with fewest points
-                    inum[inum.index(min(inum))] += 1
-                elif (
-                    sum(inum) > n_points
-                ):  # if too many, remove one from the section with most points
-                    inum[inum.index(max(inum))] -= 1
+        for _ in range(5):
+            # consistent manner
+            if (
+                sum(inum) < n_points
+            ):  # if not enough points, add one to the section with fewest points
+                inum[inum.index(min(inum))] += 1
+            elif (
+                sum(inum) > n_points
+            ):  # if too many, remove one from the section with most points
+                inum[inum.index(max(inum))] -= 1
 
-            splts = []
-            for i in webs:
-                splts.extend(i.splits(self.r, self.r_relative))
+        splts = []
+        for i in webs:
+            splts.extend(i.splits(self.r, self.r_relative))
 
-            real_intervals = sorted([0, 1] + list(splts))
-            pnts = []
-            for i in range(len(inum)):
-                interval = np.linspace(
-                    real_intervals[i], real_intervals[i + 1], inum[i] + 1 * (i != 0)
-                )
-                pnts.extend(interval)
+        real_intervals = sorted([0, 1] + list(splts))
+        pnts = []
+        for i in range(len(inum)):
+            interval = np.linspace(
+                real_intervals[i], real_intervals[i + 1], inum[i] + 1 * (i != 0)
+            )
+            pnts.extend(interval)
 
-            return sorted(set(pnts))
+        return sorted(set(pnts))
 
-    def respline(self, n_points, webs=[], added_datums={}, panel_mesh_scale=[]):
+    def respline(self, n_points, webs=None, added_datums=None, panel_mesh_scale=None):
         """
         re-evaluate the spline using n_points points, when there are webs they
         are put as hard points into the point list
         Add a whole bunch of related coordinates to the points, that can later
         be used to drape plies
         """
+        if webs is None:
+            webs = []
+        if added_datums is None:
+            added_datums = {}
+        if panel_mesh_scale is None:
+            panel_mesh_scale = []
         spline = vtk.vtkParametricSpline()
         spline.SetPoints(self.poly.GetPoints())
         spline.SetLeftConstraint(2)
@@ -257,7 +261,6 @@ class section:
         # add a coordinate that specifies the distance to the web attachment,
         # this is convenient for the specification of girders
         web_datums = {}
-        counter = 0
         for i in webs:
             splits = sorted(i.splits(self.r, self.r_relative))
             datum, datum_r = [], []
@@ -267,12 +270,10 @@ class section:
                 )
                 datum_r.append((j[0] - splits[j[1]]) * (-1 if j[1] else 1))
 
-            web_datums["d_%s" % i.coordinate] = datum
-            web_datums["d_%s_r" % i.coordinate] = datum_r
+            web_datums[f"d_{i.coordinate}"] = datum
+            web_datums[f"d_{i.coordinate}_r"] = datum_r
 
-            counter += 1
-
-        r = [self.r for i in dist]
+        r = [self.r for _ in dist]
         # d_along_airfoil: distance from the TE to the point at hand along the
         # section
         # radius: radius position of the point
@@ -288,7 +289,7 @@ class section:
             "d_rel_dist_from_te": rel_dist_from_te,
             "d_abs_dist_from_te": dist,
             "d_abs_dist_from_bte": [-i + mdist for i in dist],
-            "chord_length": [max_dist_from_te for i in dist_from_te],
+            "chord_length": [max_dist_from_te for _ in dist_from_te],
             "d_miny": dist_sparcap,
             "d_le": le_datum,
             "zone_ss": suction_side,
@@ -302,7 +303,7 @@ class section:
             "d_y": y_abs,
             "d_sl": sl_dist,
             "d_sla": abs(sl_dist),
-            "is_web": [0 for i in r],
+            "is_web": [0 for _ in r],
         }
         for i in web_datums:
             datums[i] = web_datums[i]

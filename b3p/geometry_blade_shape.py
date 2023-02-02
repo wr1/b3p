@@ -5,9 +5,11 @@ from b3p import geom_utils
 
 
 class blade_shape:
-    def __init__(
-        self, sections=[], section_resolution=200, web_resolution=20, added_datums={}
-    ):
+    def __init__(self, sections=None, section_resolution=200, web_resolution=20, added_datums=None):
+        if sections is None:
+            sections = []
+        if added_datums is None:
+            added_datums = {}
         self.set_sections(sections)
         self.set_section_resolution(section_resolution)
         self.webs = []
@@ -53,13 +55,12 @@ class blade_shape:
 
             nxyz.append(list(zip(nx, ny, nz)))
 
-        self.interp_sections = []
-        for i in zip(radii, zip(*nxyz)):
-            self.interp_sections.append(
-                geometry_section.section(i[0], i[0] / max(radii), i[1])
-            )
+        self.interp_sections = [
+            geometry_section.section(i[0], i[0] / max(radii), i[1])
+            for i in zip(radii, zip(*nxyz))
+        ]
 
-    def mesh(self, n_points=100, close=True, panel_mesh_scale=[]):
+    def mesh(self, n_points=100, close=True, panel_mesh_scale=None):
         """
         Mesh generation for blade
 
@@ -68,6 +69,8 @@ class blade_shape:
 
             close (bool) : close two ends of mesh (i.e. TE)
         """
+        if panel_mesh_scale is None:
+            panel_mesh_scale = []
         self.poly = vtk.vtkPolyData()
         points = vtk.vtkPoints()
 
@@ -107,8 +110,8 @@ class blade_shape:
                 quads.InsertCellPoint(np[(j + 1) % n_points])
 
         self.poly.SetPolys(quads)
-        for j in added_arrays:
-            self.poly.GetPointData().AddArray(added_arrays[j])
+        for value in added_arrays.values():
+            self.poly.GetPointData().AddArray(value)
         for i in self.webs:
             i.mesh(self.poly, self.web_resolution)
 
@@ -124,8 +127,8 @@ class blade_shape:
             writer.SetFileName(filename)
             writer.SetInputData(self.poly)
             writer.Write()
-        except:
+        except Exception:
             print("no valid mesh available")
 
         for i in self.webs:
-            i.write_mesh("%s" % (i.name.replace(".txt", ".vtp")))
+            i.write_mesh(f'{i.name.replace(".txt", ".vtp")}')

@@ -68,7 +68,7 @@ def get_material_db(material_map):
 
 
 def run_mesh(meshname, matdb):
-    print("run %s" % meshname)
+    print(f"run {meshname}")
 
     infile = XDMFFile(meshname)
     mesh = Mesh()
@@ -133,7 +133,7 @@ def run_mesh(meshname, matdb):
         "shear_center": shear_center,
     }
 
-    with open(meshname + ".json", "w") as write_file:
+    with open(f"{meshname}.json", "w") as write_file:
         json.dump(output, write_file, indent=4)
 
 

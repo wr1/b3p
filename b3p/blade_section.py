@@ -20,17 +20,6 @@ class section:
             cells.InsertCellPoint(i)
         self.polydata.SetLines(cells)
 
-    def plot(self, label=""):
-        x, y, z = list(
-            zip(
-                *[
-                    self.polydata.GetPoint(i)
-                    for i in range(self.polydata.GetNumberOfPoints())
-                ]
-            )
-        )
-        pl.plot(x, y, label=label)
-
     def local_to_global(self):
         pnts = vtk.vtkPoints()
         for i in range(self.polydata.GetNumberOfPoints()):

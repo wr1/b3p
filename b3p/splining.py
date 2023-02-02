@@ -38,9 +38,7 @@ def intp_k(x, points, const=2, clamp=True, tension=-0.3, bias=0, continuity=0):
     for i in points:
         sc.AddPoint(i[0], i[1])
 
-    o = []
-    for i in x:
-        o.append(sc.Evaluate(i))
+    o = [sc.Evaluate(i) for i in x]
     return x, o
 
 
@@ -69,9 +67,7 @@ def intp_c(x, points, const=2, clamp=True):
     for i in points:
         sc.AddPoint(i[0], i[1])
 
-    o = []
-    for i in x:
-        o.append(sc.Evaluate(i))
+    o = [sc.Evaluate(i) for i in x]
     return x, o
 
 
@@ -93,8 +89,6 @@ def intp_sc(x, points):
     sc = vtk.vtkSCurveSpline()
     for i in points:
         sc.AddPoint(i[0], i[1])
-    o = []
-    for i in x:
-        o.append(sc.Evaluate(i))
+    o = [sc.Evaluate(i) for i in x]
     return x, o
 

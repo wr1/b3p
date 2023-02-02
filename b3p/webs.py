@@ -36,7 +36,6 @@ def write_web(
 
     clip.Update()
     out = clip.GetOutput()
-    # print(zone)
     points = []
 
     c = out.GetPointData().GetArray("d_rel_dist_from_te")
@@ -70,9 +69,7 @@ def write_web(
 
     out = []
     for i, rr in enumerate(r):
-        if rr > tipcut:
-            pass
-        else:
+        if rr <= tipcut:
             lwl, wwl = lw1[i], ww1[i]
 
         out.append((rr, wwl, lwl, rt1[i]))
@@ -86,15 +83,15 @@ def write_web(
     if tip > out[-1][0]:
         out.append((tip, out[-1][1], out[-1][2], out[-1][3]))
 
-    open("%s.txt" % name, "wb").write(str(out).encode("utf-8"))
-    open("%s_points.txt" % name, "wb").write(str([lwp, wwp]).encode("utf-8"))
+    open(f"{name}.txt", "wb").write(str(out).encode("utf-8"))
+    open(f"{name}_points.txt", "wb").write(str([lwp, wwp]).encode("utf-8"))
     return out
 
 
 def build_webs(mesh, webs, prefix="__dum"):
     web_meshes = {}
     for i in webs:
-        name = prefix + "_" + i
+        name = f"{prefix}_{i}"
         normal = (0, 1, 0)
 
         if "orientation" in webs[i]:

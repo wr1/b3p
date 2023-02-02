@@ -5,10 +5,7 @@ from b3p import geom_utils
 
 def equals(v1, v2):
     tol = 1e-6
-    if (v1 - v2) ** 2 < tol:
-        return True
-    else:
-        return False
+    return (v1 - v2) ** 2 < tol
 
 
 def mesh_line(pnt1, pnt2, np, id):
@@ -36,21 +33,21 @@ def mesh_line(pnt1, pnt2, np, id):
     ppl = [-i + pl[-1] for i in pl]
     ml = [abs(i - 0.5 * web_height) for i in pl]  # distance from the web centerline
 
-    wh = [web_height for i in ml]
+    wh = [web_height for _ in ml]
 
     rad = numpy.mean(xyz[2])
-    r = [rad for i in range(np)]
+    r = [rad for _ in range(np)]
 
     arrays = {
         "d_te": pl,
         "d_le": ppl,
         "d_le_r": [i / max(ppl) for i in ppl],
-        "d_%s_r" % id: [i / max(ml) for i in ml],
-        "d_%s" % id: ml,
+        f"d_{id}_r": [i / max(ml) for i in ml],
+        f"d_{id}": ml,
         "d_along_airfoil": ml,
         "web_height": wh,
         "radius": r,
-        "is_web": [1 for i in ppl],
+        "is_web": [1 for _ in ppl],
     }
 
     return list(zip(*xyz)), arrays
@@ -115,10 +112,10 @@ class web:
 
         for i in range(mesh.GetNumberOfPoints()):
             rm = rad.GetValue(i)
-            rmm = int(round(rm * 1e3))
             if self.web_root <= rm <= self.web_tip:
                 rd = rel_dist.GetValue(i)
                 pnt = mesh.GetPoint(i)
+                rmm = int(round(rm * 1e3))
                 if equals(rd, self.evaluations[rmm][0][0]) or equals(
                     rd, self.evaluations[rmm][0][1]
                 ):
@@ -168,8 +165,8 @@ class web:
                         added_arrays[j].InsertNextValue(k)
 
         mesh.SetPoints(vp)
-        for i in added_arrays:
-            mesh.GetPointData().AddArray(added_arrays[i])
+        for value in added_arrays.values():
+            mesh.GetPointData().AddArray(value)
         self.mesh = mesh
 
     def write_mesh(self, vtpfile):
@@ -177,7 +174,7 @@ class web:
         writer.SetFileName(vtpfile)
         writer.SetInputData(self.mesh)
         writer.Write()
-        print("# wrote mesh to %s" % vtpfile)
+        print(f"# wrote mesh to {vtpfile}")
 
     def mesh(self, mesh, n_cells=20):
         """

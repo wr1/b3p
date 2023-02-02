@@ -9,11 +9,7 @@ def spline_interp(x, y, newx):
     for i in zip(x, y):
         spl.AddPoint(i[0], i[1])
 
-    newy = []
-    for i in newx:
-        newy.append(spl.Evaluate(i))
-
-    return newy
+    return [spl.Evaluate(i) for i in newx]
 
 
 def spline_interp_k(x, y, newx):
@@ -25,11 +21,7 @@ def spline_interp_k(x, y, newx):
     for i in zip(x, y):
         spl.AddPoint(i[0], i[1])
 
-    newy = []
-    for i in newx:
-        newy.append(spl.Evaluate(i))
-
-    return newy
+    return [spl.Evaluate(i) for i in newx]
 
 
 def distance(point1, point2):

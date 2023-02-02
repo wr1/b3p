@@ -66,6 +66,7 @@ if __name__ == "__main__":
         open(d["materials"], "r"), preserve_quotes=True
     )
 
+    d["general"]["workdir"] += "_portable"
     of = args.yaml_file.replace(".yml", "_portable.yml")
     with open(of, "w") as f:
         y.dump(d, f)

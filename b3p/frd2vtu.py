@@ -11,9 +11,8 @@ import time
 
 
 def findall(p, s):
-    out = []
     i = s.find(p)
-    out.append(i)
+    out = [i]
     while i != -1:
         i = s.find(p, i + 1)
         out.append(i)
@@ -141,9 +140,9 @@ def main():
     for s in [("stress", "s"), ("strain", "e")]:
         ss = o[s[0]]
         xx, yy, zz, xy, yz, zx = [
-            ss["%s%s" % (s[1], i)] for i in ["xx", "yy", "zz", "xy", "yz", "zx"]
+            ss[f"{s[1]}{i}"] for i in ["xx", "yy", "zz", "xy", "yz", "zx"]
         ]
-        ogrid.point_data["mises_%s" % s[0]] = (1.0 / 2.0**0.5) * (
+        ogrid.point_data[f"mises_{s[0]}"] = (1.0 / 2.0**0.5) * (
             (xx - yy) ** 2
             + (yy - zz) ** 2
             + (zz - xx) ** 2
