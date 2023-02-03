@@ -73,7 +73,8 @@ def coreblock(r, t, subdivisions=200, material=11):
 
 
 def number_stack(stack, splitstack, key, increment):
-    """Create ply numbering for the plies in the stack, depends on the start key and increment as well as the above/below ratio (splitstack)."""
+    """Create ply numbering for the plies in the stack, depends on the start key
+    and increment as well as the above/below ratio (splitstack)."""
     sp = np.nan_to_num(splitstack.astype(float))
     if sp.sum() != 1.0:
         exit(f"sum {splitstack} not 1.")
@@ -89,6 +90,7 @@ def number_stack(stack, splitstack, key, increment):
 
 
 def get_coverage(slab, datums, rr):
+    """Get the coverage of the slab and insert the datums."""
     assert "cover" in slab
     cov = slab["cover"]
     if type(cov) != str:
@@ -102,6 +104,24 @@ def get_coverage(slab, datums, rr):
             cov = cov.replace(i, f"np.array({dst.tolist()})")
 
     return dict([(i[0], i[1:]) for i in eval(cov)])
+
+
+def add_bondline_material(matdb, material_map):
+    """add a bondline material to the material map, if it is not already there,
+    this is needed because the 2d mesher adds elements with -1 material ID to connect the webs to the shell
+
+    params:
+        matdb (dict): material database
+        material_map (dict): material map
+        returns:
+            material_map (dict): material map with bondline material added"""
+    possible_glue_names = ["-1", "adhesive"]
+    for i in matdb:
+        for j in possible_glue_names:
+            if matdb[i]["name"] == j:
+                material_map[j] = -1
+
+    return material_map
 
 
 def export_matdb(blade, material_map):
@@ -125,8 +145,11 @@ def export_matdb(blade, material_map):
             )
     else:
         print("no material db defined in blade file")
+
     matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
-    json.dump(material_map, open(matmap, "w"))
+    json.dump(
+        add_bondline_material(blade["materials"], material_map), open(matmap, "w")
+    )
     print(f"written material map to {matmap}")
 
 
