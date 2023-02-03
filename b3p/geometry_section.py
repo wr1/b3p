@@ -69,25 +69,6 @@ class section:
                     points.remove(i)
         return points
 
-    # def plot(self, prefix):
-    #     cla()
-    #     x_in = zip(*self.base_points)
-    #     plot(x_in[0], x_in[1], "-")
-    #     title("R=%f,R_rel=%f,t_te=%f" % (self.r, self.r_relative, self.te_thickness))
-    #     grid(True)
-    #     axis("equal")
-    #     savefig(prefix + "_%i.png" % self.r)
-
-    # def set_twist(self, twist):
-    #     self.twist = twist
-    #     transform = vtk.vtkTransform()
-    #     transform.RotateZ(twist)
-    #     transformfilter = vtk.vtkTransformFilter()
-    #     transformfilter.SetTransform(transform)
-    #     transformfilter.SetInput(self.poly)
-    #     transformfilter.Update()
-    #     self.poly = transformfilter.GetOutput()
-
     def set_twist(self, twist):
         self.twist = twist
         self.poly.rotate_z(twist, inplace=True)
