@@ -2,20 +2,14 @@
 
 import argparse
 import pandas as pd
-import multiprocessing
 import pickle
-import vtk
 import numpy as np
-import time
 import pyvista
 
 
 def get_slab_cover(inp):
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
-    # d = pd.DataFrame(cover)
-    # print(d)
-    # exit()
     one = np.ones_like(rr)
 
     names = ["ply_%.8i_%s" % (i, name) for i in numbering]
@@ -60,7 +54,6 @@ def get_slab_cover(inp):
             np.zeros_like(rccov),
         ]
     ).astype(np.float32)
-
     return names, data
 
 
@@ -111,7 +104,6 @@ def main():
     n_plies = np.zeros_like(df.radius).astype(int)
     for i in slab_data:
         slabname, ply_names, dat = i
-        # print(slabname, ply_names)
         for n, j in enumerate(ply_names):
             o.cell_data[j] = dat[:, :, n].T
 
