@@ -2,25 +2,24 @@ import vtk
 import numpy as np
 import math
 import os
+import pyvista as pv
 
 
 class section:
     def __init__(self, x, y):
         self.x, self.y = x, y
-        pnts = vtk.vtkPoints()
-        for i in zip(x, y):
-            pnts.InsertNextPoint(i[0], i[1], 0.0)
-        self.polydata = vtk.vtkPolyData()
-        self.polydata.SetPoints(pnts)
-
-        cells = vtk.vtkCellArray()
-        for i in range(1, pnts.GetNumberOfPoints()):
-            cells.InsertNextCell(2)
-            cells.InsertCellPoint(i - 1)
-            cells.InsertCellPoint(i)
-        self.polydata.SetLines(cells)
+        pnts = np.column_stack((x, y, np.zeros_like(x)))
+        cells = np.column_stack(
+            (
+                2 * np.ones(len(x)).astype(int),
+                np.arange(0, len(x)),
+                np.arange(1, (len(x) + 1)) % len(x),
+            )
+        ).flatten()
+        self.polydata = pv.PolyData(pnts, lines=cells)
 
     def local_to_global(self):
+        """Transform the section to global coordinates from airfoil coordinates"""
         self.polydata.points = np.array(
             [self.polydata.points[:, i] for i in [1, 0, 2]]
         ).T
@@ -54,44 +53,20 @@ class section:
         return px[t.index(max(t))]
 
     def scale(self, scalefactor):
-        transform = vtk.vtkTransform()
-        transform.Scale(scalefactor)
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInputData(self.polydata)
-        transformfilter.Update()
-        self.polydata = transformfilter.GetOutput()
+        self.polydata.scale(scalefactor, inplace=True)
 
     def twist(self, rz):
-        transform = vtk.vtkTransform()
-        transform.RotateZ(rz)
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInputData(self.polydata)
-        transformfilter.Update()
-        self.polydata = transformfilter.GetOutput()
+        self.polydata.rotate_z(rz, inplace=True)
 
     def translate(self, dx, dy, dz):
-        transform = vtk.vtkTransform()
-        transform.Translate(dx, dy, dz)
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInputData(self.polydata)
-        transformfilter.Update()
-        self.polydata = transformfilter.GetOutput()
+        self.polydata.translate([dx, dy, dz], inplace=True)
 
     def get_point(self, xy):
         return self.polydata.GetPoint(self.polydata.FindPoint((xy[0], xy[1], 0.0)))
 
     def get_pointlist(self, z_rotation=0):
-        transform = vtk.vtkTransform()
-        transform.RotateZ(z_rotation)
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInputData(self.polydata)
-        transformfilter.Update()
-        output = transformfilter.GetOutput()
-        return [output.GetPoint(i) for i in range(output.GetNumberOfPoints())]
+        output = self.polydata.rotate_z(z_rotation, inplace=False)
+        return output.points
 
     def to_xfoil(self, fname):
         if not os.path.isdir(os.path.dirname(fname)):
