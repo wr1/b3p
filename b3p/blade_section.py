@@ -21,13 +21,9 @@ class section:
         self.polydata.SetLines(cells)
 
     def local_to_global(self):
-        pnts = vtk.vtkPoints()
-        for i in range(self.polydata.GetNumberOfPoints()):
-            pnt = self.polydata.GetPoint(i)
-            new_point = (pnt[1], pnt[0], pnt[2])
-            pnts.InsertNextPoint(new_point)
-
-        self.polydata.SetPoints(pnts)
+        self.polydata.points = np.array(
+            [self.polydata.points[:, i] for i in [1, 0, 2]]
+        ).T
 
     def get_max_thickness(self, web_angle=0, n_points=50):
         """
