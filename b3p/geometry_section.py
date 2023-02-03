@@ -2,6 +2,7 @@ from b3p import geom_utils
 import vtk
 import numpy as np
 import math
+import pyvista as pv
 
 # from matplotlib import pyplot as plt
 import copy
@@ -77,35 +78,29 @@ class section:
     #     axis("equal")
     #     savefig(prefix + "_%i.png" % self.r)
 
+    # def set_twist(self, twist):
+    #     self.twist = twist
+    #     transform = vtk.vtkTransform()
+    #     transform.RotateZ(twist)
+    #     transformfilter = vtk.vtkTransformFilter()
+    #     transformfilter.SetTransform(transform)
+    #     transformfilter.SetInput(self.poly)
+    #     transformfilter.Update()
+    #     self.poly = transformfilter.GetOutput()
+
     def set_twist(self, twist):
         self.twist = twist
-        transform = vtk.vtkTransform()
-        transform.RotateZ(twist)
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInput(self.poly)
-        transformfilter.Update()
-        self.poly = transformfilter.GetOutput()
+        self.poly.rotate_z(twist, inplace=True)
 
     def translate(self, dx, dy):
-        transform = vtk.vtkTransform()
-        transform.Translate((dx, dy, 0.0))
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInput(self.poly)
-        transformfilter.Update()
-        self.poly = transformfilter.GetOutput()
+        self.poly.translate([dx, dy, 0.0], inplace=True)
 
     def scale(self, sx, sy):
-        transform = vtk.vtkTransform()
-        transform.Scale((sx, sy, 1.0))
-        transformfilter = vtk.vtkTransformFilter()
-        transformfilter.SetTransform(transform)
-        transformfilter.SetInput(self.poly)
-        transformfilter.Update()
-        self.poly = transformfilter.GetOutput()
+        self.poly.scale([sx, sy, 1.0], inplace=True)
 
-    def _create_evaluations(self, n_points, webs, mult=True, make_plots=False, panel_mesh_scale=None):
+    def _create_evaluations(
+        self, n_points, webs, mult=True, make_plots=False, panel_mesh_scale=None
+    ):
         if panel_mesh_scale is None:
             panel_mesh_scale = []
         tol = 1e-9
@@ -121,7 +116,6 @@ class section:
         intervals = sorted([0, 1] + list(avspl))
         isize = [intervals[i + 1] - intervals[i] for i in range(len(intervals) - 1)]
 
-        # print(isize)
         for ps in panel_mesh_scale:
             if ps[0] < len(isize):
                 isize[ps[0]] *= ps[1]
