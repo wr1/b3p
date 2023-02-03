@@ -14,6 +14,7 @@ setuptools.setup(
             "b3p_add_load=b3p.add_load_to_mesh:main",
             "b3p_export_ccx=b3p.mesh2ccx:main",
             "b3p_frd2vtu=b3p.frd2vtu:main",
+            "b3p_anbaprep=b3p.anba4_prep:main",
         ],
     },
 )
