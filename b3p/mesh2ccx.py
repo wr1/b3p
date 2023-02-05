@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import pyvista
+import pyvista as pv
 import numpy as np
 import multiprocessing
 import vtk
@@ -91,6 +91,27 @@ def material_db_to_ccx(grid, materials, matmap=None):
     return matblock
 
 
+def format_eset(name, eids, prefix):
+    out = f"*elset,elset={name.replace(prefix,'')}\n"
+    for i in range(len(eids)):
+        out += f"{eids[i]}"
+        out += "\n" if (i % 16 == 15) else ","
+    if out[-1] == ",":
+        out = out[:-1] + "\n"
+    return out
+
+
+def compute_slab_groups(grid):
+    gr = ""
+    prefix = "slab_thickness_"
+    for i in grid.cell_data:
+        if i.startswith(prefix):
+            eids = np.where(grid.cell_data[i] > 0)[0] + 1
+            gr += format_eset(i, eids, prefix)
+
+    return gr
+
+
 def main():
     p = argparse.ArgumentParser(description="Translate a blade vtk mesh into ccx")
     p.add_argument(
@@ -103,17 +124,14 @@ def main():
 
     grid = args.grid
 
-    re = vtk.vtkXMLUnstructuredGridReader()
-    re.SetFileName(grid)
-    re.Update()
-    gr = re.GetOutput()
-    glin = pyvista.UnstructuredGrid(gr)
+    gr = pv.read(grid)
+    glin = pv.UnstructuredGrid(gr)
 
     lf = vtk.vtkLinearToQuadraticCellsFilter()
-    lf.SetInputData(re.GetOutput())
+    lf.SetInputData(gr)  # re.GetOutput())
     lf.Update()
     quad = lf.GetOutput()
-    g = pyvista.UnstructuredGrid(quad)
+    g = pv.UnstructuredGrid(quad)
 
     # export the nodes
     buf = "*node,nset=nall\n"
@@ -130,6 +148,8 @@ def main():
         buf += "%i,%i,%i,%i,%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
 
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, n + 1)
+
+    buf += compute_slab_groups(g)
 
     # write orientation TODO match with element orientation, for now just align with z-axis
     for n, i in enumerate(conn):
@@ -162,10 +182,10 @@ def main():
 
     buf += "*step\n*static\n"
 
-    mid = np.where(
-        (g.points[:, 2] > g.points[:, 2].max() * 0.7)
-        & (g.points[:, 2] < g.points[:, 2].max() * 0.8)
-    )
+    # mid = np.where(
+    #     (g.points[:, 2] > g.points[:, 2].max() * 0.7)
+    #     & (g.points[:, 2] < g.points[:, 2].max() * 0.8)
+    # )
 
     loadcases = {}
 
