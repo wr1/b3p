@@ -106,12 +106,14 @@ class web:
         where the web starts and ends, this routine finds those points for the
         radius locations where the web is. Note that the length of the web is
         only exact down to the element size
-        @mesh shell mesh to find web points in
-        """
 
+        parameters:
+        -----------
+        mesh: vtkUnstructuredGrid
+            shell mesh to find web points in
+        """
         rad = mesh.GetPointData().GetArray("radius")
         rel_dist = mesh.GetPointData().GetArray("d_rel_dist_from_te")
-
         for i in range(mesh.GetNumberOfPoints()):
             rm = rad.GetValue(i)
             if self.web_root <= rm <= self.web_tip:
@@ -124,37 +126,24 @@ class web:
                     self.evaluations[rmm].append(pnt)
 
     def _create_quad_connectivity(self, n_points, n_total):
+        """create quad element connectivity array
+
+        parameters:
+        -----------
+        n_points: int
+            number of points along web
+        n_total: int
+            total number of points in mesh
+        returns:
+            connectivity array"""
         nrows = int(n_total / n_points)
         colids = np.arange(n_points - 1)
         npp = (
-            np.arange(1, nrows).repeat(n_points).reshape(nrows - 1, n_points) - 1
+            np.arange(1, nrows).repeat(n_points - 1).reshape(nrows - 1, n_points - 1)
+            - 1
         ) * n_points + colids
         stck = [np.ones_like(npp) * 4, npp, npp + n_points, npp + n_points + 1, npp + 1]
-
-        print(self.flip_normal)
-        return np.hstack(list(reversed(stck)) if self.flip_normal else stck).flatten()
-
-    def _create_quad_connectivity(self, n_points, n_total):
-        """
-        create the connectivity of the points that make up the mesh
-        """
-        connectivity = []
-        for i in range(1, int(n_total / n_points)):
-            npp = np.arange((i - 1) * n_points, i * n_points)
-            ncc = np.arange(i * n_points, (i + 1) * n_points)
-            for j in range(n_points - 1):
-                elem = [
-                    npp[j],
-                    ncc[j],
-                    ncc[(j + 1) % n_points],
-                    npp[(j + 1) % n_points],
-                ]
-                if not self.flip_normal:
-                    connectivity.append([4] + elem)
-                else:
-                    connectivity.append([4] + list(reversed(elem)))
-
-        return np.array(connectivity).flatten()
+        return np.stack(stck).T.flatten()
 
     def _create_points(self, n_cells):
         """
