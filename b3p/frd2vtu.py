@@ -42,9 +42,6 @@ def load(inp):
             skiprows=lambda x: (x % 3) != 2,
             names=range(11),
         )
-
-        # print(pd.concat([e1, e2], axis=1).dropna(axis=1))
-
         return (
             "elements",
             pd.concat([e2.iloc[:, 1:], e1.iloc[:, 1:]], axis=1),

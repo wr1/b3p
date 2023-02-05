@@ -10,6 +10,10 @@ import numpy as np
 
 
 def build_rectangle_blade_mesh_with_webs(configfile):
+    """build a rectangle blade mesh with webs, and save it to a vtp file
+
+    Arguments:
+        configfile {str} -- path to the yaml config file"""
     config = yaml.load(open(configfile, "r"), Loader=yaml.CLoader)
     wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
     pckfile = f"{wdp}.pck"

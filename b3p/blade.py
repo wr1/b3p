@@ -286,7 +286,6 @@ class blade:
     def title_plot(self, arg0, arg1):
         plt.title(arg0)
         plt.grid(True)
-
         plt.subplot(3, 3, arg1)
 
     def _interpolate_airfoils(self):

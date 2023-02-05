@@ -27,7 +27,6 @@ def run_loft(configfile, verbose=False):
         chordwise_sampling=b3p.loft_utils.optspace(config["planform"]["npchord"]),
         np_spanwise=config["planform"]["npspan"],
         barrel_length=2,
-        # interpolate_method=0,
         flatten_lw=False,
         offset_optimal=True,
         offset_clamp_points=config["planform"]["offset_clamp_points"]

@@ -39,11 +39,10 @@ class section:
 
     def _open_te(self, points, te_thickness):
         """
-        open the trailing edge
+        Open the trailing edge
 
-        args:
+        parameters:
             points (list): points
-
             te_thickness (float): trailing edge thickness
         """
 
