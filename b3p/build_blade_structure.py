@@ -29,7 +29,7 @@ def build_blade_structure(config):
     )
 
     # build the plain blade mesh
-    mesh_from_loft.build_mesh(pckfile, radii, [], [], wdp, outfile=base_vtp)
+    blade = mesh_from_loft.build_mesh(pckfile, radii, [], [], wdp, outfile=base_vtp)
 
     # compute the locations where the webs intersect with the blade mesh
     web_shell_intersections = webs.build_webs(base_vtp, config_webs, prefix=wdp)
@@ -41,8 +41,7 @@ def build_blade_structure(config):
             [(i, [ad[i]["base"]] + list(zip(*ad[i]["points"]))) for i in ad]
         )
 
-    # remesh the blade, but now making sure there are nodes at the web intersections
-    mesh_from_loft.build_mesh(
+    return mesh_from_loft.build_mesh(
         pckfile,
         radii,
         config_webs,

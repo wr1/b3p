@@ -6,7 +6,18 @@ from b3p import geometry_web
 import pickle
 
 
-def build_mesh(pckfile, radii, web_inputs, web_intersections, prefix, n_web_points=10, n_ch_points=120, outfile="out.vtp", added_datums=None, panel_mesh_scale=None):
+def build_mesh(
+    pckfile,
+    radii,
+    web_inputs,
+    web_intersections,
+    prefix,
+    n_web_points=10,
+    n_ch_points=120,
+    outfile="out.vtp",
+    added_datums=None,
+    panel_mesh_scale=None,
+):
 
     if added_datums is None:
         added_datums = {}
@@ -54,3 +65,4 @@ def build_mesh(pckfile, radii, web_inputs, web_intersections, prefix, n_web_poin
     print(f"# writing to {outfile}")
     blade.write_mesh(outfile)
     print("# writing mesh done")
+    return blade
