@@ -360,7 +360,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     mstacks = []  # material stack
     astacks = []  # angle stack
 
-    vls = []
     # loop over all cells
     for i in range(sec.GetNumberOfCells()):
         # get the id, the nodes attached to the cell, and the elements attached to each node
@@ -437,9 +436,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
                 # ones used for puck postprocessing)
                 # if the material and angle are the same as the last, don't put in a new ply,
                 # but increase the previous ply thickness, this greatly reduces element count in e.g. sparcaps
-                if mstack and (
-                    mstack[-1] == int(tup[0]) and astack[-1] == tup[2]
-                ):
+                if mstack and (mstack[-1] == int(tup[0]) and astack[-1] == tup[2]):
                     stack[-1] += tup[1]
                     p0 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p0, nr0)]
                     p1 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p1, nr1)]
@@ -450,8 +447,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
                     stack.append(tup[1] + stack[-1])
                     mstack.append(int(tup[0]))
                     astack.append(tup[2])
-                    # p0o = p0
-                    # p1o = p1
                     p0 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p0, nr0)]
                     p1 = [k[0] + k[1] * tup[1] * 1e-3 for k in zip(p1, nr1)]
                     points.InsertNextPoint(tuple(p0))
@@ -478,8 +473,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     # join up the plydrop elements
     join_up(join_nodes, epid, stacks, sec, poly)
 
-    # print(web_links)
-
     # join up the webs with the shell
     web_link(web_links, epid, stacks, sec, poly)
 
@@ -489,6 +482,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
 
     if verbose:
         write_vtp(poly, os.path.join(workdir, "inter_%i.vtp" % (1e3 * r)))
+
     # clean up the polydata, i.e. remove duplicate points
     cln = vtk.vtkCleanPolyData()
     cln.SetInputData(poly)
@@ -560,16 +554,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     for i in range(out.GetNumberOfCells()):
         cl = out.GetCell(i)
 
-        # print(cl.GetNumberOfPoints())
-
-        # order = [
-        #     cl.GetPointId(0) + 1,
-        #     cl.GetPointId(1) + 1,
-        #     cl.GetPointId(2) + 1,
-        #     cl.GetPointId(2) + 1
-        #     if cl.GetNumberOfPoints() == 3
-        #     else cl.GetPointId(3) + 1,
-        # ]
         if cl.GetNumberOfPoints() > 2:
             [pt1, pt2] = [cl.GetEdge(1).GetPoints().GetPoint(j) for j in range(2)]
 
@@ -593,7 +577,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
 
     out.GetCellData().AddArray(ang2)
 
-    mkeys = sorted({mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())})
+    # mkeys = sorted({mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())})
 
     if verbose:
         write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
@@ -605,15 +589,17 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     wrt.SetInputData(out)
     wrt.SetFileName(of)
     wrt.Write()
+    # out.save(of)
     print(f"# written vtk to {of}")
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
     )
 
 
-def run_all(vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False):
+def cut_blade_parallel(
+    vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False
+):
     var = eval(open(var, "r").read())
-
     part = partial(
         cut_blade,
         vtu=vtu,
@@ -648,7 +634,7 @@ def main():
     args = p.parse_args()
 
     rr = eval(args.r)
-    run_all(
+    cut_blade_parallel(
         args.vtu,
         rr,
         args.bondline,

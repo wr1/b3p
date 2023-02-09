@@ -4,21 +4,22 @@ import os
 from copy import deepcopy as dc
 from b3p import mesh_from_loft
 from b3p import webs
-import yaml
+from ruamel import yaml
 import argparse
 import numpy as np
 
 
-def build_rectangle_blade_mesh_with_webs(configfile):
+def build_blade_structure(config):
     """build a rectangle blade mesh with webs, and save it to a vtp file
 
     Arguments:
         configfile {str} -- path to the yaml config file"""
-    config = yaml.load(open(configfile, "r"), Loader=yaml.CLoader)
+    # config = yaml.load(open(configfile, "r"), Loader=yaml.CLoader)
     wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
     pckfile = f"{wdp}.pck"
     base_vtp = f"{wdp}_base.vtp"
     web_vtp = f"{wdp}_web.vtp"
+
     radii = eval(str(config["mesh"]["radii"]))
     config_webs = config["mesh"]["webs"]
     panel_mesh_scale = (
@@ -59,9 +60,11 @@ def main():
     parser = argparse.ArgumentParser(
         "Build a rectangle blade mesh with shared nodes where the webs link up with the shell"
     )
-    parser.add_argument("yaml", help="config file ")
+    parser.add_argument("yaml", help="config file defining the blade")
     args = parser.parse_args()
-    build_rectangle_blade_mesh_with_webs(args.yaml)
+
+    bladeconfig = yaml.round_trip_load(open(args.yaml, "r"))
+    build_blade_structure(bladeconfig)
 
 
 if __name__ == "__main__":

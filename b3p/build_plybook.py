@@ -2,7 +2,7 @@
 
 import argparse
 import numpy as np
-import yaml
+from ruamel import yaml
 import os
 from itertools import chain, zip_longest
 import pickle
@@ -147,6 +147,8 @@ def export_matdb(blade, material_map):
         print("no material db defined in blade file")
 
     matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
+    if type(blade["materials"]) == str:
+        blade["materials"] = yaml.round_trip_load(open(blade["materials"]))
     json.dump(
         add_bondline_material(blade["materials"], material_map), open(matmap, "w")
     )

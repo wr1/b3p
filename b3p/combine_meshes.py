@@ -21,16 +21,8 @@ def is_nonzero_array(arr):
     return True
 
 
-def main():
-    # global meshes
-    p = argparse.ArgumentParser(
-        description="Join a series of meshes, i.e. a shell and n web meshes together into a single vtu"
-    )
-    p.add_argument("meshes", nargs="*")
-    p.add_argument("--out", default="__joined_mesh.vtu", help="output file name")
-    args = p.parse_args()
-
-    meshes = [pv.read(i) for i in args.meshes]
+def combine_meshes(meshes, output_filename):
+    meshes = [pv.read(i) for i in meshes]
     # find all the point and cell data arrays
     all_pd = [
         (j, x.point_data[j].shape, x.point_data[j].dtype)
@@ -76,8 +68,20 @@ def main():
         f"timing: \n\tcreate 0 arrays: { toc0 - tic:.3f} \n\ttime adding: {toc1-toc0:.3f}\n\ttime merging: {toc2-toc1:.3f}"
     )
 
-    out.save(args.out)
-    print(f"written mesh to {args.out}")
+    out.save(output_filename)
+    print(f"written mesh to {output_filename}")
+
+
+def main():
+    # global meshes
+    p = argparse.ArgumentParser(
+        description="Join a series of meshes, i.e. a shell and n web meshes together into a single vtu"
+    )
+    p.add_argument("meshes", nargs="*")
+    p.add_argument("--out", default="__joined_mesh.vtu", help="output file name")
+    args = p.parse_args()
+
+    combine_meshes(args.meshes, args.out)
 
 
 if __name__ == "__main__":

@@ -91,6 +91,13 @@ class blade:
         )
 
     def to_table(self, x, prefix="prebend_out"):
+        """
+        write out a table of the blade
+
+        parameters:
+            x (list) : list of sections where airfoils are to be interpolated
+            prefix (str) : prefix for output file
+        """
         dxx = (self.dy[0], self.dxf[1] - self.dy[1])
 
         cols = [
@@ -144,6 +151,7 @@ class blade:
                     # normalise flatback root
             else:
                 # load an airfoil from the self-contained format, which is a dict with keys xy
+                print(f"loading airfoil {airfoils[i]['name']} at thickness {i}")
                 t = airfoils[i]["xy"]
 
             self.airfoils[i] = loft_utils.interp(x, t)[:2]
@@ -153,6 +161,15 @@ class blade:
     ):
         """
         spline the planform based on parameters
+
+        parameters:
+            chord (list) : chord distribution [(r,chord),..]
+            thickness (list) : thickness distribution [(r,t),..] --> relative
+            twist (list) : twist distribution [(r,twist),..]
+            dx (list) : x distribution [(r,x),..]
+            dy (list) : y distribution [(r,y),..]
+            z (list) : z distribution [(r,z),..]
+            flatten_lw (bool): flag indicating whether to run LW side flattening
         """
         self.x = np.linspace(0, 1.0, self.np_spanwise)
         (
@@ -194,6 +211,13 @@ class blade:
             self.flatten_lw(dy_flat, dy)
 
     def flatten_lw(self, dy_flat, dy):
+        """
+        flatten the leeward side of the blade
+
+        parameters:
+            dy_flat (list) : y offset distribution [(r,y),..]
+            dy (list) : y distribution [(r,y),..]
+        """
         mid_offset = dy_flat[1][len(dy_flat[1]) // 2]
         dy_flat[1] = [
             i[1] - 2.0 * i[0] * mid_offset for i in zip(dy_flat[0], dy_flat[1])

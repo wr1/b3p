@@ -5,16 +5,14 @@ from copy import deepcopy as dc
 import argparse
 import b3p.blade
 import b3p.loft_utils
-import yaml
+from ruamel import yaml
 import numpy as np
 
 
-def run_loft(configfile, verbose=False):
+def build_blade_geometry(config, verbose=False):
     """
-    Perform blade 3d model generation based on yaml input file.
+    Perform blade 3d model generation based on b3p dictionary.
     """
-    config = yaml.load(open(configfile, "r"), Loader=yaml.CLoader)
-
     pln = config["planform"]
     blade = b3p.blade.blade(
         pln["chord"],
@@ -52,6 +50,7 @@ def run_loft(configfile, verbose=False):
     blade.plot(f"{wdp}", fname=f"{wdp}.png")
     n_sections = 50
     blade.to_table(np.linspace(0, 1, n_sections), "%s_sca_%i" % (wdp, n_sections))
+    return blade
 
 
 def main():
@@ -62,7 +61,9 @@ def main():
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
-    run_loft(args.yaml, args.verbose)
+    config = yaml.load(open(args.yaml, "r"), Loader=yaml.CLoader)
+
+    build_blade_geometry(config, args.verbose)
 
 
 if __name__ == "__main__":

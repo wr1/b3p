@@ -25,6 +25,8 @@ def flowlist(listoflists):
 
 
 def load_airfoil(af):
+    """Load an airfoil from an xfoil formated text file.
+    Check if the first line are coordinates or airfoil name."""
     with open(af, "r") as f:
         name = f.readline().strip()
         floats = re.findall(r"\d+\.\d+", name)
@@ -41,34 +43,45 @@ def load_airfoil(af):
 
 
 def load_airfoils(afs):
+    """Load a list of airfoils from a dictionary of xfoil formated text files."""
     dct = {}
     for i in afs:
         name, xy = load_airfoil(afs[i])
         dct[i] = {"xy": flowlist(xy)}
         dct[i]["name"] = name
         dct[i]["path"] = afs[i]
+        print(f"imported airfoil {name} at thickness {i}")
 
     return dct
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("yaml_file", help="yaml file to load")
-    args = parser.parse_args()
-
+def import_linked_yml(yaml_file):
     y = YAML()
 
-    d = yaml.round_trip_load(open(args.yaml_file, "r"), preserve_quotes=True)
+    d = yaml.round_trip_load(open(yaml_file, "r"), preserve_quotes=True)
 
     d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"])
 
-    d["materials"] = yaml.round_trip_load(
-        open(d["materials"], "r"), preserve_quotes=True
-    )
+    if type(d["materials"]) == str:
+        print(f'loading materials from: {d["materials"]}')
+        d["materials"] = yaml.round_trip_load(
+            open(d["materials"], "r"), preserve_quotes=True
+        )
 
     d["general"]["workdir"] += "_portable"
-    of = args.yaml_file.replace(".yml", "_portable.yml")
+    of = yaml_file.replace(".yml", "_portable.yml")
     with open(of, "w") as f:
         y.dump(d, f)
 
     print(f"written to: {of}")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("yaml_file", help="yaml file to load")
+    args = parser.parse_args()
+    import_linked_yml(args.yaml_file)
+
+
+if __name__ == "__main__":
+    main()

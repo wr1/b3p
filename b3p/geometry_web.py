@@ -170,7 +170,14 @@ class web:
 
     def mesh(self, mesh, n_cells=20):
         """
-        main interface for meshing a web
+        create the mesh for the web
+
+        parameters:
+        -----------
+        mesh: vtkUnstructuredGrid
+            shell mesh to find web points in
+        n_cells: int
+            number of cells to use to represent the web
         """
         self._find_top_and_bottom_points(mesh)
         points, pdata = self._create_points(n_cells)

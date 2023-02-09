@@ -5,7 +5,6 @@ import numpy as np
 import multiprocessing
 import vtk
 import argparse
-from functools import partial
 import time
 import json
 import os
@@ -28,7 +27,7 @@ def make_shell_section(inp):
     return "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies)
 
 
-def material_db_to_ccx(grid, materials, matmap=None):
+def material_db_to_ccx(materials, matmap=None):
     "find the material db and write properties to a ccx block"
 
     # 2 files are relevant, a material map that maps the material ID (integer)
@@ -161,7 +160,7 @@ def main():
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
-    matblock = material_db_to_ccx(grid, materials, matmap=args.matmap)
+    matblock = material_db_to_ccx(materials, matmap=args.matmap)
 
     buf += matblock
 
@@ -181,11 +180,6 @@ def main():
     buf += comps
 
     buf += "*step\n*static\n"
-
-    # mid = np.where(
-    #     (g.points[:, 2] > g.points[:, 2].max() * 0.7)
-    #     & (g.points[:, 2] < g.points[:, 2].max() * 0.8)
-    # )
 
     loadcases = {}
 

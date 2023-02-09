@@ -18,7 +18,8 @@ def get_slab_cover(inp):
     material, thickness, rmin, rmax = np.array(stack).T
     rrt = np.array([df.radius.values]).T
 
-    # compute radius coverage
+    # compute radius coverage    names = [f"ply_%.8i_%s" % (i, name) for i in numbering]
+
     rcover = (rrt >= rmin) & (rrt < rmax)
 
     ply_increments = [cover[i][-1] for i in cover]
@@ -57,17 +58,10 @@ def get_slab_cover(inp):
     return names, data
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("pck")
-    p.add_argument("vtp", help="_web.vtp file")
-    p.add_argument("--key", default="blade")
-    p.add_argument("--out", default="__draped.vtu")
-    args = p.parse_args()
+def drape_mesh(vtp, stack, key, output_file):
+    x = pyvista.read(vtp)
 
-    x = pyvista.read(args.vtp)
-
-    o = x.point_data_to_cell_data(pass_point_data=True)  # centers.GetOutput()
+    o = x.point_data_to_cell_data(pass_point_data=True)
 
     o = o.compute_cell_sizes(length=False, volume=False)
 
@@ -78,7 +72,7 @@ def main():
     for i in o.cell_data.keys():
         df[i] = o.cell_data[i]
 
-    stck = pickle.load(open(args.pck, "rb"))
+    # stck = pickle.load(open(args.pck, "rb"))
 
     print("** computing ply coverage")
 
@@ -96,11 +90,11 @@ def main():
                 )
             )
         )
-        for i in stck
-        if args.key.strip() == i["grid"] and i["stack"] != []
+        for i in stack
+        if key.strip() == i["grid"] and i["stack"] != []
     ]
     print("** assigning ply data to grid")
-    total_thickness = np.zeros_like(df.radius)
+    total_thickness = np.zeros_like(df.radius).astype(np.float32)
     n_plies = np.zeros_like(df.radius).astype(int)
     for i in slab_data:
         slabname, ply_names, dat = i
@@ -113,7 +107,7 @@ def main():
         n_plies += s_thick > 0.0
 
     o.cell_data["n_plies"] = n_plies
-    o.cell_data["is_web"] = args.key.lower().find("web") != -1
+    o.cell_data["is_web"] = key.lower().find("web") != -1
 
     o.cell_data["thickness"] = total_thickness
 
@@ -127,8 +121,19 @@ def main():
     o.cell_data["y_dir"] = y
     o.cell_data["x_dir"] = x
 
-    pyvista.UnstructuredGrid(o).save(args.out)
-    print(f"** written to {args.out}")
+    pyvista.UnstructuredGrid(o).save(output_file, binary=True)
+    print(f"** written to {output_file}")
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("pck", help="pickle file containing the plies")
+    p.add_argument("vtp", help="_web.vtp file")
+    p.add_argument("--key", default="blade", help="blade web name on which to drape")
+    p.add_argument("--out", default="__draped.vtu", help="output file")
+    args = p.parse_args()
+
+    drape_mesh(args.vtp, pickle.load(open(args.pck, "rb")), args.key, args.out)
 
 
 if __name__ == "__main__":

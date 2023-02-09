@@ -19,7 +19,6 @@ def write_web(
     coordinate of top and bottom lines. This is used to represent geometrically straight entities
     in 3D as coordinates in local systems defined per section
     """
-    # mesh = mesh
     print("reading", name)
     rd = vtk.vtkXMLPolyDataReader()
     rd.SetFileName(mesh)
