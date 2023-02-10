@@ -18,6 +18,20 @@ def test_blade_structure_point_on_mesh(build_structure):
     )
 
 
+def test_blade_structure_bounding_box(build_structure):
+    """Check that the blade sits in the exact same bounding box"""
+    assert build_structure.bounds == pytest.approx(
+        (
+            -3.052877902984619,
+            2.5136566162109375,
+            -2.783158302307129,
+            3.6869149208068848,
+            0.0,
+            100.0,
+        )
+    )
+
+
 def test_blade_structure_has_coordinate_systems(build_structure):
     """Check if all point coordinate systems are present"""
     assert build_structure.point_data.keys() == [

@@ -139,7 +139,8 @@ def export_matdb(blade, material_map):
         else:
             mdbname = "__matdb.yml"
             material_map["matdb"] = mdbname
-            yaml.dump(
+
+            yaml.YAML(typ="unsafe", pure=True).dump(
                 blade["materials"],
                 open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
             )
