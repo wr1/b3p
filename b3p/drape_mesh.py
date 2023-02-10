@@ -8,6 +8,21 @@ import pyvista
 
 
 def get_slab_cover(inp):
+    """Get the cover of the ply
+
+    Parameters
+    ----------
+    inp : tuple
+        name, cover, numbering, rr, stack, df
+
+        Returns
+        -------
+        names : list
+            list of ply names
+            data : np.ndarray
+            array representing the material id, thickness and orientation of the ply
+    """
+
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
     one = np.ones_like(rr)
@@ -59,6 +74,19 @@ def get_slab_cover(inp):
 
 
 def drape_mesh(vtp, stack, key, output_file):
+    """drape a stack of plies onto a mesh
+
+    Parameters
+    ----------
+    vtp : str
+        path to the vtp file
+        stack : list
+        list of dictionaries containing the ply stack
+        key : str
+        key to identify the mesh on which to drape the plies
+        output_file : str
+        path to the output file
+    """
     x = pyvista.read(vtp)
 
     o = x.point_data_to_cell_data(pass_point_data=True)
@@ -121,8 +149,10 @@ def drape_mesh(vtp, stack, key, output_file):
     o.cell_data["y_dir"] = y
     o.cell_data["x_dir"] = x
 
-    pyvista.UnstructuredGrid(o).save(output_file, binary=True)
+    output_grid = pyvista.UnstructuredGrid(o)
+    output_grid.save(output_file, binary=True)
     print(f"** written to {output_file}")
+    return output_grid
 
 
 def main():
