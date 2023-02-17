@@ -69,7 +69,7 @@ def import_linked_yml(yaml_file):
         )
 
     d["general"]["workdir"] += "_portable"
-    of = yaml_file.replace(".yml", "_portable.yml")
+    of = yaml_file.replace(".yml", "_portable.yml").replace(".yaml", "_portable.yml")
     with open(of, "w") as f:
         y.dump(d, f)
 

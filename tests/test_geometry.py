@@ -1,5 +1,4 @@
-from b3p import build_blade_geometry, build_blade_structure
-
+from b3p import build_blade_geometry
 import os
 from ruamel import yaml
 import pytest

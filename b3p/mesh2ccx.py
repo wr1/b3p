@@ -11,15 +11,14 @@ import os
 import yaml
 
 
-def make_shell_section(inp):
+def make_shell_section(inp, merge_adjacent_plies=True):
     elem_id, plyarray = inp
     plies = []
     # if material in next ply is the same, add it to the previous ply,
     # NOTE this does not take ply angle into account so it only works
     # for multidirectional fibre mats at angle==0 for now
     for j in plyarray[np.where(plyarray[:, 1] > 1e-6)]:
-        # ply_dat = g.cell_data[j][n, :]
-        if plies and plies[-1][1] == j[0]:
+        if plies and plies[-1][1] == j[0] and merge_adjacent_plies:
             plies[-1][0] += j[1] * 1e-3
         else:
             plies.append([j[1] * 1e-3, j[0]])
@@ -111,6 +110,45 @@ def compute_slab_groups(grid):
     return gr
 
 
+def nodebuffer(grid):
+    buf = "*node,nset=nall\n"
+    for n, i in enumerate(grid.points):
+        buf += "%i,%f,%f,%f\n" % tuple([n + 1] + list(i))
+    return buf
+
+
+def element_buffer_quadratic(grid):
+    conn = grid.cell_connectivity.reshape(
+        (
+            grid.GetNumberOfCells(),
+            int(grid.cell_connectivity.shape[0] / grid.GetNumberOfCells()),
+        )
+    )
+    buf = ""
+    # export the elements
+    for n, i in enumerate(conn):
+        buf += "*element,type=s8r,elset=e%i\n" % (n + 1)
+        buf += "%i,%i,%i,%i,%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
+
+    return buf
+
+
+def element_buffer_linear(grid):
+    conn = grid.cell_connectivity.reshape(
+        (
+            grid.GetNumberOfCells(),
+            int(grid.cell_connectivity.shape[0] / grid.GetNumberOfCells()),
+        )
+    )
+    buf = ""
+    # export the elements
+    for n, i in enumerate(conn):
+        buf += "*element,type=s4,elset=e%i\n" % (n + 1)
+        buf += "%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
+
+    return buf
+
+
 def main():
     p = argparse.ArgumentParser(description="Translate a blade vtk mesh into ccx")
     p.add_argument(
@@ -123,40 +161,45 @@ def main():
 
     grid = args.grid
 
+    order = 1
+
     gr = pv.read(grid)
-    glin = pv.UnstructuredGrid(gr)
+
+    lin_mesh = pv.UnstructuredGrid(gr)
 
     lf = vtk.vtkLinearToQuadraticCellsFilter()
     lf.SetInputData(gr)  # re.GetOutput())
     lf.Update()
     quad = lf.GetOutput()
-    g = pv.UnstructuredGrid(quad)
+    quad_mesh = pv.UnstructuredGrid(quad)
 
     # export the nodes
     buf = "*node,nset=nall\n"
-    for n, i in enumerate(g.points):
+    for n, i in enumerate(quad_mesh.points):
         buf += "%i,%f,%f,%f\n" % tuple([n + 1] + list(i))
 
-    conn = g.cell_connectivity.reshape(
-        (g.GetNumberOfCells(), int(g.cell_connectivity.shape[0] / g.GetNumberOfCells()))
-    )
+    buf = nodebuffer(quad_mesh)
 
-    # export the elements
-    for n, i in enumerate(conn):
-        buf += "*element,type=s8r,elset=e%i\n" % (n + 1)
-        buf += "%i,%i,%i,%i,%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
+    if order == 1:
+        buf += element_buffer_linear(lin_mesh)
+    elif order == 2:
+        buf += element_buffer_quadratic(quad_mesh)
+    else:
+        raise ValueError("order must be 1 or 2")
 
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, n + 1)
 
-    buf += compute_slab_groups(g)
+    buf += compute_slab_groups(quad_mesh)
 
     # write orientation TODO match with element orientation, for now just align with z-axis
-    for n, i in enumerate(conn):
-        xdir, ydir = g.cell_data["x_dir"][n], g.cell_data["y_dir"][n]
+    for n in range(quad_mesh.GetNumberOfCells()):
+        xdir, ydir = quad_mesh.cell_data["x_dir"][n], quad_mesh.cell_data["y_dir"][n]
         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
         buf += "%.4g,%.4g,%.4g,%.4g,%.4g,%.4g\n" % tuple(xdir.tolist() + ydir.tolist())
 
-    plydat = np.stack(g.cell_data[i] for i in g.cell_data if i.startswith("ply_"))
+    plydat = np.stack(
+        quad_mesh.cell_data[i] for i in quad_mesh.cell_data if i.startswith("ply_")
+    )
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
@@ -165,11 +208,11 @@ def main():
     buf += matblock
 
     tic = time.perf_counter()
-    p = multiprocessing.Pool()
+    # p = multiprocessing.Pool()
 
-    blx = p.map(
-        make_shell_section, [(i, plydat[:, i, :]) for i in range(plydat.shape[1])]
-    )
+    # blx = p.map(
+    #     make_shell_section, [(i, plydat[:, i, :]) for i in range(plydat.shape[1])]
+    # )
     toc = time.perf_counter()
     print("time spent creating shell sections %f" % (toc - tic))
 
@@ -183,13 +226,13 @@ def main():
 
     loadcases = {}
 
-    for i in g.point_data:
+    for i in quad_mesh.point_data:
         if i.startswith("lc_"):
             # forces are interpolated to midside nodes, causing the sum of forces to be off,
             # compute a multiplier from the sum of the forces in the linear model here
-            multiplier = glin.point_data[i].sum() / g.point_data[i].sum()
+            multiplier = lin_mesh.point_data[i].sum() / quad_mesh.point_data[i].sum()
             lbuf = ""
-            ld = g.point_data[i] * multiplier
+            ld = quad_mesh.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
                     lbuf += "%i,1,%f\n" % (n + 1, j[0])
@@ -198,7 +241,7 @@ def main():
 
             loadcases[i] = "*cload\n" + lbuf
 
-    root = np.where(g.points[:, 2] == g.points[:, 2].min())
+    root = np.where(quad_mesh.points[:, 2] == quad_mesh.points[:, 2].min())
     bcs = "*boundary,op=new\n"
     for i in root[0]:
         bcs += "%i,1,3\n" % (i + 1)

@@ -70,6 +70,7 @@ def combine_meshes(meshes, output_filename):
 
     out.save(output_filename)
     print(f"written mesh to {output_filename}")
+    return out
 
 
 def main():
