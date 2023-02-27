@@ -107,7 +107,7 @@ def get_coverage(slab, datums, rr):
 
 
 def add_bondline_material(matdb, material_map):
-    """add a bondline material to the material map, if it is not already there,
+    """Add a bondline material to the material map, if it is not already there,
     this is needed because the 2d mesher adds elements with -1 material ID to connect the webs to the shell
 
     params:
@@ -236,6 +236,9 @@ def lamplan2plies(blade):
 
 
 def main():
+    """Main function for the plybook command line tool, reads the yaml file and uses the laminate block.
+    Each of the laminate blocks is then split up into plies and blocks and written to a .pck file for use in draping
+    """
     parser = argparse.ArgumentParser(
         description="Split up the slab based laminate plan into plies (for laminae) and blocks (for core materials), write to a .pck file for use in draping"
     )

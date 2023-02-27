@@ -72,7 +72,7 @@ laminates:
       material: carbon_ud
       cover: 
         d_w0: [-0.5, 0.5,0]
-      slab: [[.03,0],[.08,58],[.7,58],[.9,0]]  
+      slab: [[.03,0],[.10,58],[.7,58],[.9,0]]  
       ply_thickness: 0.73
       key: [100,2000]
       increment: [1,-1]
@@ -93,7 +93,7 @@ laminates:
       slab: [[.0,4],[.2,4],[.7,4],[1.,0]]
       key: [0,8000]
       increment: [1,-1]
-      splitstack: [.5 , .5]
+      splitstack: [0.5 , 0.5]
       ply_thickness: 1.25
       grid: shell
     transition_triax:
@@ -101,7 +101,9 @@ laminates:
       cover:
         d_te_r: [0, 1 , 0]
       slab: [[.0,89],[.01,89],[.1,15],[.2,0]]
-      key: [600,0]
+      key: [50,7000]
+      increment: [1,-1]
+      splitstack: [0.5 , 0.5]
       ply_thickness: 1.25
       grid: shell
     trailing_edge_core:
@@ -109,7 +111,7 @@ laminates:
       cover:
         d_te: [0.15,8,0]
         d_w0: [-10,-0.5,0]
-      slab: [[.05,0],[.06,50],[.4,50],[.405,20],[1.,20]]
+      slab: [[.06,0],[.07,20],[.1,20],[.11,50],[.4,50],[.45,20],[1.,20]]
       key: [900,0]
       ply_thickness: 1.
       draping: blocks

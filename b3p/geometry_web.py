@@ -49,7 +49,7 @@ def mesh_line(pnt1, pnt2, n_cells, id):
         # "d_along_airfoil": ml,
         "web_height": wh,
         "radius": r,
-        "is_web": [1 for _ in ppl],
+        "is_web": [1.0 for _ in ppl],
     }
 
     return list(zip(*xyz)), arrays
@@ -185,4 +185,4 @@ class web:
 
         self.mesh = pv.PolyData(points, faces=cells)
         for i in pdata:
-            self.mesh.point_data[i] = pdata[i]
+            self.mesh.point_data[i] = np.array(pdata[i]).astype(np.float32)

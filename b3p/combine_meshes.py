@@ -8,6 +8,7 @@ import time
 def add_missing_data(inp):
     mesh, pd, cd = inp
     for i in pd:
+        # print(i[0], i[1].shape)
         mesh.point_data.set_array(i[1], i[0])
     for i in cd:
         mesh.cell_data.set_array(i[1], i[0])
@@ -44,6 +45,7 @@ def combine_meshes(meshes, output_filename):
         da = [m, [], []]
         for j in all_pd:
             if j[0] not in m.point_data:
+                # print(j, m == meshes[0])
                 a = np.zeros((m.n_points, j[1][1] if len(j[1]) > 1 else 1), dtype=j[2])
                 da[1].append((j[0], a))
         for j in all_cd:
@@ -62,6 +64,8 @@ def combine_meshes(meshes, output_filename):
 
     out = cmeshes[0].merge(cmeshes[1:])
 
+    # print(cmeshes[0].point_data.keys())
+
     toc2 = time.time()
 
     print(
@@ -74,11 +78,12 @@ def combine_meshes(meshes, output_filename):
 
 
 def main():
+    """Combine a series of meshes into a single vtu file."""
     # global meshes
     p = argparse.ArgumentParser(
         description="Join a series of meshes, i.e. a shell and n web meshes together into a single vtu"
     )
-    p.add_argument("meshes", nargs="*")
+    p.add_argument("meshes", nargs="*", help="Input meshes.")
     p.add_argument("--out", default="__joined_mesh.vtu", help="output file name")
     args = p.parse_args()
 
