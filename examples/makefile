@@ -33,15 +33,17 @@ loads: ## assign nodal forces to the joined mesh for use in FEA
 	b3p_add_load $(YML) $(TMP)/joinedup_mesh.vtu
 
 ccxpre: ## export a grid to ccx format
-	b3p_export_ccx $(TMP)/joinedup_mesh.vtu --out $(TMP)/ccxmodel.inp	
+	b3p_export_ccx $(TMP)/joinedup_mesh.vtu --out $(TMP)/ccxmodel.inp	--matmap $(TMP)/material_map.json --merge_adjacent --quadratic --force_iso
 
 ccxsolve: ## run calculix on the ccx output models, and postprocess (requires ccx to be installed and be in PATH)
 	ccx $(TMP)/ccxmodel_lc_forward_flap
 	ccx $(TMP)/ccxmodel_lc_forward_edge
+
+ccxpost: ## postprocess the ccx results
 	b3p_frd2vtu $(TMP)/ccxmodel_lc_forward_edge.frd --out $(TMP)/ccx_fe.vtu
 	b3p_frd2vtu $(TMP)/ccxmodel_lc_forward_flap.frd --out $(TMP)/ccx_ff.vtu
 
-ccx: ccxpre ccxsolve ## run ccxpre and ccxsolve
+ccx: ccxpre ccxsolve ccxpost ## run ccxpre and ccxsolve
 
 anbaprep: ## translate the section meshes to xdmf format
 	b3p_anbaprep $(TMP)/msec_*.vtp

@@ -280,10 +280,10 @@ class section:
             "is_web": [0 for _ in r],
         }
         for i in web_datums:
-            datums[i] = web_datums[i]
+            datums[i] = np.array(web_datums[i]).astype(np.float32)
 
         for i in added_datums.items():
             offs = np.interp(self.r, i[1][1], i[1][2])
-            datums[i[0]] = list(np.array(datums[i[1][0]]) + offs)
+            datums[i[0]] = np.array(np.array(datums[i[1][0]]) + offs).astype(np.float32)
 
         return out, datums

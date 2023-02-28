@@ -8,7 +8,6 @@ import time
 def add_missing_data(inp):
     mesh, pd, cd = inp
     for i in pd:
-        # print(i[0], i[1].shape)
         mesh.point_data.set_array(i[1], i[0])
     for i in cd:
         mesh.cell_data.set_array(i[1], i[0])
@@ -34,8 +33,14 @@ def combine_meshes(meshes, output_filename):
         (j, x.cell_data[j].shape, x.cell_data[j].dtype)
         for x in meshes
         for j in x.cell_data.keys()
-        if is_nonzero_array(x.cell_data[j])
+        # if is_nonzero_array(x.cell_data[j])
     ]
+
+    for i in all_pd + all_cd:
+        if i[0].startswith("is_w"):
+            print(i)
+
+    # print(all_pd, all_cd)
 
     tic = time.time()
 
@@ -45,7 +50,6 @@ def combine_meshes(meshes, output_filename):
         da = [m, [], []]
         for j in all_pd:
             if j[0] not in m.point_data:
-                # print(j, m == meshes[0])
                 a = np.zeros((m.n_points, j[1][1] if len(j[1]) > 1 else 1), dtype=j[2])
                 da[1].append((j[0], a))
         for j in all_cd:
@@ -63,8 +67,6 @@ def combine_meshes(meshes, output_filename):
     toc1 = time.time()
 
     out = cmeshes[0].merge(cmeshes[1:])
-
-    # print(cmeshes[0].point_data.keys())
 
     toc2 = time.time()
 

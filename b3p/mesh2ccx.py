@@ -27,7 +27,7 @@ def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=
         return "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies)
 
 
-def material_db_to_ccx(materials, matmap=None):
+def material_db_to_ccx(materials, matmap=None, force_iso=False):
     "find the material db and write properties to a ccx block"
     # 2 files are relevant, a material map that maps the material ID (integer)
     # in the VTK file to a key (string) in the material database and the material
@@ -56,9 +56,13 @@ def material_db_to_ccx(materials, matmap=None):
 
             # print(material_properties)
             matblock += f'** material: {material_properties["name"]}\n'
-            matblock += f"** {str(material_properties)}\n"
+            # matblock += f"** {str(material_properties)}\n"
 
-            if "vf" in material_properties or "C" in material_properties:
+            if (
+                "vf" in material_properties
+                or "C" in material_properties
+                and not force_iso
+            ):
                 print(material_properties["name"], "is assumed to be orthotropic")
                 C = np.array(material_properties["C"])
                 # https://github.com/rsmith-nl/lamprop/blob/410ebfef2e14d7cc2988489ca2c31103056da38f/lp/text.py#L96
@@ -81,7 +85,7 @@ def material_db_to_ccx(materials, matmap=None):
                     + f"{D[3,3]:.4g},{D[4,4]:.4g},\n"
                     + f"{D[5,5]:.4g},293\n"
                 )
-            elif "e11" in material_properties:
+            elif "e11" in material_properties and not force_iso:
                 print(material_properties["name"], "has engineering constants")
 
                 matblock += "** orthotropic material\n"
@@ -98,10 +102,18 @@ def material_db_to_ccx(materials, matmap=None):
             else:
                 print(material_properties["name"], "is assumed to be isotropic")
                 print(material_properties)
-                nu = min(0.45, max(0.1, float(material_properties["nu"])))  # min()
+                nu = min(
+                    0.45,
+                    max(
+                        0.1,
+                        float(material_properties["nu"])
+                        if "nu" in material_properties
+                        else material_properties["nu12"],
+                    ),
+                )  # min()
                 E = 1e6 * float(
-                    material_properties["Ex"]
-                    if "Ex" in material_properties
+                    material_properties["tEx"]
+                    if "tEx" in material_properties
                     else material_properties["E"]
                 )
                 matblock += "** isotropic material\n"
@@ -125,7 +137,11 @@ def compute_groups(grid, prefix):
     gr = ""
     for i in grid.cell_data:
         if i.startswith(prefix):
-            eids = np.where(grid.cell_data[i] > 0)[0] + 1
+            if len(grid.cell_data[i].shape) == 1:
+                eids = np.where(grid.cell_data[i] > 0)[0] + 1
+            elif len(grid.cell_data[i].shape):
+                eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
+
             gr += format_eset(i, eids, prefix)
 
     return gr
@@ -170,15 +186,15 @@ def element_buffer_linear(grid):
     return buf
 
 
-def orientation_buffer(grid):
+def orientation_buffer(grid, add_centers=False):
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
     for n in range(grid.GetNumberOfCells()):
         xdir, ydir = grid.cell_data["x_dir"][n], grid.cell_data["y_dir"][n]
         center = grid.cell_data["centers"][n]
         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
-        buf += "%.4g,%.4g,%.4g,%.4g,%.4g,%.4g," % tuple(xdir.tolist() + ydir.tolist())
-        buf += ",".join(center.astype(str)) + "\n"
+        buf += "%.4g,%.4g,%.4g,%.4g,%.4g,%.4g" % tuple(xdir.tolist() + ydir.tolist())
+        buf += "," + ",".join(center.astype(str)) + "\n" if add_centers else "\n"
     return buf
 
 
@@ -243,13 +259,24 @@ def main():
     p.add_argument(
         "--quadratic", action="store_true", default=False, help="Use quadratic elements"
     )
+    p.add_argument(
+        "--add_centers",
+        action="store_true",
+        default=False,
+        help="Add centers to orientation",
+    )
+    p.add_argument("--force_iso", action="store_true", default=False, help="Force iso")
     args = p.parse_args()
 
     grid = args.grid
 
     # order = 1
 
-    gr = pv.read(grid)
+    print(pv.read(grid).points.shape)
+
+    gr = pv.read(grid).threshold(value=(1e-6, 1e9), scalars="thickness")
+
+    print(gr.points.shape)
     gr.cell_data["centers"] = gr.cell_centers().points
 
     if args.quadratic:
@@ -276,8 +303,9 @@ def main():
 
     # else:
     #     raise ValueError("order must be 1 or 2")
+    print(mesh.GetNumberOfCells())
 
-    buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, n + 1)
+    buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
 
     buf += compute_groups(mesh, "slab_thickness_")
 
@@ -289,9 +317,11 @@ def main():
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
-    buf += orientation_buffer(mesh)
+    buf += orientation_buffer(mesh, args.add_centers)
 
-    matblock = material_db_to_ccx(materials, matmap=args.matmap)
+    matblock = material_db_to_ccx(
+        materials, matmap=args.matmap, force_iso=args.force_iso
+    )
 
     # exit()
     buf += matblock
@@ -319,12 +349,14 @@ def main():
     print("time spent creating shell sections %f" % (toc - tic))
 
     comps = "".join(
-        "*shell section, composite, elset=e%i,offset=-.5\n%s" % (n + 1, i)
+        "*shell section,composite,elset=e%i,offset=-.5\n%s" % (n + 1, i)
         for n, i in enumerate(blx)
     )
     buf += comps
 
     loadcases = get_loadcases(mesh)
+
+    # print(loadcases)
 
     # write a full ccx file for each loadcase, assuming parallel execution
     if args.single:
