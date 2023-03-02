@@ -5,6 +5,8 @@ import argparse
 import numpy as np
 from ruamel.yaml import YAML
 import re
+import fire
+import os
 
 
 def flowlist(listoflists):
@@ -42,11 +44,11 @@ def load_airfoil(af):
     return name, np.loadtxt(af, skiprows=offset).tolist()
 
 
-def load_airfoils(afs):
+def load_airfoils(afs, prefix=""):
     """Load a list of airfoils from a dictionary of xfoil formated text files."""
     dct = {}
     for i in afs:
-        name, xy = load_airfoil(afs[i])
+        name, xy = load_airfoil(os.path.join(prefix, afs[i]))
         dct[i] = {"xy": flowlist(xy)}
         dct[i]["name"] = name
         dct[i]["path"] = afs[i]
@@ -55,17 +57,22 @@ def load_airfoils(afs):
     return dct
 
 
-def import_linked_yml(yaml_file):
+def yaml_make_portable(yaml_file):
+    """Import a yaml file and all linked files, and write to a _portable version of itself.
+
+    :param yaml_file: path to yaml file
+    :return: None"""
+    prefix = os.path.dirname(yaml_file)
     y = YAML()
 
     d = yaml.round_trip_load(open(yaml_file, "r"), preserve_quotes=True)
 
-    d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"])
+    d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
 
     if type(d["materials"]) == str:
         print(f'loading materials from: {d["materials"]}')
         d["materials"] = yaml.round_trip_load(
-            open(d["materials"], "r"), preserve_quotes=True
+            open(os.path.join(prefix, d["materials"]), "r"), preserve_quotes=True
         )
 
     d["general"]["workdir"] += "_portable"
@@ -77,10 +84,7 @@ def import_linked_yml(yaml_file):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("yaml_file", help="yaml file to load")
-    args = parser.parse_args()
-    import_linked_yml(args.yaml_file)
+    fire.Fire(yaml_make_portable)
 
 
 if __name__ == "__main__":
