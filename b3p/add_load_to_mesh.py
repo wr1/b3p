@@ -1,25 +1,18 @@
 #! /usr/bin/env python3
 
 import numpy as np
-import vtk
-import math
-import copy
 import pyvista
-import yaml
-import argparse
-import scipy.optimize
-from functools import partial
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 
 
 def compute_nodal_forces(nz, target_z, target_moment, fmult=1.0):
-    assert fmult ** 2 == 1
+    assert fmult**2 == 1
     loaded = np.zeros_like(nz).astype(bool)
     force = np.zeros_like(nz)
     for i in reversed(list(zip(target_z, target_moment))):
         # compute the moment coming from the previously applied forces
         initial_moment = ((nz - i[0]) * fmult * force * loaded).sum()
-        # get the nodes that are outboard from this point, but have not had a load applied yet 
+        # get the nodes that are outboard from this point, but have not had a load applied yet
         rel_nodes = (nz > i[0]) & (loaded == 0)
         # compute distance for these nodes
         dz = (nz - i[0]) * rel_nodes
@@ -36,23 +29,15 @@ def compute_nodal_forces(nz, target_z, target_moment, fmult=1.0):
     return force, zpl, moment
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("yaml")
-    p.add_argument("grid")
-    args = p.parse_args()
-
-    yml = args.yaml
-    gridname = args.grid
-
-    config = yaml.load(open(yml, "r"), Loader=yaml.CLoader)
+def add_load_to_mesh(config, gridname, plotfile=None):
     grid = pyvista.UnstructuredGrid(gridname)
 
-    fig, ax = pyplot.subplots(2, 1)
+    if plotfile:
+        fig, ax = plt.subplots(2, 1, figsize=(12, 10))
 
     lds = config["loads"]
     for i in lds:
-        print(f"loadcase {i}")
+        print(f"** loadcase {i}")
         # get applicable nodes
         for n, j in enumerate(config["loads"][i]["apply"]):
             key, [mn, mx] = j, config["loads"][i]["apply"][j]
@@ -76,24 +61,27 @@ def main():
         fx, zmy, bmy = compute_nodal_forces(nz, z, my, fmult=1.0)
         fy, zmx, bmx = compute_nodal_forces(nz, z, mx, fmult=-1.0)
 
-        ax[0].plot(zmy, bmy, label="my moment backcalc from forces ")
-        ax[0].plot(z, my, "o", label="my moment target ")
-        ax[0].plot(zmx, bmx, label="mx moment backcalc from forces ")
-        ax[0].plot(z, mx, "o", label="mx moment target ")
-        ax[0].legend(loc="best")
-        ax[1].plot(nz, fx, label="fx, sum=%.2f" % fx.sum())
-        ax[1].plot(nz, fy, label="fy, sum=%.2f" % fy.sum())
-        ax[1].legend(loc="best")
+        if plotfile:
+            ax[0].plot(zmy, bmy, label="my moment backcalc from forces ")
+            ax[0].plot(z, my, "o", label="my moment target ")
+            ax[0].plot(zmx, bmx, label="mx moment backcalc from forces ")
+            ax[0].plot(z, mx, "o", label="mx moment target ")
+            ax[0].legend(loc="best")
+            ax[1].plot(nz, fx, label="fx, sum=%.2f" % fx.sum())
+            ax[1].plot(nz, fy, label="fy, sum=%.2f" % fy.sum())
+            ax[1].legend(loc="best")
 
         force_vector = np.zeros_like(grid.points)
         force_vector[loaded_node_ids, 0] = fx
         force_vector[loaded_node_ids, 1] = fy
-        print(i)
         grid.point_data[f"lc_{i}"] = force_vector
 
     print(f"writing loadcases to grid {gridname}")
     grid.save(gridname)
-    pyplot.savefig("load_output.png")
+
+    if plotfile:
+        fig.savefig(plotfile)
+    return grid
 
 
 if __name__ == "__main__":

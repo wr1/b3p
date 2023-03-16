@@ -6,7 +6,13 @@ help: ## Show this help
 
 
 YML = blade_test_portable.yml
-TMP= temp_portable
+TMP= temp_b50_portable
+
+portable: ## make self contained yaml file 
+	b3p_yml_portable blade_test.yml 
+
+clean: ## remove all temporary files
+	rm -rf $(TMP)
 
 geom: ## create blade shell geometry (no shearwebs)
 	b3p_blade_geometry $(YML) 
@@ -18,12 +24,13 @@ plybook: ## create a plybook out of slab definition
 	b3p_plybook $(YML) --out $(TMP)/plybook.pck
 
 drape: ## drape the shell and the shear web
-	b3p_drape $(TMP)/plybook.pck $(TMP)/test_blade_web.vtp --key shell  --out $(TMP)/test_blade_shell1.vtu 
+	b3p_drape $(TMP)/plybook.pck $(TMP)/test_blade_web.vtp --key shell  --out $(TMP)/test_blade_web.vtu 
 	b3p_drape $(TMP)/plybook.pck $(TMP)/test_blade_w4.vtp --key web4  --out $(TMP)/test_blade_w04.vtu 
 	b3p_drape $(TMP)/plybook.pck $(TMP)/test_blade_w3.vtp --key web3  --out $(TMP)/test_blade_w03.vtu 
+	b3p_drape $(TMP)/plybook.pck $(TMP)/test_blade_w5.vtp --key web5  --out $(TMP)/test_blade_w05.vtu 
 
 combine: ## add the meshes together 
-	b3p_meshcombine $(TMP)/test_blade_shell1.vtu  $(TMP)/test_blade_w04.vtu $(TMP)/test_blade_w03.vtu --out $(TMP)/joinedup_mesh.vtu
+	b3p_meshcombine $(TMP)/test_blade_web.vtu $(TMP)/test_blade_w05.vtu $(TMP)/test_blade_w04.vtu $(TMP)/test_blade_w03.vtu --out $(TMP)/joinedup_mesh.vtu
 
 # $(TMP)/test_blade_w04.vtu
 mesh2d: ## extract 2D meshes 

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import argparse
+import fire
 import numpy as np
 from ruamel import yaml
 import os
@@ -20,7 +20,7 @@ def plyify(r, t, ply_thickness, reverse=False):
         ply_thickness (float): thickness of the plies
         reverse (bool): flag determining whether the plies are numbered from the
             top or bottom of the stack
-            returns:    list of plies in the form [rmin, rmax]"""
+        returns:    list of plies in the form [rmin, rmax]"""
     active = []
     done = []
     np = len(r)
@@ -47,6 +47,14 @@ def ply_stack(r, t, t_ply=1.0, reverse=False, subdivisions=5000, material=11):
     plies, note that it rounds down in thickness (if the last ply does not fit
     in the thickness it does not go on), so if you have thick plies,
     make sure that the mm thickness is slightly up from a whole number of plies.
+
+    :param r: radius distribution
+    :param t: thickness distribution
+    :param t_ply: thickness of the plies
+    :param reverse: flag determining whether the plies are numbered from the
+        top or bottom of the stack
+    :param subdivisions: number of subdivisions
+    :param material: material number
     """
     x = np.linspace(min(r), max(r), subdivisions)
     y = np.interp(x, list(r), t)
@@ -55,7 +63,12 @@ def ply_stack(r, t, t_ply=1.0, reverse=False, subdivisions=5000, material=11):
 
 
 def coreblock(r, t, subdivisions=200, material=11):
-    """Make a thickness distribution into a block divisions."""
+    """Make a thickness distribution into a block divisions.
+
+    :param r: radius distribution
+    :param t: thickness distribution
+    :param subdivisions: number of subdivisions
+    :param material: material number"""
     assert len(r) == len(t)
     lr = len(r)
     x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
@@ -74,7 +87,13 @@ def coreblock(r, t, subdivisions=200, material=11):
 
 def number_stack(stack, splitstack, key, increment):
     """Create ply numbering for the plies in the stack, depends on the start key
-    and increment as well as the above/below ratio (splitstack)."""
+    and increment as well as the above/below ratio (splitstack).
+
+    :param stack: list of plies
+    :param splitstack: ratio of above/below plies
+    :param key: start key from top and bottom
+    :param increment: increment, number by which to increment the key (can be used to interleave plies)
+    """
     sp = np.nan_to_num(splitstack.astype(float))
     if sp.sum() != 1.0:
         exit(f"sum {splitstack} not 1.")
@@ -90,9 +109,13 @@ def number_stack(stack, splitstack, key, increment):
 
 
 def get_coverage(slab, datums, rr):
-    """Get the coverage of the slab and insert the datums."""
+    """Get the coverage of the slab and insert the datums.
+    :param slab: slab dictionary
+    :param datums: datums dictionary
+    :param rr: radius distribution"""
     assert "cover" in slab
     cov = slab["cover"]
+
     if type(cov) != str:
         return cov
     for i in datums:
@@ -125,6 +148,11 @@ def add_bondline_material(matdb, material_map):
 
 
 def export_matdb(blade, material_map):
+    """Export the material database to the working directory
+
+    :param blade: blade dictionary
+    :param material_map: material map
+    """
     if "materials" in blade:
         if type(blade["materials"]) == str:
             mdb = blade["materials"]
@@ -156,7 +184,15 @@ def export_matdb(blade, material_map):
     print(f"written material map to {matmap}")
 
 
-def lamplan2plies(blade):
+def export_plybook(stacks, outputfile):
+    pickle.dump(stacks, open(outputfile, "wb"))
+    print(f"written to {outputfile}")
+
+
+def lamplan2plies(blade, outputfile="__plybook.pck"):
+    """Convert a lamplan to a list of plies.
+
+    params: blade (dict): blade dictionary"""
     root_radius = blade["planform"]["z"][0][1]
 
     tip_radius = blade["planform"]["z"][-1][1]
@@ -232,29 +268,25 @@ def lamplan2plies(blade):
             }
         )
     export_matdb(blade, material_map)
+    export_plybook(
+        allstacks, outputfile=os.path.join(blade["general"]["workdir"], outputfile)
+    )
     return allstacks
+
+
+def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
+    """Convert a lamplan to a list of plies.
+    :param yamlfile: lamplan yaml file
+    :param outputfile: output file name"""
+    blade = yaml.load(open(yamlfile, "r"), Loader=yaml.CLoader)
+
+    allstacks = lamplan2plies(blade, outputfile)
+
+    print(f"written plydrape to {outputfile}")
 
 
 def main():
     """Main function for the plybook command line tool, reads the yaml file and uses the laminate block.
     Each of the laminate blocks is then split up into plies and blocks and written to a .pck file for use in draping
     """
-    parser = argparse.ArgumentParser(
-        description="Split up the slab based laminate plan into plies (for laminae) and blocks (for core materials), write to a .pck file for use in draping"
-    )
-    parser.add_argument("yaml", help="Laminate plan yaml file")
-    parser.add_argument("--out", default="__lamplan.pck", help="Output file name")
-    args = parser.parse_args()
-
-    blade = yaml.load(open(args.yaml, "r"), Loader=yaml.CLoader)
-
-    allstacks = lamplan2plies(blade)
-
-    of = args.out
-    pickle.dump(allstacks, open(of, "wb"))
-
-    print(f"written plydrape to {of}")
-
-
-if __name__ == "__main__":
-    main()
+    fire.Fire(slab2plybook)

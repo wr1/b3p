@@ -577,8 +577,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
 
     out.GetCellData().AddArray(ang2)
 
-    # mkeys = sorted({mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())})
-
     if verbose:
         write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
 
@@ -589,7 +587,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     wrt.SetInputData(out)
     wrt.SetFileName(of)
     wrt.Write()
-    # out.save(of)
     print(f"# written vtk to {of}")
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False

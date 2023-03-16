@@ -166,7 +166,7 @@ class web:
 
     def write_mesh(self, vtpfile):
         self.mesh.save(vtpfile)
-        print(f"# wrote mesh to {vtpfile}")
+        print(f"** wrote mesh to {vtpfile}")
 
     def mesh(self, mesh, n_cells=20):
         """
@@ -186,4 +186,3 @@ class web:
         self.mesh = pv.PolyData(points, faces=cells)
         for i in pdata:
             self.mesh.point_data[i] = np.array(pdata[i]).astype(np.float32)
-            # print(self.mesh.point_data[i].dtype)

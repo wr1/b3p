@@ -36,11 +36,9 @@ def combine_meshes(meshes, output_filename):
         # if is_nonzero_array(x.cell_data[j])
     ]
 
-    for i in all_pd + all_cd:
-        if i[0].startswith("is_w"):
-            print(i)
-
-    # print(all_pd, all_cd)
+    # for i in all_pd + all_cd:
+    #     if i[0].startswith("is_w"):
+    #         print(i)
 
     tic = time.time()
 

@@ -5,7 +5,9 @@ import multiprocessing
 
 
 def conv3d_2d(mesh):
-    "hack to translate a mesh to 2D format, which is what fenics/anba needs"
+    """hack to translate a mesh to 2D format, which is what fenics/anba needs
+    :param mesh: path to the mesh file
+    """
     x = open(mesh, "r").read()
     nb = x[: x.find("Topology")]
     rest = x[x.find("Topology") :]
@@ -16,6 +18,7 @@ def conv3d_2d(mesh):
 
 
 def vtp2xdmf(vtp):
+    """convert a vtp file to xdmf format and translate to 2D"""
     assert vtp.endswith(".vtp")
     mesh = pv.read(vtp)
     tri = mesh.triangulate()  # fenics doesn't do mixed element types

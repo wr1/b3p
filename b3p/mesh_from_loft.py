@@ -55,14 +55,13 @@ def build_mesh(
     )
 
     for i in weblist:
-        # print(i.name)
         blade.set_web(i)
 
     blade.build_interpolated_sections(radii=radii, interpolation_type=2)
 
     # mesh with a given number of points around the circumference
     blade.mesh(n_ch_points, panel_mesh_scale=panel_mesh_scale)
-    print(f"# writing to {outfile}")
     blade.write_mesh(outfile)
-    print("# writing mesh done")
+    print(f"** wrote mesh to {outfile}")
+
     return blade

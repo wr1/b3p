@@ -8,18 +8,24 @@ def write_web(
     loc,
     normal,
     mesh,
-    name,
     rootcut=0.0,
     tipcut=100.0,
     tip=0.0,
     zone="d_rel_dist_from_te",
 ):
     """
-    routine that slices a plane through a mesh, and reports back a relative
+    Slices a plane through a mesh, and reports back a relative
     coordinate of top and bottom lines. This is used to represent geometrically straight entities
     in 3D as coordinates in local systems defined per section
+
+    :param loc: location of the plane
+    :param normal: normal of the plane
+    :param mesh: mesh to slice
+    :param rootcut: cut the root of the web
+    :param tipcut: cut the tip of the web
+    :param tip: tip of the blade
     """
-    print("reading", name)
+
     rd = vtk.vtkXMLPolyDataReader()
     rd.SetFileName(mesh)
     rd.Update()
@@ -82,15 +88,12 @@ def write_web(
     if tip > out[-1][0]:
         out.append((tip, out[-1][1], out[-1][2], out[-1][3]))
 
-    open(f"{name}.txt", "wb").write(str(out).encode("utf-8"))
-    open(f"{name}_points.txt", "wb").write(str([lwp, wwp]).encode("utf-8"))
     return out
 
 
 def build_webs(mesh, webs, prefix="__dum"):
     web_meshes = {}
     for i in webs:
-        name = f"{prefix}_{i}"
         normal = (0, 1, 0)
 
         if "orientation" in webs[i]:
@@ -100,7 +103,6 @@ def build_webs(mesh, webs, prefix="__dum"):
             np.array(webs[i]["origin"]),
             normal,
             mesh,
-            name=name,
             rootcut=webs[i]["z_start"],
             tipcut=webs[i]["z_follow_blade"],
             tip=webs[i]["z_end"],

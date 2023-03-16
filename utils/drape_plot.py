@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
 import pyvista as pv
-import argparse
 from matplotlib import pyplot as plt
 import numpy as np
+import fire
 
 
 def plot_thresholded(sm, ax):
@@ -14,7 +14,6 @@ def plot_thresholded(sm, ax):
     mat = [int(sm.cell_data[i][:, 0].max()) for i in pk]
     pt = np.stack(sm.cell_data[i][:, 1] for i in pk)
 
-    # f, ax = plt.subplots(1, 1, figsize=(20, 12))
     base = np.zeros(pt.shape[1])
     for i in range(pt.shape[0]):
         ax.fill_between(
@@ -32,19 +31,14 @@ def plot_thresholded(sm, ax):
     temp = dict(zip(labels, handles))
     ax.legend(temp.values(), temp.keys(), loc="best")
 
-    # return ax
-    # f.savefig("__temp.png")
 
+def drape_plot(mesh, output="__temp.png"):
+    """plot the cross section of the laminate plan on (lengthwise) slices of the blade
 
-if __name__ == "__main__":
-    # parse the command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("mesh", help="path to vtu file")
-    parser.add_argument("--out", help="path to output file", default="__temp.png")
-    args = parser.parse_args()
-
+    :param mesh: path to the mesh in vtu format, needs to have ply_ arrays in cell data
+    """
     # build the blade mesh
-    mesh = pv.read(args.mesh)
+    mesh = pv.read(mesh)
 
     fig, ax = plt.subplots(4, 1, figsize=(40, 30))
 
@@ -59,7 +53,6 @@ if __name__ == "__main__":
         scalars="d_te",
         isosurfaces=[0.025],
     )
-    print(cnt)
 
     plot_thresholded(cnt, ax[1])
 
@@ -77,5 +70,16 @@ if __name__ == "__main__":
 
     plot_thresholded(cnt, ax[3])
 
-    fig.savefig(args.out)
-    print(f"written output to {args.out}")
+    fig.savefig(output)
+    print(f"written output to {output}")
+
+
+def test_drape_plot():
+    drape_plot(
+        "temp_portable/test_blade_shell.vtu",
+        output="data/blade_0001.png",
+    )
+
+
+if __name__ == "__main__":
+    fire.Fire(drape_plot)
