@@ -18,6 +18,7 @@ import numpy as np
 import shutil
 import scipy as sp
 from copy import deepcopy
+import glob
 
 
 class cli:
@@ -92,24 +93,42 @@ class cli:
         print(self)
         return self
 
-    def ccx(self):
+    def ccxprep(
+        self,
+        merge_adjacent_layers=True,
+        single_step=True,
+        quadratic=True,
+        force_isotropic=False,
+        zeroangle=False,
+        add_centers=False,
+    ):
         grid = add_load_to_mesh.add_load_to_mesh(self.dct, f"{self.prefix}_joined.vtu")
         mesh2ccx.mesh2ccx(
-            f"{self.prefix}_joined.vtu",
+            # f"{self.prefix}_joined.vtu",
+            grid,
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
-            merge_adjacent_layers=True,
-            single_step=True,
-            quadratic=True,
+            merge_adjacent_layers=merge_adjacent_layers,
+            single_step=single_step,
+            quadratic=quadratic,
+            force_isotropic=force_isotropic,
+            zeroangle=zeroangle,
+            add_centers=add_centers,
         )
         return self
 
-    def all(self):
-        """Run all steps, geometry, mesh, drape, mesh2d"""
+    # def ccxrun(self):
+
+    #     # os.system(f"ccx {self.prefix}_ccx")
+    #     return self
+
+    def build(self):
+        """Build the whole model, geometry, mesh, drape"""
         self.geometry()
         self.mesh()
         self.drape()
-        self.mesh2d(z_start=0.0001, z_end=100, nsec=50)
+        # self.mesh2d(z_start=0.0001, z_end=100, nsec=50)
+        return self
 
 
 def main():
