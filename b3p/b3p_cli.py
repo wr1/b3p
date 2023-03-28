@@ -10,6 +10,7 @@ from b3p import (
     mesh_2d,
     add_load_to_mesh,
     mesh2ccx,
+    frd2vtu,
 )
 from utils import yml_portable
 import os
@@ -19,6 +20,8 @@ import shutil
 import scipy as sp
 from copy import deepcopy
 import glob
+import pprint
+import multiprocessing
 
 
 class cli:
@@ -96,13 +99,16 @@ class cli:
     def ccxprep(
         self,
         merge_adjacent_layers=True,
-        single_step=True,
+        single_step=False,
         quadratic=True,
         force_isotropic=False,
         zeroangle=False,
         add_centers=False,
+        export_plygroups=False,
     ):
-        grid = add_load_to_mesh.add_load_to_mesh(self.dct, f"{self.prefix}_joined.vtu")
+        grid = add_load_to_mesh.add_load_to_mesh(
+            self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
+        )
         mesh2ccx.mesh2ccx(
             # f"{self.prefix}_joined.vtu",
             grid,
@@ -114,13 +120,27 @@ class cli:
             force_isotropic=force_isotropic,
             zeroangle=zeroangle,
             add_centers=add_centers,
+            export_plygroups=export_plygroups,
         )
         return self
 
-    # def ccxrun(self):
+    def ccxsolve(self, wildcard="", nproc=3):
+        """Run ccx on all inp files in workdir that match wildcard"""
+        inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
+        pprint.pprint(inps, indent=4)
+        p = multiprocessing.Pool(nproc)
+        p.map(os.system, [f"ccx {inp.replace('.inp','')}" for inp in inps])
+        p.close()
+        return self
 
-    #     # os.system(f"ccx {self.prefix}_ccx")
-    #     return self
+    def ccxpost(self, wildcard="", nproc=3):
+        """Postprocess ccx results"""
+        frds = glob.glob(f"{self.prefix}*{wildcard}*.frd")
+        p = multiprocessing.Pool(nproc)
+        p.map(frd2vtu.frd2vtu, frds)
+        p.close()
+
+        return self
 
     def build(self):
         """Build the whole model, geometry, mesh, drape"""
