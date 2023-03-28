@@ -25,6 +25,8 @@ def build_mesh(
         panel_mesh_scale = []
     sections = pickle.load(open(pckfile, "rb"))
 
+    # print(web_inputs)
+
     weblist = [
         geometry_web.web(
             points=web_intersections[i],
@@ -32,6 +34,7 @@ def build_mesh(
             web_tip=web_inputs[i]["z_end"],
             web_name=f"{prefix}_{i}.txt",
             coordinate=i,
+            # normal=web_inputs[i]["normal"] if "normal" in web_inputs[i] else (0, 1, 0),
             flip_normal=(web_inputs[i]["origin"][1] > 0),
         )
         for i in web_inputs

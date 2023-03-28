@@ -81,6 +81,7 @@ def add_load_to_mesh(config, gridname, plotfile=None):
 
     if plotfile:
         fig.savefig(plotfile)
+        print(f"** written load plot to {plotfile}")
     return grid
 
 

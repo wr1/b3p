@@ -6,7 +6,7 @@ from io import StringIO
 import multiprocessing
 import numpy as np
 import vtk
-import argparse
+import fire
 import time
 
 
@@ -86,22 +86,22 @@ def load(inp):
     return ("other", None)
 
 
-def main():
-    p = argparse.ArgumentParser(
-        description="Fast translate of frd into vtu file using multiprocessing and pandas parsers, only tested on hex20"
-    )
-    p.add_argument("frd", help="Input file")
-    p.add_argument("--output", default="__temp.vtu", help="Output file name")
+def frd2vtu(frd, output=None, multiprocessing=False):
+    if not output:
+        output = frd.replace(".frd", ".vtu")
 
     tic = time.perf_counter()
-    args = p.parse_args()
-    x = open(args.frd, "r").read()
+    # args = p.parse_args()
+    x = open(frd, "r").read()
     # find all block endings
     min3 = [0] + findall("\n -3", x)
 
     # pass the blocks to a process each
-    p = multiprocessing.Pool()
-    o = dict(p.map(load, [x[i[0] : i[1]] for i in zip(min3, min3[1:])]))
+    if multiprocessing:
+        p = multiprocessing.Pool()
+        o = dict(p.map(load, [x[i[0] : i[1]] for i in zip(min3, min3[1:])]))
+    else:
+        o = dict([load(x[i[0] : i[1]]) for i in zip(min3, min3[1:])])
 
     # create a map between ccx node id and vtk
     idmap = pd.DataFrame(o["nodes"].index, o["nodes"]["index"])
@@ -146,12 +146,12 @@ def main():
             + 6.0 * (xy**2 + yz**2 + zx**2)
         ) ** 0.5
 
-    ogrid.save(args.output)
+    ogrid.save(output)
 
-    print("written to ", args.output)
+    print(f"** written to {output}")
     toc = time.perf_counter()
     print("time for translation %fs" % (toc - tic))
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(frd2vtu)  # main()
