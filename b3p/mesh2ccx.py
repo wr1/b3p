@@ -23,9 +23,12 @@ def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=
             plies.append([j[1] * 1e-3, j[0]])
 
     if zero_angle:
-        return "".join("%f,,m%i,0\n" % tuple(i) for i in plies)
+        return (len(plies), "".join("%f,,m%i,0\n" % tuple(i) for i in plies))
     else:
-        return "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies)
+        return (
+            len(plies),
+            "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies),
+        )
 
 
 def material_db_to_ccx(materials, matmap=None, force_iso=False):
@@ -56,7 +59,9 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
             material_properties = mat_db[mm_inv[int(i)]]
 
             # print(material_properties)
-            matblock += f'** material: {material_properties["name"]}\n'
+            matblock += (
+                f'** material: {mm_inv[int(i)]} {i} {material_properties["name"]}\n'
+            )
             # matblock += f"** {str(material_properties)}\n"
 
             if (
@@ -102,7 +107,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
 
             else:
                 print(material_properties["name"], "is assumed to be isotropic")
-                print(material_properties)
+                # print(material_properties)
                 nu = min(
                     0.45,
                     max(
@@ -238,6 +243,19 @@ def orientation_buffer(grid, add_centers=False):
 
 def get_loadcases(mesh, multiplier=1.0):
     loadcases = {}
+
+    if mesh.celltypes[0] == 23:
+        conn = mesh.cell_connectivity.reshape(
+            (
+                mesh.GetNumberOfCells(),
+                int(mesh.cell_connectivity.shape[0] / mesh.GetNumberOfCells()),
+            )
+        )
+        midsides = conn[:, 4:8].flatten()
+        for i in mesh.point_data:
+            if i.startswith("lc_"):
+                mesh.point_data[i][midsides] *= 0.0
+
     for i in mesh.point_data:
         if i.startswith("lc_"):
             print(f"loadcase {i}")
@@ -278,6 +296,7 @@ def mesh2ccx(
     add_centers=False,
     force_isotropic=False,
     export_hyperworks=False,
+    export_plygroups=False,
 ):
     """
     Export a grid to ccx input file
@@ -293,7 +312,9 @@ def mesh2ccx(
     :param force_isotropic (bool, optional): _description_. Defaults to False.
     :return: _description_
     """
-    gr = pv.read(grid).threshold(value=(1e-6, 1e9), scalars="thickness")
+    if type(grid) == str:
+        grid = pv.read(grid)
+    gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
     if quadratic:
@@ -321,9 +342,12 @@ def mesh2ccx(
 
     plygroups, df = compute_ply_groups(mesh, "ply_")
 
-    buf += plygroups
+    slabgroups = compute_slab_groups(mesh, "slab_thickness_")
 
-    buf += compute_slab_groups(mesh, "slab_thickness_")
+    if export_plygroups:
+        buf += plygroups + slabgroups
+
+    # buf += compute_slab_groups(mesh, "slab_thickness_")
 
     plykeys = [i for i in mesh.cell_data if i.startswith("ply_")]
 
@@ -344,13 +368,26 @@ def mesh2ccx(
         for i in range(plydat.shape[1])
     ]
 
+    nplies = np.array([i[0] for i in blx])
+
+    nplmax = nplies.max()
+    npxid = np.where(nplies == nplmax)[0]
+    print(npxid)
+    print(f"max number of plies: {nplmax}")
+    print(f"associated stack \n{ blx[npxid[0]][1]}")
+    # .replace('\n','\n\t')
+    # # print(blx)
+
+    # for i in blx:
+    #     print(i, len(i))
+
     toc = time.perf_counter()
     print("** time spent creating shell sections %f" % (toc - tic))
 
     comps = "".join(
         f"*shell section,composite,elset=e{n+1},offset=-.5"
         + (f",orientation=or{n+1}\n" if zeroangle else "\n")
-        + i
+        + i[1]
         for n, i in enumerate(blx)
     )
     buf += comps
@@ -377,3 +414,7 @@ def mesh2ccx(
 
 def main():
     fire.Fire(mesh2ccx)
+
+
+if __name__ == "__main__":
+    main()
