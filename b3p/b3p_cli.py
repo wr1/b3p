@@ -18,6 +18,7 @@ import numpy as np
 import shutil
 import scipy as sp
 from copy import deepcopy
+from ruamel import yaml
 
 
 class cli:
@@ -45,6 +46,8 @@ class cli:
     def geometry(self):
         """Build blade geometry based on yaml input file"""
         build_blade_geometry.build_blade_geometry(self.dct)
+        y = yaml.YAML()
+        y.dump(self.dct, open(f"{self.prefix}_portable.yml", "w"))
         return self
 
     def mesh(self):
