@@ -86,7 +86,7 @@ def load(inp):
     return ("other", None)
 
 
-def frd2vtu(frd, output=None, multiprocessing=False):
+def frd2vtu(frd, output=None, multi=False):
     if not output:
         output = frd.replace(".frd", ".vtu")
 
@@ -97,7 +97,7 @@ def frd2vtu(frd, output=None, multiprocessing=False):
     min3 = [0] + findall("\n -3", x)
 
     # pass the blocks to a process each
-    if multiprocessing:
+    if multi:
         p = multiprocessing.Pool()
         o = dict(p.map(load, [x[i[0] : i[1]] for i in zip(min3, min3[1:])]))
     else:
