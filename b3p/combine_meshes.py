@@ -33,12 +33,7 @@ def combine_meshes(meshes, output_filename):
         (j, x.cell_data[j].shape, x.cell_data[j].dtype)
         for x in meshes
         for j in x.cell_data.keys()
-        # if is_nonzero_array(x.cell_data[j])
     ]
-
-    # for i in all_pd + all_cd:
-    #     if i[0].startswith("is_w"):
-    #         print(i)
 
     tic = time.time()
 
@@ -64,7 +59,11 @@ def combine_meshes(meshes, output_filename):
 
     toc1 = time.time()
 
-    out = cmeshes[0].merge(cmeshes[1:])
+    out = (
+        cmeshes[0]
+        .merge(cmeshes[1:])
+        .compute_cell_quality(quality_measure="aspect_ratio")
+    )
 
     toc2 = time.time()
 

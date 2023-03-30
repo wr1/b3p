@@ -11,6 +11,7 @@ from b3p import (
     add_load_to_mesh,
     mesh2ccx,
     frd2vtu,
+    drape_summary,
 )
 from utils import yml_portable
 import os
@@ -151,6 +152,11 @@ class cli:
         self.mesh()
         self.drape()
         # self.mesh2d(z_start=0.0001, z_end=100, nsec=50)
+        return self
+
+    def mass(self):
+        """Calculate mass of the blade, requires drape."""
+        drape_summary.drape_summary(f"{self.prefix}_joined.vtu")
         return self
 
 
