@@ -14,9 +14,9 @@ def load_mm(matmap):
 
     :param matmap: path to the material map file"""
     mm = json.load(open(matmap))
-    mdb = yaml.load(
-        open(os.path.join(os.path.dirname(matmap), mm["matdb"])), Loader=yaml.FullLoader
-    )
+    mdbpath = os.path.join(os.path.dirname(matmap), mm["matdb"])
+    mdb = yaml.load(open(mdbpath, "r"), Loader=yaml.FullLoader)
+    print(f"Loaded material database from {mdbpath}")
     return mm, mdb
 
 

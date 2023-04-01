@@ -65,8 +65,9 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
             # matblock += f"** {str(material_properties)}\n"
 
             if (
-                "vf" in material_properties
-                or "C" in material_properties
+                # "vf" in material_properties
+                # or
+                "C" in material_properties
                 and not force_iso
             ):
                 print(material_properties["name"], "is assumed to be orthotropic")
@@ -84,7 +85,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 D[2, 5] = C[2, 3]
                 D[3, 3] = C[5, 5]
                 D[5, 5] = C[3, 3]
-                D *= 1e6
+                # D *= 1e6
                 matblock += (
                     f"{D[0,0]:.4g},{D[0,1]:.4g},{D[1,1]:.4g},"
                     + f"{D[0,2]:.4g},{D[1,2]:.4g},{D[2,2]:.4g},"
@@ -117,9 +118,9 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                         else material_properties["nu12"],
                     ),
                 )
-                E = 1e6 * float(
-                    material_properties["tEx"]
-                    if "tEx" in material_properties
+                E = float(
+                    material_properties["Ex"]
+                    if "Ex" in material_properties
                     else material_properties["E"]
                 )
                 matblock += "** isotropic material\n"
