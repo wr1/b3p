@@ -33,7 +33,7 @@ def add_load_to_mesh(config, gridname, plotfile=None):
     grid = pyvista.UnstructuredGrid(gridname)
 
     if plotfile:
-        fig, ax = plt.subplots(2, 1, figsize=(12, 10))
+        fig, ax = plt.subplots(2, 1, figsize=(18, 13))
 
     lds = config["loads"]
     for i in lds:
@@ -62,10 +62,10 @@ def add_load_to_mesh(config, gridname, plotfile=None):
         fy, zmx, bmx = compute_nodal_forces(nz, z, mx, fmult=-1.0)
 
         if plotfile:
-            ax[0].plot(zmy, bmy, label="my moment backcalc from forces ")
-            ax[0].plot(z, my, "o", label="my moment target ")
-            ax[0].plot(zmx, bmx, label="mx moment backcalc from forces ")
-            ax[0].plot(z, mx, "o", label="mx moment target ")
+            ax[0].plot(zmy, bmy, label=None)
+            ax[0].plot(z, my, "o", label=f"my lc {i}")
+            ax[0].plot(zmx, bmx, label=None)
+            ax[0].plot(z, mx, "o", label=f"mx ls {i}")
             ax[0].legend(loc="best")
             ax[1].plot(nz, fx, label="fx, sum=%.2f" % fx.sum())
             ax[1].plot(nz, fy, label="fy, sum=%.2f" % fy.sum())

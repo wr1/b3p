@@ -6,15 +6,21 @@ import fire
 
 
 def visualize_slab_thickness(vtu_file, output_image=None):
+    """Create a plot with the slab thicknesses from a VTU file displayed on a mesh.
+
+    Args:
+        vtu_file (_type_): grid with laminates
+        output_image (_type_, optional): _description_. Defaults to None.
+    """
     if output_image is None:
-        output_image = vtu_file.replace(".vtu", ".png")
+        output_image = vtu_file.replace(".vtu", "_slabs.png")
     # Read the unstructured grid from the VTU file
     grid = pv.read(vtu_file)
 
     egrid = grid.extract_geometry()
 
     # Extract the slab arrays
-    slab_arrays = [name for name in grid.cell_arrays.keys() if name.startswith("slab_")]
+    slab_arrays = [name for name in grid.cell_data.keys() if name.startswith("slab_")]
 
     if not slab_arrays:
         print("No arrays with names starting with 'slab_' were found in the VTU file.")
@@ -30,16 +36,22 @@ def visualize_slab_thickness(vtu_file, output_image=None):
     # Loop over the slab arrays and add them to the plotter with the appropriate offset and rotation
     for i, slab_name in enumerate(slab_arrays):
         slab_grid = egrid.copy(deep=True)
-        slab_grid.cell_arrays[slab_name] = grid.cell_arrays[slab_name]
+        slab_grid.cell_data[slab_name] = grid.cell_data[slab_name]
         # Set the active scalars to the current slab array
-        slab_grid.rotate_y(90)  # Rotate the grid around the y-axis by 90 degrees
+        slab_grid.rotate_y(
+            90, inplace=True
+        )  # Rotate the grid around the y-axis by 90 degrees
 
         if "web" in slab_name:
-            non_zero_mask = slab_grid.cell_arrays[slab_name] != 0
+            non_zero_mask = slab_grid.cell_data[slab_name] != 0
             slab_grid = slab_grid.extract_cells(non_zero_mask)
-            slab_grid.rotate_x(90)  # Rotate the grid around the y-axis by 90 degrees
+            slab_grid.rotate_x(
+                90, inplace=True
+            )  # Rotate the grid around the y-axis by 90 degrees
 
-        slab_grid.translate([0, i * x_offset, 0])  # Apply horizontal stacking
+        slab_grid.translate(
+            [0, i * x_offset, 0], inplace=True
+        )  # Apply horizontal stacking
 
         plotter.add_mesh(
             slab_grid,
