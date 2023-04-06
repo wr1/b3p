@@ -114,7 +114,6 @@ class cli:
             self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
         )
         mesh2ccx.mesh2ccx(
-            # f"{self.prefix}_joined.vtu",
             grid,
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
@@ -130,10 +129,18 @@ class cli:
 
     def ccxsolve(self, wildcard="", nproc=3):
         """Run ccx on all inp files in workdir that match wildcard"""
+
         inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
-        pprint.pprint(inps, indent=4)
+        inps_to_run = []
+        for inp in inps:
+            frd_file = inp.replace(".inp", ".frd")
+            if not os.path.exists(frd_file):
+                inps_to_run.append(inp)
+            else:
+                print(f"** Skipping {inp} because {frd_file} exists")
+        # pprint.pprint(inps, indent=4)
         p = multiprocessing.Pool(nproc)
-        p.map(os.system, [f"ccx {inp.replace('.inp','')}" for inp in inps])
+        p.map(os.system, [f"ccx {inp.replace('.inp','')}" for inp in inps_to_run])
         p.close()
         return self
 
@@ -156,7 +163,8 @@ class cli:
 
     def mass(self):
         """Calculate mass of the blade, requires drape."""
-        drape_summary.drape_summary(f"{self.prefix}_joined.vtu")
+        mass_table = drape_summary.drape_summary(f"{self.prefix}_joined.vtu")
+        mass_table.to_csv(f"{self.prefix}_mass.csv")
         return self
 
 
