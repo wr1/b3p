@@ -67,6 +67,7 @@ def drape_summary(vtu, matmap=None):
     print(f"Total volume backcheck: {total_volume.sum():.4f} m^3")
     sum_mass_mom = mass_moment.sum()
     print(f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom/dt.sum()['mass']}")
+    return dt
 
 
 if __name__ == "__main__":

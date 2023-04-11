@@ -22,6 +22,11 @@ def is_nonzero_array(arr):
 
 
 def combine_meshes(meshes, output_filename):
+    """Combine a series of meshes into a single vtu file.
+
+    meshes: list of vtu files
+    output_filename: name of output file
+    """
     meshes = [pv.read(i) for i in meshes]
     # find all the point and cell data arrays
     all_pd = [
