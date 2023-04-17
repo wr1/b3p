@@ -10,7 +10,7 @@ from b3p import (
     mesh_2d,
     add_load_to_mesh,
     mesh2ccx,
-    frd2vtu,
+    ccx2vtu,
     drape_summary,
 )
 from utils import yml_portable
@@ -24,6 +24,8 @@ from ruamel import yaml
 import glob
 import pprint
 import multiprocessing
+import pyvista as pv
+from matplotlib import pyplot as plt
 
 
 class cli:
@@ -138,19 +140,20 @@ class cli:
                 inps_to_run.append(inp)
             else:
                 print(f"** Skipping {inp} because {frd_file} exists")
-        # pprint.pprint(inps, indent=4)
         p = multiprocessing.Pool(nproc)
         p.map(os.system, [f"ccx {inp.replace('.inp','')}" for inp in inps_to_run])
         p.close()
         return self
 
-    def ccxpost(self, wildcard="", nproc=3):
+    def ccxpost(self, wildcard="", nproc=3, nbins=60):
         """Postprocess ccx results"""
-        frds = glob.glob(f"{self.prefix}*{wildcard}*.frd")
-        p = multiprocessing.Pool(nproc)
-        p.map(frd2vtu.frd2vtu, frds)
-        p.close()
-
+        wd = self.dct["general"]["workdir"]
+        post = ccx2vtu.ccx2vtu(wd)
+        post.load_grids()
+        post.tabulate()
+        # plotter = ccxpost.plot_ccx(wd)
+        # plotter.plot3d()
+        # plotter.plot2d(nbins)
         return self
 
     def build(self):

@@ -59,7 +59,7 @@ mesh:
       z_end : 105  
 
   n_web_points : 10
-  n_chordwise_points : 40
+  n_chordwise_points : 60
   coordinates:
     d_te_offset:
       base: d_te
