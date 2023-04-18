@@ -16,15 +16,6 @@ def findall(p, s):
     return [m.start() for m in regex.finditer(p, s, overlapped=True)]
 
 
-# def findall(p, s):
-#     i = s.find(p)
-#     out = [i]
-#     while i != -1:
-#         i = s.find(p, i + 1)
-#         out.append(i)
-#     return out
-
-
 def load_frd(inp):
     if inp.find("PSTEP") != -1:
         start_step_line = inp.find("100CL")
