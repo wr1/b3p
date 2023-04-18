@@ -242,7 +242,7 @@ def orientation_buffer(grid, add_centers=False):
     return buf
 
 
-def get_loadcases(mesh, multiplier=1.0):
+def get_loadcases(mesh, multiplier=1.0, solution="static"):
     loadcases = {}
 
     if mesh.celltypes[0] == 23:
@@ -263,7 +263,10 @@ def get_loadcases(mesh, multiplier=1.0):
             # forces are interpolated to midside nodes, causing the sum of forces to be off,
             # compute a multiplier from the sum of the forces in the linear model here
             multiplier = 1.0  # TODO fix for quadratic meshes # mesh.point_data[i].sum() / mesh.point_data[i].sum()
-            lbuf = f"** {i}\n*step\n*static\n*cload\n"
+            if solution == "static":
+                lbuf = f"** {i}\n*step\n*static\n*cload\n"
+            elif solution == "buckle":
+                lbuf = f"** {i}\n*step\n*buckle\n6\n*cload\n"
             ld = mesh.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
@@ -298,6 +301,7 @@ def mesh2ccx(
     force_isotropic=False,
     export_hyperworks=False,
     export_plygroups=False,
+    solution="static",
 ):
     """
     Export a grid to ccx input file
@@ -376,11 +380,6 @@ def mesh2ccx(
     print(npxid)
     print(f"max number of plies: {nplmax}")
     print(f"associated stack \n{ blx[npxid[0]][1]}")
-    # .replace('\n','\n\t')
-    # # print(blx)
-
-    # for i in blx:
-    #     print(i, len(i))
 
     toc = time.perf_counter()
     print("** time spent creating shell sections %f" % (toc - tic))
@@ -393,7 +392,7 @@ def mesh2ccx(
     )
     buf += comps
     buf += root_clamp(mesh)
-    loadcases = get_loadcases(mesh)
+    loadcases = get_loadcases(mesh, solution=solution)
 
     # write a full ccx file for each loadcase, assuming parallel execution
     if single_step:
