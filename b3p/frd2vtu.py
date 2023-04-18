@@ -9,17 +9,28 @@ import vtk
 import fire
 import time
 
+import regex
+
 
 def findall(p, s):
-    i = s.find(p)
-    out = [i]
-    while i != -1:
-        i = s.find(p, i + 1)
-        out.append(i)
-    return out
+    return [m.start() for m in regex.finditer(p, s, overlapped=True)]
+
+
+# def findall(p, s):
+#     i = s.find(p)
+#     out = [i]
+#     while i != -1:
+#         i = s.find(p, i + 1)
+#         out.append(i)
+#     return out
 
 
 def load_frd(inp):
+    if inp.find("PSTEP") != -1:
+        start_step_line = inp.find("100CL")
+        end_step_line = inp.find("\n", start_step_line)
+        _, solution_type, timestep = inp[start_step_line:end_step_line].split()[:3]
+
     if inp.find("CalculiX") != -1:  # read the nodes
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -54,7 +65,7 @@ def load_frd(inp):
             widths=[3, 10, 12, 12, 12],
             index_col=1,
         )
-        return ("disp", out)
+        return (f"disp_{timestep}", out)
     elif inp.find("FORC") != -1:  # forces
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -63,7 +74,7 @@ def load_frd(inp):
             widths=[3, 10, 12, 12, 12],
             index_col=1,
         )
-        return ("force", out)
+        return (f"force_{timestep}", out)
     elif inp.find("STRESS") != -1:  # stresses
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -72,7 +83,7 @@ def load_frd(inp):
             widths=[3, 10, 12, 12, 12, 12, 12, 12],
             index_col=1,
         )
-        return ("stress", out)
+        return (f"stress_{timestep}", out)
     elif inp.find("STRAIN") != -1:  # strains
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -81,7 +92,7 @@ def load_frd(inp):
             widths=[3, 10, 12, 12, 12, 12, 12, 12],
             index_col=1,
         )
-        return ("strain", out)
+        return (f"strain_{timestep}", out)
 
     return ("other", None)
 
@@ -102,20 +113,20 @@ def frd2vtu(frd, output=None, multi=False):
     else:
         o = [load_frd(x[i[0] : i[1]]) for i in zip(min3, min3[1:])]
 
-    lst = [i[0] for i in o]
+    o = dict(o)
+    # lst = [i[0] for i in o]
 
-    #  Create a count dictionary using a dictionary comprehension
-    count = {x: 0 for x in lst}
+    # #  Create a count dictionary using a dictionary comprehension
+    # count = {x: 0 for x in lst}
 
-    # Loop through the list and update each item as needed
-    for i, x in enumerate(lst):
-        count[x] += 1
-        if count[x] > 1:
-            lst[i] = f"{x}{count[x]-1}"
+    # # Loop through the list and update each item as needed
+    # for i, x in enumerate(lst):
+    #     if any(x.startswith(i) for i in ("nodes", "elements")):
+    #         continue
+    #     count[x] += 1
+    #     lst[i] = f"{x}{count[x]}"
 
-    o = dict([(i[0], i[1][1]) for i in zip(lst, o)])
-    for i in o:
-        print(i)
+    # o = dict([(i[0], i[1][1]) for i in zip(lst, o)])
 
     # create a map between ccx node id and vtk
     idmap = pd.DataFrame(o["nodes"].index, o["nodes"]["index"])
@@ -150,6 +161,7 @@ def frd2vtu(frd, output=None, multi=False):
             ogrid.point_data[i] = o[i].values[:, 1:]
 
     # add mises strain and stress
+
     # for s in [("stress", "s"), ("strain", "e")]:
     #     ss = o[s[0]]
     #     xx, yy, zz, xy, yz, zx = [
