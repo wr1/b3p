@@ -105,19 +105,6 @@ def frd2vtu(frd, output=None, multi=False):
         o = [load_frd(x[i[0] : i[1]]) for i in zip(min3, min3[1:])]
 
     o = dict(o)
-    # lst = [i[0] for i in o]
-
-    # #  Create a count dictionary using a dictionary comprehension
-    # count = {x: 0 for x in lst}
-
-    # # Loop through the list and update each item as needed
-    # for i, x in enumerate(lst):
-    #     if any(x.startswith(i) for i in ("nodes", "elements")):
-    #         continue
-    #     count[x] += 1
-    #     lst[i] = f"{x}{count[x]}"
-
-    # o = dict([(i[0], i[1][1]) for i in zip(lst, o)])
 
     # create a map between ccx node id and vtk
     idmap = pd.DataFrame(o["nodes"].index, o["nodes"]["index"])
