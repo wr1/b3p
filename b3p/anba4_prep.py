@@ -29,15 +29,19 @@ def vtp2xdmf(vtp):
     print(f"converted {vtp} to {xd}")
 
 
+def anba4_prep(section_meshes):
+    p = multiprocessing.Pool()
+    p.map(vtp2xdmf, section_meshes)
+    p.close()
+
+
 def main():
     p = argparse.ArgumentParser(
         description="translate section meshes from vtk to XDMF and 2D"
     )
     p.add_argument("sections", nargs="*", help="section meshes in .vtp format")
     args = p.parse_args()
-    p = multiprocessing.Pool()
-    p.map(vtp2xdmf, args.sections)
-    p.close()
+    anba4_prep(args.sections)
 
 
 if __name__ == "__main__":
