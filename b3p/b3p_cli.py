@@ -12,6 +12,7 @@ from b3p import (
     mesh2ccx,
     ccx2vtu,
     drape_summary,
+    anba4_prep,
 )
 from utils import yml_portable
 import os
@@ -96,6 +97,8 @@ class cli:
             rotz=0.0,
             var=f"{self.prefix}.var",
         )
+        anba4_prep.anba4_prep(glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
+
         return self
 
     def show(self):
@@ -111,6 +114,7 @@ class cli:
         zeroangle=False,
         add_centers=False,
         export_plygroups=False,
+        solution="static",
     ):
         grid = add_load_to_mesh.add_load_to_mesh(
             self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
@@ -126,6 +130,7 @@ class cli:
             zeroangle=zeroangle,
             add_centers=add_centers,
             export_plygroups=export_plygroups,
+            solution=solution,
         )
         return self
 
@@ -172,6 +177,7 @@ class cli:
 
 
 def main():
+    fire.core.Display = lambda lines, out: print(*lines, file=out)
     fire.Fire(cli)
 
 
