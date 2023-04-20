@@ -2,18 +2,12 @@
 
 import pandas as pd
 import pyvista
-from io import StringIO
-import multiprocessing
 import numpy as np
-import vtk
 import fire
-import time
 import glob
 import os
-import pyvista as pv
-from matplotlib import pyplot as plt
 import re
-from frd2vtu import frd2vtu
+from b3p import frd2vtu
 
 
 def has_later_vtu(frd):
@@ -63,15 +57,16 @@ def digitize_strain_distribution(z, strain, num_bins=100):
 class ccx2vtu:
     def __init__(self, workdir):
         self.workdir = workdir
-        self.frds = glob.glob(f"{workdir}/*.frd")
+        self.frds = glob.glob(f"{workdir}/*lc*.frd")
 
     def load_grids(self):
         self.grids = {}
         for i in self.frds:
-            if not has_later_vtu(i):
-                self.grids[i] = frd2vtu(i, multi=True)
-            else:
-                self.grids[i] = pyvista.UnstructuredGrid(i.replace(".frd", ".vtu"))
+            self.grids[i] = (
+                pyvista.UnstructuredGrid(i.replace(".frd", ".vtu"))
+                if has_later_vtu(i)
+                else frd2vtu.frd2vtu(i, multi=True)
+            )
 
     def tabulate(self, n_bins=50):
         # Initialize an empty list to store the results
@@ -79,13 +74,18 @@ class ccx2vtu:
         if len(self.grids) == 0:
             print(f"** no grids found in {self.workdir}")
             return None
+
         # Loop through the file_list
         for grid in self.grids:
-            print(grid)
             # Read the input data from the current file
             input_data = self.grids[grid]  # pd.read_csv(file_name)
+            strain0 = next(
+                (s for s in input_data.point_data.keys() if s.startswith("strain")),
+                None,
+            )
+
             z = input_data.points[:, 2]  # input_data['z'].values
-            strain = input_data.point_data["strain"]
+            strain = input_data.point_data[strain0]
 
             # Compute the digitized strain distribution for the current input
             zbin, min_vals, max_vals = digitize_strain_distribution(
@@ -96,6 +96,7 @@ class ccx2vtu:
             vals = np.hstack([min_vals, max_vals])
 
             # Create MultiColumns for the current input
+            print(grid)
             columns = pd.MultiIndex.from_product(
                 [
                     [re.search(r"_lc_(.+)\.frd", grid).group(1)],
