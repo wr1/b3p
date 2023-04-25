@@ -12,7 +12,7 @@ from b3p import frd2vtu
 
 def has_later_vtu(frd):
     output = frd.replace(".frd", ".vtu")
-    print(output, os.path.exists(output))
+    # print(output, os.path.exists(output))
     if not os.path.exists(output):
         return False
     frd_time = os.path.getmtime(frd)
@@ -55,11 +55,12 @@ def digitize_strain_distribution(z, strain, num_bins=100):
 
 
 class ccx2vtu:
-    def __init__(self, workdir):
+    def __init__(self, workdir, wildcard=""):
         self.workdir = workdir
-        self.frds = glob.glob(f"{workdir}/*lc*.frd")
+        self.frds = glob.glob(f"{workdir}/*lc*{wildcard}*.frd")
 
     def load_grids(self):
+        print(f"** loading grids {self.frds}")
         self.grids = {}
         for i in self.frds:
             self.grids[i] = (
@@ -96,10 +97,10 @@ class ccx2vtu:
             vals = np.hstack([min_vals, max_vals])
 
             # Create MultiColumns for the current input
-            print(grid)
+            # print(grid)
             columns = pd.MultiIndex.from_product(
                 [
-                    [re.search(r"_lc_(.+)\.frd", grid).group(1)],
+                    [re.search(r"_lc_(.+)\.frd", grid)[1]],
                     ["e_min", "e_max"],
                     ["xx", "yy", "zz", "xy", "yz", "xz"],
                 ],
@@ -109,16 +110,17 @@ class ccx2vtu:
             # Create a DataFrame for the current input
             df = pd.DataFrame(vals, index=zbin, columns=columns)
 
+            of = grid.replace(".frd", "_eps2d.pq")
+            df.to_parquet(of)
+            print(f"** written to {of}")
+
             # Append the current DataFrame to the results list
-            results.append(df)
+        #     results.append(df)
 
-        # Concatenate all the DataFrames in the results list
-        result_df = pd.concat(results)
+        # # Concatenate all the DataFrames in the results list
+        # result_df = pd.concat(results)
 
-        of = f"{self.workdir}/strain.pq"
-        result_df.to_parquet(of)
-        print(f"** written to {of}")
-        return result_df
+        # return result_df
 
 
 if __name__ == "__main__":
