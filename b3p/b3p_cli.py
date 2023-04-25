@@ -11,6 +11,7 @@ from b3p import (
     add_load_to_mesh,
     mesh2ccx,
     ccx2vtu,
+    ccxpost,
     drape_summary,
     anba4_prep,
 )
@@ -141,24 +142,36 @@ class cli:
         inps_to_run = []
         for inp in inps:
             frd_file = inp.replace(".inp", ".frd")
+            # check if frd exists
             if not os.path.exists(frd_file):
                 inps_to_run.append(inp)
             else:
-                print(f"** Skipping {inp} because {frd_file} exists")
+                # check if the frd is a complete file
+                with open(frd_file, "rb") as f:
+                    f.seek(-5, 2)
+                    y = f.read()
+                    if y != b"9999\n":
+                        inps_to_run.append(inp)
+                    else:
+                        print(f"** Skipping {inp} because {frd_file} exists")
+
+        print(f"running ccx on: {inps_to_run} using {wildcard}")
         p = multiprocessing.Pool(nproc)
         p.map(os.system, [f"ccx {inp.replace('.inp','')}" for inp in inps_to_run])
         p.close()
         return self
 
-    def ccxpost(self, wildcard="", nproc=3, nbins=60):
+    def ccxpost(self, wildcard="", nbins=60):
         """Postprocess ccx results"""
-        wd = self.dct["general"]["workdir"]
-        post = ccx2vtu.ccx2vtu(wd)
+        post = ccx2vtu.ccx2vtu(self.dct["general"]["workdir"], wildcard=wildcard)
         post.load_grids()
-        post.tabulate()
-        # plotter = ccxpost.plot_ccx(wd)
-        # plotter.plot3d()
-        # plotter.plot2d(nbins)
+        post.tabulate(nbins)
+        return self
+
+    def ccxplot(self, wildcard=""):
+        plotter = ccxpost.plot_ccx(self.dct["general"]["workdir"], wildcard=wildcard)
+        plotter.plot3d()
+        plotter.plot2d()
         return self
 
     def build(self):
