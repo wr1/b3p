@@ -132,7 +132,8 @@ def drape_mesh(vtp, stack, key, output_file):
         n_plies += s_thick > 0.0
 
     o.cell_data["n_plies"] = n_plies
-    o.cell_data["is_web"] = key.lower().find("web") != -1
+
+    o.cell_data["is_web"] = key.lower() != "shell"
 
     o.cell_data["thickness"] = total_thickness
 
