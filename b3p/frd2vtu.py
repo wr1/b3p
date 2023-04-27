@@ -92,6 +92,7 @@ def frd2vtu(frd, output=None, multi=False):
     if not output:
         output = frd.replace(".frd", ".vtu")
 
+    print("running frd2vtu on file: ", frd)
     tic = time.perf_counter()
     x = open(frd, "r").read()
     # find all block endings

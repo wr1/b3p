@@ -379,7 +379,7 @@ def mesh2ccx(
 
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
-    print(npxid)
+    # print(npxid)
     print(f"max number of plies: {nplmax}")
     print(f"associated stack \n{ blx[npxid[0]][1]}")
 
