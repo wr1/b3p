@@ -267,6 +267,8 @@ def get_loadcases(mesh, multiplier=1.0, solution="static"):
                 lbuf = f"** {i}\n*step\n*static\n*cload\n"
             elif solution == "buckle":
                 lbuf = f"** {i}\n*step\n*buckle\n6\n*cload\n"
+            else:
+                print(f'solution type "{solution}" not supported')
             ld = mesh.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
