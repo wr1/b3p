@@ -153,6 +153,7 @@ def main():
     else:
         p = multiprocessing.Pool()
         # run async seems to avoid a sporadic blocking error
+        # p.map(part, args.meshes)
         r = p.map_async(part, args.meshes)
         r.wait()
 

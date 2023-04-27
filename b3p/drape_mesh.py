@@ -69,7 +69,7 @@ def get_slab_cover(inp):
             np.zeros_like(rccov),
         ]
     ).astype(np.float32)
-    return names, data
+    return names[: data.shape[2]], data
 
 
 def drape_mesh(vtp, stack, key, output_file):
