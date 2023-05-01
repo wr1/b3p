@@ -2,6 +2,7 @@ import vtk
 import numpy as np
 from b3p import geom_utils
 import pyvista as pv
+import math
 
 
 def equals(v1, v2):
@@ -94,7 +95,9 @@ class web:
         # log the evaluations of the web position, so that it can be used later
         # to look up the 3D coordinates, store in mm, so that it can be used as
         # an integer key to look up corresponding web split locations
-        self.evaluations[int(round(r * 1e3))] = [out]
+        # if math.isclose(r, 86.3, abs_tol=0.1):
+        #     print(r, int(r * 1e2))
+        self.evaluations[int(round(r * 1e2) * 10)] = [out]
         return out
 
     def _find_top_and_bottom_points(self, mesh):
@@ -117,7 +120,12 @@ class web:
             if self.web_root <= rm <= self.web_tip:
                 rd = rel_dist.GetValue(i)
                 pnt = mesh.GetPoint(i)
-                rmm = int(round(rm * 1e3))
+                rmm = int(round(rm * 1e2) * 10)
+                # if math.isclose(rm, 86.3, abs_tol=0.1):
+                #     print(rm, round(rm * 1e2) * 10)
+
+                # print(rmm, rd, self.evaluations[rmm][0][0], self.evaluations[rmm][0][1])
+                # print(self.evaluations.keys())
                 if equals(rd, self.evaluations[rmm][0][0]) or equals(
                     rd, self.evaluations[rmm][0][1]
                 ):
