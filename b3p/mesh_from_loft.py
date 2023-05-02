@@ -25,8 +25,6 @@ def build_mesh(
         panel_mesh_scale = []
     sections = pickle.load(open(pckfile, "rb"))
 
-    # print(web_inputs)
-
     weblist = [
         geometry_web.web(
             points=web_intersections[i],
