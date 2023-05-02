@@ -168,10 +168,12 @@ class cli:
         post.tabulate(nbins)
         return self
 
-    def ccxplot(self, wildcard=""):
+    def ccxplot(self, wildcard="", plot3d=True, plot2d=True):
         plotter = ccxpost.plot_ccx(self.dct["general"]["workdir"], wildcard=wildcard)
-        plotter.plot3d()
-        plotter.plot2d()
+        if plot3d:
+            plotter.plot3d()
+        if plot2d:
+            plotter.plot2d(wildcard=wildcard)
         return self
 
     def build(self):
