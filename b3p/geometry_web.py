@@ -95,8 +95,6 @@ class web:
         # log the evaluations of the web position, so that it can be used later
         # to look up the 3D coordinates, store in mm, so that it can be used as
         # an integer key to look up corresponding web split locations
-        # if math.isclose(r, 86.3, abs_tol=0.1):
-        #     print(r, int(r * 1e2))
         self.evaluations[int(round(r * 1e2) * 10)] = [out]
         return out
 
@@ -121,11 +119,6 @@ class web:
                 rd = rel_dist.GetValue(i)
                 pnt = mesh.GetPoint(i)
                 rmm = int(round(rm * 1e2) * 10)
-                # if math.isclose(rm, 86.3, abs_tol=0.1):
-                #     print(rm, round(rm * 1e2) * 10)
-
-                # print(rmm, rd, self.evaluations[rmm][0][0], self.evaluations[rmm][0][1])
-                # print(self.evaluations.keys())
                 if equals(rd, self.evaluations[rmm][0][0]) or equals(
                     rd, self.evaluations[rmm][0][1]
                 ):
