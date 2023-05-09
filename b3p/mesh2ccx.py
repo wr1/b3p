@@ -13,22 +13,22 @@ import pandas as pd
 
 def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=True):
     plies = []
-    # if material in next ply is the same, add it to the previous ply,
-    # NOTE this does not take ply angle into account so it only works
-    # for multidirectional fibre mats at angle==0 for now
-    for j in plyarray[np.where(plyarray[:, 1] > 1e-6)]:
+    filtered_plyarray = plyarray[plyarray[:, 1] > 1e-6]
+
+    for j in filtered_plyarray:
         if plies and plies[-1][1] == j[0] and merge_adjacent_plies:
             plies[-1][0] += j[1] * 1e-3
         else:
             plies.append([j[1] * 1e-3, j[0]])
 
     if zero_angle:
-        return (len(plies), "".join("%f,,m%i,0\n" % tuple(i) for i in plies))
+        section_string = "".join("%f,,m%i,0\n" % tuple(i) for i in plies)
     else:
-        return (
-            len(plies),
-            "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies),
+        section_string = "".join(
+            "%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies
         )
+
+    return len(plies), section_string
 
 
 def material_db_to_ccx(materials, matmap=None, force_iso=False):
@@ -179,66 +179,68 @@ def compute_slab_groups(grid, prefix):
 
 
 def nodebuffer(grid):
-    buf = "*node,nset=nall\n"
-    for n, i in enumerate(grid.points):
-        buf += "%i,%f,%f,%f\n" % tuple([n + 1] + list(i))
-    return buf
-
-
-def element_buffer_quadratic(grid):
-    conn = grid.cell_connectivity.reshape(
-        (
-            grid.GetNumberOfCells(),
-            int(grid.cell_connectivity.shape[0] / grid.GetNumberOfCells()),
-        )
+    nodes = np.column_stack((np.arange(1, len(grid.points) + 1), grid.points))
+    print(f"** exporting {len(nodes)} nodes")
+    return "*node,nset=nall\n" + "\n".join(
+        [f"{int(n)},{x},{y},{z}" for n, x, y, z in nodes]
     )
+
+
+def element_buffer(grid, quadratic=True):
+    conn = grid.cell_connectivity.reshape((grid.GetNumberOfCells(), -1)) + 1
+    eltype = "s8r" if quadratic else "s4"
     buf = ""
     for n, i in enumerate(conn):
-        buf += "*element,type=s8r,elset=e%i\n" % (n + 1)
-        buf += "%i,%i,%i,%i,%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
+        buf += f"*element,type={eltype},elset=e{n+1}\n"
+        buf += f"{n+1},{','.join(map(str, i))}\n"
 
     return buf
 
 
-def element_buffer_linear(grid):
-    conn = grid.cell_connectivity.reshape(
-        (
-            grid.GetNumberOfCells(),
-            int(grid.cell_connectivity.shape[0] / grid.GetNumberOfCells()),
-        )
-    )
-    buf = ""
-    for n, i in enumerate(conn):
-        buf += "*element,type=s4,elset=e%i\n" % (n + 1)
-        buf += "%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
-
-    return buf
-
-
+# def orientation_buffer(grid, add_centers=False):
+#     buf = ""
+#     # write orientation TODO match with element orientation, for now just align with z-axis
+#     for n in range(grid.GetNumberOfCells()):
+#         xdir, ydir = grid.cell_data["x_dir"][n], grid.cell_data["y_dir"][n]
+#         center = grid.cell_data["centers"][n]
+#         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
+#         if add_centers:
+#             buf += (
+#                 ",".join(
+#                     [
+#                         format(k, ".4g")
+#                         for k in (xdir + center).tolist()
+#                         + (ydir + center).tolist()
+#                         + center.tolist()
+#                     ]
+#                 )
+#                 + "\n3,0\n"
+#             )
+#         else:
+#             buf += (
+#                 ",".join([format(k, ".4g") for k in xdir.tolist() + ydir.tolist()])
+#                 + "\n"
+#             )
+#     return buf
 def orientation_buffer(grid, add_centers=False):
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
-    for n in range(grid.GetNumberOfCells()):
-        xdir, ydir = grid.cell_data["x_dir"][n], grid.cell_data["y_dir"][n]
-        center = grid.cell_data["centers"][n]
+    x_dirs = grid.cell_data["x_dir"]
+    y_dirs = grid.cell_data["y_dir"]
+    centers = grid.cell_data["centers"]
+    num_cells = grid.GetNumberOfCells()
+
+    for n in range(num_cells):
+        xdir, ydir = x_dirs[n], y_dirs[n]
+        center = centers[n]
         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
         if add_centers:
-            buf += (
-                ",".join(
-                    [
-                        format(k, ".4g")
-                        for k in (xdir + center).tolist()
-                        + (ydir + center).tolist()
-                        + center.tolist()
-                    ]
-                )
-                + "\n3,0\n"
-            )
+            coords = np.concatenate([xdir + center, ydir + center, center], axis=0)
+            buf += ",".join(format(k, ".4g") for k in coords.tolist()) + "\n3,0\n"
         else:
-            buf += (
-                ",".join([format(k, ".4g") for k in xdir.tolist() + ydir.tolist()])
-                + "\n"
-            )
+            coords = np.concatenate([xdir, ydir], axis=0)
+            buf += ",".join(format(k, ".4g") for k in coords.tolist()) + "\n"
+
     return buf
 
 
@@ -304,6 +306,7 @@ def mesh2ccx(
     export_hyperworks=False,
     export_plygroups=False,
     solution="static",
+    meshonly=False,
 ):
     """
     Export a grid to ccx input file
@@ -317,6 +320,10 @@ def mesh2ccx(
     :param quadratic (bool, optional): _description_. Defaults to False.
     :param add_centers (bool, optional): _description_. Defaults to False.
     :param force_isotropic (bool, optional): _description_. Defaults to False.
+    :param export_hyperworks (bool, optional): _description_. Defaults to False.
+    :param export_plygroups (bool, optional): _description_. Defaults to False.
+    :param solution (str, optional): _description_. Defaults to "static".
+    :param meshonly (bool, optional): _description_. Defaults to False.
     :return: _description_
     """
     if type(grid) == str:
@@ -324,6 +331,7 @@ def mesh2ccx(
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
+    print(f"** Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
         lf = vtk.vtkLinearToQuadraticCellsFilter()
         lf.SetInputData(gr)
@@ -333,37 +341,39 @@ def mesh2ccx(
     else:
         mesh = pv.UnstructuredGrid(gr)
 
-    # export the nodes
-    buf = "*node,nset=nall\n"
-    for n, i in enumerate(mesh.points):
-        buf += "%i,%f,%f,%f\n" % tuple([n + 1] + list(i))
-
     buf = nodebuffer(mesh)
 
     if quadratic:
-        buf += element_buffer_quadratic(mesh)
+        buf += element_buffer(mesh, quadratic=True)
     else:
-        buf += element_buffer_linear(mesh)
+        buf += element_buffer(mesh, quadratic=False)
+
+    if meshonly:
+        of = out.replace(".inp", "_meshonly.inp")
+        open(of, "w").write(buf)
+        print(f"** written to {of}")
+        return
 
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
 
-    plygroups, df = compute_ply_groups(mesh, "ply_")
-
-    slabgroups = compute_slab_groups(mesh, "slab_thickness_")
-
+    print(f"** Export plygroups {export_plygroups}")
     if export_plygroups:
-        buf += plygroups + slabgroups
+        plygroups, df = compute_ply_groups(mesh, "ply_")
 
-    # buf += compute_slab_groups(mesh, "slab_thickness_")
+        slabgroups = compute_slab_groups(mesh, "slab_thickness_")
+
+        buf += plygroups + slabgroups
 
     plykeys = [i for i in mesh.cell_data if i.startswith("ply_")]
 
     plydat = np.stack(mesh.cell_data[i] for i in plykeys)
+
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
     buf += orientation_buffer(mesh, add_centers)
 
+    print("** made orientation buffer")
     matblock = material_db_to_ccx(materials, matmap=matmap, force_iso=force_isotropic)
 
     buf += matblock
@@ -374,6 +384,7 @@ def mesh2ccx(
         make_shell_section(i, plydat[:, i, :], merge_adjacent_layers, zeroangle)
         for i in range(plydat.shape[1])
     ]
+    print("** made shell sections")
 
     nplies = np.array([i[0] for i in blx])
 
@@ -385,7 +396,7 @@ def mesh2ccx(
 
     toc = time.perf_counter()
     print("** time spent creating shell sections %f" % (toc - tic))
-
+    # sys.stdout.flush()
     comps = "".join(
         f"*shell section,composite,elset=e{n+1},offset=-.5"
         + (f",orientation=or{n+1}\n" if zeroangle else "\n")
@@ -394,6 +405,9 @@ def mesh2ccx(
     )
     buf += comps
     buf += root_clamp(mesh)
+    print(f"create loadcases")
+    sys.stdout.flush()
+
     loadcases = get_loadcases(mesh, solution=solution)
 
     # write a full ccx file for each loadcase, assuming parallel execution
