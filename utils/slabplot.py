@@ -73,7 +73,7 @@ def visualize_slab_thickness(vtu_file, output_image=None):
 
     # Set the camera position
     plotter.view_xy()
-    plotter.camera.zoom(1.6)
+    plotter.camera.zoom(1.3)
     # Save the high-resolution image
     plotter.screenshot(
         output_image, transparent_background=True, window_size=[1920, 1080]

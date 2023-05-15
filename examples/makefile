@@ -11,7 +11,7 @@ TMP= temp_b50_portable
 build: ## make self contained yaml file 
 	b3p --yml=$(YML) clean build 
 
-ccx:
+ccx: ## prepare and run ccx models
 	b3p --yml=$(YML) ccxprep --solution=buckle
 	b3p --yml=$(YML) ccxsolve forward -n 5  
 	b3p --yml=$(YML) ccxpost
