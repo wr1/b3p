@@ -55,7 +55,7 @@ def load_frd(inp):
             names=["n", "d1", "d2", "d3"],
             widths=[3, 10, 12, 12, 12],
             index_col=1,
-        )
+        ).astype("float32")
         return (f"disp_{timestep}", out)
     elif inp.find("FORC") != -1:  # forces
         out = pd.read_fwf(
@@ -64,7 +64,7 @@ def load_frd(inp):
             names=["n", "f1", "f2", "f3"],
             widths=[3, 10, 12, 12, 12],
             index_col=1,
-        )
+        ).astype("float32")
         return (f"force_{timestep}", out)
     elif inp.find("STRESS") != -1:  # stresses
         out = pd.read_fwf(
@@ -73,7 +73,7 @@ def load_frd(inp):
             names=["n", "sxx", "syy", "szz", "sxy", "syz", "szx"],
             widths=[3, 10, 12, 12, 12, 12, 12, 12],
             index_col=1,
-        )
+        ).astype("float32")
         return (f"stress_{timestep}", out)
     elif inp.find("STRAIN") != -1:  # strains
         out = pd.read_fwf(
@@ -82,7 +82,7 @@ def load_frd(inp):
             names=["n", "exx", "eyy", "ezz", "exy", "eyz", "ezx"],
             widths=[3, 10, 12, 12, 12, 12, 12, 12],
             index_col=1,
-        )
+        ).astype("float32")
         return (f"strain_{timestep}", out)
 
     return ("other", None)
