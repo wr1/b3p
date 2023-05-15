@@ -115,11 +115,14 @@ class cli:
         zeroangle=False,
         add_centers=False,
         export_plygroups=False,
+        export_hyperworks=False,
+        meshonly=False,
         solution="static",
     ):
         grid = add_load_to_mesh.add_load_to_mesh(
             self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
         )
+        print("** create ccx input file")
         mesh2ccx.mesh2ccx(
             grid,
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
@@ -132,6 +135,8 @@ class cli:
             add_centers=add_centers,
             export_plygroups=export_plygroups,
             solution=solution,
+            meshonly=meshonly,
+            export_hyperworks=export_hyperworks,
         )
         return self
 
