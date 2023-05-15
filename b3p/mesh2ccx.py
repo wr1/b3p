@@ -165,7 +165,6 @@ def compute_ply_groups(grid, prefix):
             eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
             gr += format_eset(i, eids)
             n += 1
-
     return gr, pd.DataFrame(out)
 
 
@@ -181,8 +180,10 @@ def compute_slab_groups(grid, prefix):
 def nodebuffer(grid):
     nodes = np.column_stack((np.arange(1, len(grid.points) + 1), grid.points))
     print(f"** exporting {len(nodes)} nodes")
-    return "*node,nset=nall\n" + "\n".join(
-        [f"{int(n)},{x},{y},{z}" for n, x, y, z in nodes]
+    return (
+        "*node,nset=nall\n"
+        + "\n".join([f"{int(n)},{x:f},{y:f},{z:f}" for n, x, y, z in nodes])
+        + "\n"
     )
 
 
@@ -197,31 +198,6 @@ def element_buffer(grid, quadratic=True):
     return buf
 
 
-# def orientation_buffer(grid, add_centers=False):
-#     buf = ""
-#     # write orientation TODO match with element orientation, for now just align with z-axis
-#     for n in range(grid.GetNumberOfCells()):
-#         xdir, ydir = grid.cell_data["x_dir"][n], grid.cell_data["y_dir"][n]
-#         center = grid.cell_data["centers"][n]
-#         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
-#         if add_centers:
-#             buf += (
-#                 ",".join(
-#                     [
-#                         format(k, ".4g")
-#                         for k in (xdir + center).tolist()
-#                         + (ydir + center).tolist()
-#                         + center.tolist()
-#                     ]
-#                 )
-#                 + "\n3,0\n"
-#             )
-#         else:
-#             buf += (
-#                 ",".join([format(k, ".4g") for k in xdir.tolist() + ydir.tolist()])
-#                 + "\n"
-#             )
-#     return buf
 def orientation_buffer(grid, add_centers=False):
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
@@ -405,8 +381,6 @@ def mesh2ccx(
     )
     buf += comps
     buf += root_clamp(mesh)
-    print(f"create loadcases")
-    sys.stdout.flush()
 
     loadcases = get_loadcases(mesh, solution=solution)
 
