@@ -117,7 +117,7 @@ class cli:
         export_plygroups=False,
         export_hyperworks=False,
         meshonly=False,
-        solution="static",
+        buckling=False,
     ):
         grid = add_load_to_mesh.add_load_to_mesh(
             self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
@@ -134,7 +134,7 @@ class cli:
             zeroangle=zeroangle,
             add_centers=add_centers,
             export_plygroups=export_plygroups,
-            solution=solution,
+            buckling=buckling,
             meshonly=meshonly,
             export_hyperworks=export_hyperworks,
         )
