@@ -220,7 +220,7 @@ def orientation_buffer(grid, add_centers=False):
     return buf
 
 
-def get_loadcases(mesh, multiplier=1.0, solution="static"):
+def get_loadcases(mesh, multiplier=1.0, buckling=False):
     loadcases = {}
 
     if mesh.celltypes[0] == 23:
@@ -241,12 +241,7 @@ def get_loadcases(mesh, multiplier=1.0, solution="static"):
             # forces are interpolated to midside nodes, causing the sum of forces to be off,
             # compute a multiplier from the sum of the forces in the linear model here
             multiplier = 1.0  # TODO fix for quadratic meshes # mesh.point_data[i].sum() / mesh.point_data[i].sum()
-            if solution == "static":
-                lbuf = f"** {i}\n*step\n*static\n*cload\n"
-            elif solution == "buckle":
-                lbuf = f"** {i}\n*step\n*buckle\n6\n*cload\n"
-            else:
-                print(f'solution type "{solution}" not supported')
+            lbuf = f"** {i}\n*step,perturbation\n*static\n*cload\n"
             ld = mesh.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
@@ -255,6 +250,10 @@ def get_loadcases(mesh, multiplier=1.0, solution="static"):
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
 
             lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n*node print,nset=nall\nrf\n*end step\n"
+            if buckling:
+                lbuf += (
+                    "*step\n*buckle\n5\n*el file\n*node file,output=3d\nu\n*end step\n"
+                )
 
             loadcases[i] = lbuf
 
@@ -281,7 +280,7 @@ def mesh2ccx(
     force_isotropic=False,
     export_hyperworks=False,
     export_plygroups=False,
-    solution="static",
+    buckling=False,
     meshonly=False,
 ):
     """
@@ -298,7 +297,7 @@ def mesh2ccx(
     :param force_isotropic (bool, optional): _description_. Defaults to False.
     :param export_hyperworks (bool, optional): _description_. Defaults to False.
     :param export_plygroups (bool, optional): _description_. Defaults to False.
-    :param solution (str, optional): _description_. Defaults to "static".
+    :param buckling (str, optional): _description_. Defaults to "static".
     :param meshonly (bool, optional): _description_. Defaults to False.
     :return: _description_
     """
@@ -382,7 +381,7 @@ def mesh2ccx(
     buf += comps
     buf += root_clamp(mesh)
 
-    loadcases = get_loadcases(mesh, solution=solution)
+    loadcases = get_loadcases(mesh, buckling=buckling)
 
     # write a full ccx file for each loadcase, assuming parallel execution
     if single_step:
