@@ -6,7 +6,9 @@ setuptools.setup(
     install_requires=["fire"],
     entry_points={
         "console_scripts": [
-            "b3p=b3p.b3p_cli:main"
+            "b3p=b3p.b3p_cli:main",
+            "b3p_slab_plot=utils.slab_plot:main",
+            "b3p_drape_plot=utils.drape_plot:main",
             # "b3p_blade_geometry=b3p.build_blade_geometry:main",
             # "b3p_blade_structure=b3p.build_blade_structure:main",
             # # "b3p_plybook=b3p.build_plybook:main",
