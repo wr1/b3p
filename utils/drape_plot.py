@@ -90,12 +90,9 @@ def drape_plot(meshname, output=None):
     print(f"written output to {output}")
 
 
-def test_drape_plot():
-    drape_plot(
-        "temp_portable/test_blade_shell.vtu",
-        output="data/blade_0001.png",
-    )
+def main():
+    fire.Fire(drape_plot)
 
 
 if __name__ == "__main__":
-    fire.Fire(drape_plot)
+    main()

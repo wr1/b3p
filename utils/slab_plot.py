@@ -78,9 +78,12 @@ def visualize_slab_thickness(vtu_file, output_image=None):
     plotter.screenshot(
         output_image, transparent_background=True, window_size=[1920, 1080]
     )
-
     print(f"Saved the high-resolution image to: {output_image}")
 
 
-if __name__ == "__main__":
+def main():
     fire.Fire(visualize_slab_thickness)
+
+
+if __name__ == "__main__":
+    main()
