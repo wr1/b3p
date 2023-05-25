@@ -25,15 +25,24 @@ class plot_ccx:
         ts = np.unique([i.split("_")[1] for i in mesh.point_data.keys()])
 
         for i in ts:
-            isdisp = i.startswith("1.00000")
+            isdisp = i.startswith("0.00000")
             # Deform the mesh using the ChannelDisplacement filter
             deformed_mesh = mesh.warp_by_vector(
                 f"disp_{ts[0]}", factor=1  # if isdisp else None
             )
 
-            # Color the mesh using the third component of point data strain
-            deformed_mesh.point_data["strain"] = mesh.point_data[f"strain_{i}"][:, 2]
-            deformed_mesh.set_active_scalars("strain")
+            if isdisp:  # f"strain_{i}" in mesh.point_data.keys():
+                # Color the mesh using the third component of point data strain
+                deformed_mesh.point_data["strain"] = mesh.point_data[f"strain_{i}"][
+                    :, 2
+                ]
+                deformed_mesh.set_active_scalars("strain")
+            else:
+                # Color the mesh using the third component of point data strain
+                deformed_mesh.point_data["disp"] = mesh.point_data[f"disp_{i}"].sum(
+                    axis=1
+                )
+                deformed_mesh.set_active_scalars("disp")
 
             deformed_mesh.rotate_y(-110, inplace=True)
 
@@ -77,28 +86,31 @@ class plot_ccx:
     def plot2d(self, wildcard=""):
         pqs = glob.glob(os.path.join(self.wdir, f"*{wildcard}*eps2d.pq"))
 
-        df = pd.concat([pd.read_parquet(i) for i in pqs])
-        fig, ax = plt.subplots(figsize=(12, 8))
-        # colors = ["red", "blue", "green", "orange"]
-        ax.set_prop_cycle(
-            cycler(color=["red", "blue", "green", "orange"])
-            + cycler(linestyle=["-", "--", ":", "-."])
-        )
-        for i in df:
-            if i[2] == "zz":
-                ax.plot(
-                    df[i].index,
-                    df[i].values,
-                    label=" ".join(i[:2]),
-                )
-        ax.set_xlabel("z-coordinate")
-        ax.set_ylabel("strain")
-        ax.legend()
-        ax.set_ylim(-7e-3, 7e-3)
-        ax.grid(True)
-        output_path = pqs[0].replace(".pq", ".png")
-        fig.savefig(output_path, dpi=300)  # , transparent=True)
-        print(f"Saved {output_path}")
+        # dfs = [pd.read_parquet(i) for i in pqs]
+        for pq in pqs:
+            df = pd.read_parquet(pq)
+            fig, ax = plt.subplots(figsize=(12, 8))
+            # colors = ["red", "blue", "green", "orange"]
+            ax.set_prop_cycle(
+                cycler(color=["red", "blue", "green", "orange"])
+                + cycler(linestyle=["-", "--", ":", "-."])
+            )
+            for i in df:
+                if i[2] == "zz":
+                    ax.plot(
+                        df[i].index,
+                        df[i].values,
+                        label=" ".join(i[:2]),
+                    )
+            ax.set_xlabel("z-coordinate")
+            ax.set_ylabel("strain")
+            ax.legend()
+            ax.set_ylim(-7e-3, 7e-3)
+            ax.grid(True)
+            output_path = pq.replace(".pq", ".png")
+            fig.savefig(output_path, dpi=300)  # , transparent=True)
+            print(f"Saved {output_path}")
+            plt.close(fig)
 
 
 if __name__ == "__main__":
