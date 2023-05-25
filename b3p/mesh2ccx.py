@@ -241,7 +241,11 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
             # forces are interpolated to midside nodes, causing the sum of forces to be off,
             # compute a multiplier from the sum of the forces in the linear model here
             multiplier = 1.0  # TODO fix for quadratic meshes # mesh.point_data[i].sum() / mesh.point_data[i].sum()
-            lbuf = f"** {i}\n*step,perturbation\n*static\n*cload\n"
+            if buckling:
+                lbuf = f"** {i}\n*step\n*buckle\n5\n*cload\n"
+            else:
+                lbuf = f"** {i}\n*step\n*static\n*cload\n"
+
             ld = mesh.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
@@ -249,11 +253,12 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
                 if j[1] ** 2 > 1e-8:
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
 
-            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n*node print,nset=nall\nrf\n*end step\n"
-            if buckling:
-                lbuf += (
-                    "*step\n*buckle\n5\n*el file\n*node file,output=3d\nu\n*end step\n"
-                )
+            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nE\n*end step\n"
+            # \n*node print,nset=nall\nrf
+            # if buckling:
+            #     lbuf += (
+            #         "*step\n*buckle\n5\n*el file\n*node file,output=3d\nu\n*end step\n"
+            #     )
 
             loadcases[i] = lbuf
 
