@@ -12,9 +12,9 @@ planform:
   # offset in chord direction
   dy    : [[0,0],[1,0]]
   z     : [[0,3],[1,126]]
-  chord : [[0.0,5],[0.03,5.06],[0.2,6.5],[.4,4.4],[.6,2.8],[.75,2.1],[0.94,1.5],[.985,.8],[1,.1]]
+  chord : [[0.0,5],[0.03,5.06],[0.2,6.5],[.4,4.4],[.6,2.8],[.75,2.0],[0.94,1.4],[.985,.8],[1,.1]]
   thickness:  [[0.0, 1.0],[.05,.97], [0.2, 0.53], [0.31, 0.39],  [1.0, 0.17]]
-  twist :   [[0.0,17],[0.6,0],[1.,0]]
+  twist :   [[0.0,10],[.2,2],[.4,1],[0.6,0],[.8,-.5],[.9,-1],[1.,0]]
   offset_clamp_points : [ .2, .5,.8, .9]
 
 aero:
@@ -23,6 +23,15 @@ aero:
   0.21        : 'airfoils/DU93-W-210_smoothed_dero_0.210.dat',
   0.179928    : 'airfoils/naca633418_te.dat',
   0.17        : 'airfoils/naca0017.dat'}
+  
+  bem:
+    polars: {1.0: 'polars/Cylinder1.dat',
+      .21 : 'polars/DU21_A17.dat',
+      0.25 : 'polars/DU25_A17.dat',
+      0.30 : 'polars/DU30_A17.dat',
+      0.35 : 'polars/DU35_A17.dat',
+      0.40 : 'polars/DU40_A17.dat',
+      0.17 : 'polars/NACA64_A17.dat'}
 
 mesh:
   radii: np.linspace(0,100, 100) 

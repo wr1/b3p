@@ -20,14 +20,9 @@ import os
 import pickle
 import numpy as np
 import shutil
-import scipy as sp
-from copy import deepcopy
 from ruamel import yaml
 import glob
-import pprint
 import multiprocessing
-import pyvista as pv
-from matplotlib import pyplot as plt
 
 
 class cli:
@@ -193,6 +188,9 @@ class cli:
         """Calculate mass of the blade, requires drape."""
         mass_table = drape_summary.drape_summary(f"{self.prefix}_joined.vtu")
         mass_table.to_csv(f"{self.prefix}_mass.csv")
+        mass_table.replace(to_replace="_", value="\_", regex=True).to_latex(
+            f"{self.prefix}_mass.tex", index=False
+        )
         return self
 
 
