@@ -119,7 +119,7 @@ class cli:
         )
         print("** create ccx input file")
         mesh2ccx.mesh2ccx(
-            grid,
+            f"{self.prefix}_joined.vtu",
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
             merge_adjacent_layers=merge_adjacent_layers,

@@ -11,6 +11,21 @@ import yaml
 import pandas as pd
 
 
+def zero_midside_loads(mesh):
+    if mesh.celltypes[0] == 23:
+        conn = mesh.cell_connectivity.reshape(
+            (
+                mesh.GetNumberOfCells(),
+                int(mesh.cell_connectivity.shape[0] / mesh.GetNumberOfCells()),
+            )
+        )
+        midsides = conn[:, 4:8].flatten()
+        for i in mesh.point_data:
+            if i.startswith("lc_"):
+                mesh.point_data[i][midsides] *= 0.0
+    return mesh
+
+
 def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=True):
     plies = []
     filtered_plyarray = plyarray[plyarray[:, 1] > 1e-6]
@@ -223,18 +238,6 @@ def orientation_buffer(grid, add_centers=False):
 def get_loadcases(mesh, multiplier=1.0, buckling=False):
     loadcases = {}
 
-    if mesh.celltypes[0] == 23:
-        conn = mesh.cell_connectivity.reshape(
-            (
-                mesh.GetNumberOfCells(),
-                int(mesh.cell_connectivity.shape[0] / mesh.GetNumberOfCells()),
-            )
-        )
-        midsides = conn[:, 4:8].flatten()
-        for i in mesh.point_data:
-            if i.startswith("lc_"):
-                mesh.point_data[i][midsides] *= 0.0
-
     for i in mesh.point_data:
         if i.startswith("lc_"):
             print(f"loadcase {i}")
@@ -253,7 +256,7 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
                 if j[1] ** 2 > 1e-8:
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
 
-            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nE\n*end step\n"
+            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nE\n*node print,nset=root,totals=yes\nrf\n*end step\n"
             # \n*node print,nset=nall\nrf
             # if buckling:
             #     lbuf += (
@@ -267,14 +270,22 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
 
 def root_clamp(mesh):
     root = np.where(mesh.points[:, 2] == mesh.points[:, 2].min())
-    lbuf = "*boundary,op=new\n"
-    for j in root[0]:
-        lbuf += "%i,1,3\n" % (j + 1)
+    lbuf = "*nset, nset=root\n"
+    for n, j in enumerate(root[0]):
+        lbuf += "%i" % (j + 1)
+        if n % 16 == 0:
+            lbuf += "\n"
+        else:
+            lbuf += ","
+    lbuf += "\n"
+    lbuf += "*boundary,op=new\nroot,1,3\n"
+    # for j in root[0]:
+    #     lbuf += "%i,1,3\n" % (j + 1)
     return lbuf
 
 
 def mesh2ccx(
-    grid,
+    vtu,
     out="test.inp",
     matmap="temp/material_map.json",
     merge_adjacent_layers=False,
@@ -306,8 +317,7 @@ def mesh2ccx(
     :param meshonly (bool, optional): _description_. Defaults to False.
     :return: _description_
     """
-    if type(grid) == str:
-        grid = pv.read(grid)
+    grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
@@ -317,7 +327,8 @@ def mesh2ccx(
         lf.SetInputData(gr)
         lf.Update()
         quad = lf.GetOutput()
-        mesh = pv.UnstructuredGrid(quad)
+        mesh = zero_midside_loads(pv.UnstructuredGrid(quad))
+        mesh.save(vtu.replace(".vtu", "_quad.vtu"))
     else:
         mesh = pv.UnstructuredGrid(gr)
 

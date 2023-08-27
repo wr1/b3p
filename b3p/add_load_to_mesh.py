@@ -3,6 +3,7 @@
 import numpy as np
 import pyvista
 from matplotlib import pyplot as plt
+import pandas as pd
 
 
 def compute_nodal_forces(nz, target_z, target_moment, fmult=1.0):

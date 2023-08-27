@@ -9,6 +9,44 @@ from matplotlib import pyplot as plt
 from cycler import cycler
 
 
+def get_quadrant(vector):
+    ang = np.degrees(np.arctan2(vector[1], vector[0]))
+
+    print(ang)
+
+    if np.isclose(ang, -90, atol=15):
+        return -180
+    elif np.isclose(ang, 90, atol=15):
+        return 0
+    elif np.isclose(ang, 0, atol=15):
+        return 90
+    elif np.isclose(ang, 180, atol=15):
+        return -90
+
+    # x, y = vector[0], vector[1]
+
+    # if x >= 0 and y >= 0:
+    #     return 1
+    # elif x < 0 and y >= 0:
+    #     return 2
+    # elif x < 0 and y < 0:
+    #     return 3
+    # elif x >= 0 and y < 0:
+    #     return 4
+    # angle = np.arctan2(vector[1], vector[0])
+
+    # if angle > 0:
+    #     if angle < np.pi / 2:
+    #         return 1
+    #     else:
+    #         return 2
+    # else:
+    #     if angle > -np.pi / 2:
+    #         return 4
+    #     else:
+    #         return 3
+
+
 class plot_ccx:
     def __init__(self, wdir, wildcard=""):
         self.wdir = wdir
@@ -27,6 +65,7 @@ class plot_ccx:
         for i in ts:
             isdisp = i.startswith("0.00000")
             # Deform the mesh using the ChannelDisplacement filter
+            deform = mesh.point_data[f"disp_{ts[0]}"]
             deformed_mesh = mesh.warp_by_vector(
                 f"disp_{ts[0]}", factor=1  # if isdisp else None
             )
@@ -44,12 +83,19 @@ class plot_ccx:
                 )
                 deformed_mesh.set_active_scalars("disp")
 
+            nrm = np.linalg.norm(deform, axis=1)
+
+            whr = np.where(nrm == nrm.max())
+            quadrant = get_quadrant(deform[whr[0][0]][:2])
+
+            # print(quadrant, output_path, deform[whr[0][0]][:2])
+
+            deformed_mesh.rotate_z(quadrant, inplace=True)
+
             deformed_mesh.rotate_y(-110, inplace=True)
 
-            deformed_mesh.rotate_z(0, inplace=True)
-
             # Create a plot in isometric view
-            plotter = pv.Plotter(off_screen=True, window_size=[1920, 1080])
+            plotter = pv.Plotter(off_screen=True, window_size=[1920, 600])
             plotter.add_mesh(
                 deformed_mesh,
                 cmap="coolwarm",
@@ -66,7 +112,7 @@ class plot_ccx:
             )
             plotter.view_isometric()
             plotter.camera.parallel_projection = True
-            plotter.camera.zoom(2.0)
+            plotter.camera.zoom(3.5)
 
             # Save the plot to a high-resolution image
             of = output_path.replace(".png", f"_{i}.png")
