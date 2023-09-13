@@ -94,7 +94,6 @@ class cli:
             var=f"{self.prefix}.var",
         )
         anba4_prep.anba4_prep(glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
-
         return self
 
     def show(self):

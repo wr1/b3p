@@ -9,5 +9,7 @@ pyvista>=0.37.0
 ruamel-yaml
 regex
 pyarrow
+meshio 
+h5py
 
-git+git@github.com:wr1/CCBlade.git@v1.3
+# git+git@github.com:wr1/CCBlade.git@v1.3

@@ -245,7 +245,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     local_twist = get_local_twist(r, var)
     local_chord = get_local_chord(r, var)
 
-    cut = rd.slice(normal=[0, 0, 1], origin=[0, 0, r])
+    sec = rd.slice(normal=[0, 0, 1], origin=[0, 0, r])
 
     # if not is2d:
     #     # slice the mesh at some point
