@@ -59,7 +59,6 @@ def plot_interpolated_polars(t, data, of="polars.png"):
 def plot_polars(polars, of="polars_in.png"):
     fig, ax = plt.subplots(3, 1, figsize=(6, 8))
     for i in polars:
-        # print(i)
         alpha, cl, cd, cm = i[1]  # polars[i]
         ax[0].plot(alpha, cl, label=i[0])
         ax[1].plot(alpha, cd)
@@ -137,8 +136,8 @@ class RotorOptimizer:
         result = fmin(self.objective, initial_guess, maxiter=self.maxiter)
 
         rr, rdet = self.evaluate(result)
-        print(f"{self.uinf} {self.omega} {self.rated_power} result {result}")
-        print(f"result {rr} {rdet}")
+        # print(f"{self.uinf} {self.omega} {self.rated_power} result {result}")
+        # print(f"result {rr} {rdet}")
         return result
 
 
@@ -167,7 +166,7 @@ def plot_grid(num_plots, figsize=(15, 15)):
 
     # Remove unused subplots
     for idx in range(len(axs) - 1, rows * columns):
-        print("deleting", idx)
+        # print("deleting", idx)
         fig.delaxes(axs[idx])
 
     return fig, axs  # , rows, columns
@@ -334,7 +333,11 @@ class ccblade_run:
             "max_tipspeed": 95.0,
             "uinf": [3, 5, 7, 9, 10, 11, 12, 13, 16, 20],
         }
+        missing_keys = [key for key in bem if key not in self.dct["aero"]["bem"]]
 
+        print(
+            f"the following keys are not specified in aero/bem: {missing_keys}, using defaults {bem}"
+        )
         bem |= self.dct["aero"]["bem"]
 
         self.prefix = os.path.join(
