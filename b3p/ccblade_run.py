@@ -68,7 +68,7 @@ def plot_polars(polars, of="polars_in.png"):
         ax[1].set_ylabel("Cd")
         ax[2].set_ylabel("Cl - Cd")
         ax[0].legend()
-    fig.savefig("polars_in.png")
+    fig.savefig(of)
 
 
 def interpolate_polars(polars, tnew, of=None):
@@ -199,12 +199,13 @@ def plot_bladeloads(r, data_dict, of="bladeloads.png"):
 
 
 class controloptimize:
-    def __init__(self, rotor, max_tipspeed, rtip, rating, uinf):
+    def __init__(self, rotor, max_tipspeed, rtip, rating, uinf, workdir):
         self.rotor = rotor
         self.max_tipspeed = max_tipspeed
         self.rating = rating
         self.uinf = uinf
         self.rtip = rtip
+        self.workdir = workdir
 
     def control_opt_below_rated(
         self, starting_uinf=6, starting_tsr=10, starting_pitch=0
@@ -226,8 +227,6 @@ class controloptimize:
         init_val = optimizer.evaluate(initial_guess)[0]
         opt_val, optt = optimizer.evaluate(optimal_values, coefficients=True)
 
-        print(optt.keys())
-
         print(f" {init_val} {opt_val}, improvement {opt_val/init_val}")
         self.optimal_tsr = omega2tsr(optimal_values[0], starting_uinf, self.rtip)
         self.fine_pitch = optimal_values[1]
@@ -235,10 +234,9 @@ class controloptimize:
         loads, _ = self.rotor.distributedAeroLoads(
             self.uinf, optimal_values[0], optimal_values[1], 0
         )
-        # print(f"max cp {np.max(optt['CP'])}")
-        # print(optt)
-        # print(optt["CP"])
-        plot_bladeloads(self.rotor.r, loads, of="bladeloads.png")
+        plot_bladeloads(
+            self.rotor.r, loads, of=os.path.join(self.workdir, "bladeloads.png")
+        )
         print(f"optimal tsr {self.optimal_tsr} {self.fine_pitch}")
 
     def control_opt_above_rated(self):
@@ -258,7 +256,7 @@ class controloptimize:
             self.pitch,
             coefficients=False,
         )
-        rotorplot(init_pc, self.uinf, of="init.png")
+        rotorplot(init_pc, self.uinf, of=os.path.join(self.workdir, "init.png"))
 
         # find the wind speeds that are over rated power
         overrated = np.where(init_pc["P"] > self.rating)
@@ -294,7 +292,7 @@ class controloptimize:
             out_pc,
             self.uinf,
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
-            of="out.png",
+            of=os.path.join(self.workdir, "out.png"),
         )
         print(out_pc.keys())
         print(f"pitch {self.pitch}")
@@ -319,9 +317,9 @@ def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
 
 
 class ccblade_run:
-    def __init__(self, blade="blade_test.yml"):
+    def __init__(self, blade):
         self.dct = yml_portable.yaml_make_portable(blade)
-
+        workdir = self.dct["general"]["workdir"]
         bem = {
             "rated_power": 10e6,
             "polars": {},
@@ -337,7 +335,7 @@ class ccblade_run:
             "uinf": [3, 5, 7, 9, 10, 11, 12, 13, 16, 20],
         }
 
-        bem.update(self.dct["aero"]["bem"])
+        bem |= self.dct["aero"]["bem"]
 
         self.prefix = os.path.join(
             self.dct["general"]["workdir"], self.dct["general"]["prefix"]
@@ -355,7 +353,9 @@ class ccblade_run:
             [(i[0], load_polar(i[1])) for i in bem["polars"].items()],
             reverse=True,
         )
-        iplr = interpolate_polars(plrs, plf.relative_thickness, of="polars.png")
+        iplr = interpolate_polars(
+            plrs, plf.relative_thickness, of=os.path.join(workdir, "polars.png")
+        )
         rhub, rtip = plf.z.iloc[0], plf.z.iloc[-1]
         self.rotor = CCBlade(
             plf.z - plf.z[0],
@@ -383,6 +383,7 @@ class ccblade_run:
             rtip,
             bem["rated_power"],
             uinf=np.array(bem["uinf"]),
+            workdir=workdir,
         )
 
         copt.control_opt_below_rated()
@@ -393,9 +394,22 @@ class ccblade_run:
         return ""
 
 
-def ccblade_run_test():
-    ccblade_run()
+# def main(blade):
+#     ccblade_run(blade=blade)
+
+
+# def ccblade_run_test():
+#     ccblade_run()
+
+
+# if __name__ == "__main__":
+#     fire.Fire(main)
+
+
+def main():
+    fire.core.Display = lambda lines, out: print(*lines, file=out)
+    fire.Fire(ccblade_run)
 
 
 if __name__ == "__main__":
-    fire.Fire(ccblade_run)
+    main()
