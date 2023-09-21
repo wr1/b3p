@@ -4,6 +4,8 @@ import sys
 import numpy as np
 import fire
 
+pv.start_xvfb()
+
 
 def visualize_slab_thickness(vtu_file, output_image=None):
     """Create a plot with the slab thicknesses from a VTU file displayed on a mesh.
