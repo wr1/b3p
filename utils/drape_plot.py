@@ -1,12 +1,14 @@
 #! /usr/bin/env python
 
 import pyvista as pv
-import argparse
 from matplotlib import pyplot as plt
 import numpy as np
+import fire
+import os
+import json
 
 
-def plot_thresholded(sm, ax):
+def plot_thresholded(sm, ax, title, material_map=None):
     p = sm.cell_centers().points
     # get ply arrays
     pk = [i for i in sm.cell_data.keys() if i.startswith("ply_")]
@@ -14,68 +16,83 @@ def plot_thresholded(sm, ax):
     mat = [int(sm.cell_data[i][:, 0].max()) for i in pk]
     pt = np.stack(sm.cell_data[i][:, 1] for i in pk)
 
-    # f, ax = plt.subplots(1, 1, figsize=(20, 12))
     base = np.zeros(pt.shape[1])
     for i in range(pt.shape[0]):
         ax.fill_between(
             p[:, 2],
             y1=base,
             y2=base + pt[i, :],
-            label=f"{mat[i]}",
+            label=f"{material_map[mat[i]]}",
             color=f"C{max(mat[i],0)}",
             alpha=0.3,
         )
         base += pt[i, :]
 
+    ax.set_title(title)
     # get unique labels into legend
     handles, labels = ax.get_legend_handles_labels()
     temp = dict(zip(labels, handles))
     ax.legend(temp.values(), temp.keys(), loc="best")
 
-    # return ax
-    # f.savefig("__temp.png")
 
+def drape_plot(meshname, output=None):
+    """plot the cross section of the laminate plan on (lengthwise) slices of the blade
 
-if __name__ == "__main__":
-    # parse the command line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("mesh", help="path to vtu file")
-    parser.add_argument("--out", help="path to output file", default="__temp.png")
-    args = parser.parse_args()
-
+    :param mesh: path to the mesh in vtu format, needs to have ply_ arrays in cell data
+    """
+    assert meshname.endswith(".vtu")
     # build the blade mesh
-    mesh = pv.read(args.mesh)
+    mesh = pv.read(meshname)
 
-    fig, ax = plt.subplots(4, 1, figsize=(40, 30))
+    if output is None:
+        output = meshname.replace(".vtu", "_drapeplot.png")
+
+    mm = json.load(open(os.path.join(os.path.dirname(meshname), "material_map.json")))
+    imm = {v: k for k, v in mm.items()}
+    imm[-1] = "adhesive"
+    # if os.path.exists(os.path.join(os.path.dirname(mesh), 'material_map.json')) is False:
+    #     os.remove(output)
+    # print(mm)
+
+    fig, ax = plt.subplots(4, 1, figsize=(30, 20))
 
     cnt = mesh.contour(
         scalars="d_w1",
-        isosurfaces=[0.2],
+        isosurfaces=[0.0],
     )
 
-    plot_thresholded(cnt, ax[0])
+    plot_thresholded(cnt, ax[0], title="sparcap", material_map=imm)
 
     cnt = mesh.contour(
         scalars="d_te",
-        isosurfaces=[0.025],
+        isosurfaces=[0.3],
     )
-    print(cnt)
 
-    plot_thresholded(cnt, ax[1])
+    plot_thresholded(cnt, ax[1], title="trailing edge ud", material_map=imm)
 
     cnt = mesh.contour(
         scalars="d_w2_r",
         isosurfaces=[0.01],
     )
 
-    plot_thresholded(cnt, ax[2])
+    plot_thresholded(cnt, ax[2], title="leading edge panel", material_map=imm)
 
     cnt = mesh.contour(
-        scalars="d_le_r",
-        isosurfaces=[0.001],
+        scalars="d_w4_r",
+        isosurfaces=[-0.05],
     )
 
-    plot_thresholded(cnt, ax[3])
+    plot_thresholded(cnt, ax[3], title="trailing edge panel", material_map=imm)
 
-    fig.savefig(args.out)
-    print(f"written output to {args.out}")
+    fig.tight_layout()
+
+    fig.savefig(output)
+    print(f"written output to {output}")
+
+
+def main():
+    fire.Fire(drape_plot)
+
+
+if __name__ == "__main__":
+    main()

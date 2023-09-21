@@ -2,33 +2,52 @@
 
 import pyvista as pv
 import numpy as np
-import multiprocessing
 import vtk
-import argparse
+import fire
 import time
 import json
 import os
 import yaml
+import pandas as pd
+
+
+def zero_midside_loads(mesh):
+    if mesh.celltypes[0] == 23:
+        conn = mesh.cell_connectivity.reshape(
+            (
+                mesh.GetNumberOfCells(),
+                int(mesh.cell_connectivity.shape[0] / mesh.GetNumberOfCells()),
+            )
+        )
+        midsides = conn[:, 4:8].flatten()
+        for i in mesh.point_data:
+            if i.startswith("lc_"):
+                mesh.point_data[i][midsides] *= 0.0
+    return mesh
 
 
 def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=True):
     plies = []
-    # if material in next ply is the same, add it to the previous ply,
-    # NOTE this does not take ply angle into account so it only works
-    # for multidirectional fibre mats at angle==0 for now
-    for j in plyarray[np.where(plyarray[:, 1] > 1e-6)]:
+    filtered_plyarray = plyarray[plyarray[:, 1] > 1e-6]
+
+    for j in filtered_plyarray:
         if plies and plies[-1][1] == j[0] and merge_adjacent_plies:
             plies[-1][0] += j[1] * 1e-3
         else:
             plies.append([j[1] * 1e-3, j[0]])
+
     if zero_angle:
-        return "".join("%f,,m%i,0\n" % tuple(i) for i in plies)
+        section_string = "".join("%f,,m%i,0\n" % tuple(i) for i in plies)
     else:
-        return "".join("%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies)
+        section_string = "".join(
+            "%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies
+        )
+
+    return len(plies), section_string
 
 
 def material_db_to_ccx(materials, matmap=None, force_iso=False):
-    "find the material db and write properties to a ccx block"
+    """find the material db and write properties to a ccx block"""
     # 2 files are relevant, a material map that maps the material ID (integer)
     # in the VTK file to a key (string) in the material database and the material
     # database itself
@@ -55,12 +74,15 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
             material_properties = mat_db[mm_inv[int(i)]]
 
             # print(material_properties)
-            matblock += f'** material: {material_properties["name"]}\n'
+            matblock += (
+                f'** material: {mm_inv[int(i)]} {i} {material_properties["name"]}\n'
+            )
             # matblock += f"** {str(material_properties)}\n"
 
             if (
-                "vf" in material_properties
-                or "C" in material_properties
+                # "vf" in material_properties
+                # or
+                "C" in material_properties
                 and not force_iso
             ):
                 print(material_properties["name"], "is assumed to be orthotropic")
@@ -78,7 +100,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 D[2, 5] = C[2, 3]
                 D[3, 3] = C[5, 5]
                 D[5, 5] = C[3, 3]
-                D *= 1e6
+                # D *= 1e6
                 matblock += (
                     f"{D[0,0]:.4g},{D[0,1]:.4g},{D[1,1]:.4g},"
                     + f"{D[0,2]:.4g},{D[1,2]:.4g},{D[2,2]:.4g},"
@@ -101,7 +123,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
 
             else:
                 print(material_properties["name"], "is assumed to be isotropic")
-                print(material_properties)
+                # print(material_properties)
                 nu = min(
                     0.45,
                     max(
@@ -110,10 +132,10 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                         if "nu" in material_properties
                         else material_properties["nu12"],
                     ),
-                )  # min()
-                E = 1e6 * float(
-                    material_properties["tEx"]
-                    if "tEx" in material_properties
+                )
+                E = float(
+                    material_properties["Ex"]
+                    if "Ex" in material_properties
                     else material_properties["E"]
                 )
                 matblock += "** isotropic material\n"
@@ -123,8 +145,8 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
     return matblock
 
 
-def format_eset(name, eids, prefix):
-    out = f"*elset,elset={name.replace(prefix,'').lstrip('0')}\n"
+def format_eset(name, eids):
+    out = f"*elset,elset={name}\n"
     for i in range(len(eids)):
         out += f"{eids[i]}"
         out += "\n" if (i % 16 == 15) else ","
@@ -133,55 +155,60 @@ def format_eset(name, eids, prefix):
     return out
 
 
-def compute_groups(grid, prefix):
+def compute_ply_groups(grid, prefix):
+    gr = ""
+    out = []
+    n = 1
+    for i in grid.cell_data:
+        if i.startswith(prefix):
+            thickness = grid.cell_data[i][:, 1].max()
+            material = grid.cell_data[i][:, 0].max()
+            out.append(
+                {
+                    "Ply Name": i,
+                    "Ply ID": n,
+                    "Card Image": "PLY",
+                    "Mat Name": f"m{int(material)}",
+                    "Thickness": thickness,
+                    "Orientation": 0,
+                    "Output Results": "yes",
+                    "TMANU": "",
+                    "DRAPE_ID": 0,
+                    "ESID": n,
+                }
+            )
+            eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
+            gr += format_eset(i, eids)
+            n += 1
+    return gr, pd.DataFrame(out)
+
+
+def compute_slab_groups(grid, prefix):
     gr = ""
     for i in grid.cell_data:
         if i.startswith(prefix):
-            if len(grid.cell_data[i].shape) == 1:
-                eids = np.where(grid.cell_data[i] > 0)[0] + 1
-            elif len(grid.cell_data[i].shape):
-                eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
-
-            gr += format_eset(i, eids, prefix)
-
+            eids = np.where(grid.cell_data[i] > 0)[0] + 1
+            gr += format_eset(i, eids)
     return gr
 
 
 def nodebuffer(grid):
-    buf = "*node,nset=nall\n"
-    for n, i in enumerate(grid.points):
-        buf += "%i,%f,%f,%f\n" % tuple([n + 1] + list(i))
-    return buf
-
-
-def element_buffer_quadratic(grid):
-    conn = grid.cell_connectivity.reshape(
-        (
-            grid.GetNumberOfCells(),
-            int(grid.cell_connectivity.shape[0] / grid.GetNumberOfCells()),
-        )
+    nodes = np.column_stack((np.arange(1, len(grid.points) + 1), grid.points))
+    print(f"** exporting {len(nodes)} nodes")
+    return (
+        "*node,nset=nall\n"
+        + "\n".join([f"{int(n)},{x:f},{y:f},{z:f}" for n, x, y, z in nodes])
+        + "\n"
     )
+
+
+def element_buffer(grid, quadratic=True):
+    conn = grid.cell_connectivity.reshape((grid.GetNumberOfCells(), -1)) + 1
+    eltype = "s8r" if quadratic else "s4"
     buf = ""
-    # export the elements
     for n, i in enumerate(conn):
-        buf += "*element,type=s8r,elset=e%i\n" % (n + 1)
-        buf += "%i,%i,%i,%i,%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
-
-    return buf
-
-
-def element_buffer_linear(grid):
-    conn = grid.cell_connectivity.reshape(
-        (
-            grid.GetNumberOfCells(),
-            int(grid.cell_connectivity.shape[0] / grid.GetNumberOfCells()),
-        )
-    )
-    buf = ""
-    # export the elements
-    for n, i in enumerate(conn):
-        buf += "*element,type=s4,elset=e%i\n" % (n + 1)
-        buf += "%i,%i,%i,%i,%i\n" % tuple([n + 1] + list(i + 1))
+        buf += f"*element,type={eltype},elset=e{n+1}\n"
+        buf += f"{n+1},{','.join(map(str, i))}\n"
 
     return buf
 
@@ -189,24 +216,39 @@ def element_buffer_linear(grid):
 def orientation_buffer(grid, add_centers=False):
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
-    for n in range(grid.GetNumberOfCells()):
-        xdir, ydir = grid.cell_data["x_dir"][n], grid.cell_data["y_dir"][n]
-        center = grid.cell_data["centers"][n]
+    x_dirs = grid.cell_data["x_dir"]
+    y_dirs = grid.cell_data["y_dir"]
+    centers = grid.cell_data["centers"]
+    num_cells = grid.GetNumberOfCells()
+
+    for n in range(num_cells):
+        xdir, ydir = x_dirs[n], y_dirs[n]
+        center = centers[n]
         buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
-        buf += "%.4g,%.4g,%.4g,%.4g,%.4g,%.4g" % tuple(xdir.tolist() + ydir.tolist())
-        buf += "," + ",".join(center.astype(str)) + "\n" if add_centers else "\n"
+        if add_centers:
+            coords = np.concatenate([xdir + center, ydir + center, center], axis=0)
+            buf += ",".join(format(k, ".4g") for k in coords.tolist()) + "\n3,0\n"
+        else:
+            coords = np.concatenate([xdir, ydir], axis=0)
+            buf += ",".join(format(k, ".4g") for k in coords.tolist()) + "\n"
+
     return buf
 
 
-def get_loadcases(mesh, multiplier=1.0):
+def get_loadcases(mesh, multiplier=1.0, buckling=False):
     loadcases = {}
+
     for i in mesh.point_data:
         if i.startswith("lc_"):
             print(f"loadcase {i}")
             # forces are interpolated to midside nodes, causing the sum of forces to be off,
             # compute a multiplier from the sum of the forces in the linear model here
             multiplier = 1.0  # TODO fix for quadratic meshes # mesh.point_data[i].sum() / mesh.point_data[i].sum()
-            lbuf = f"** {i}\n*step\n*static\n*cload\n"
+            if buckling:
+                lbuf = f"** {i}\n*step\n*buckle\n5\n*cload\n"
+            else:
+                lbuf = f"** {i}\n*step\n*static\n*cload\n"
+
             ld = mesh.point_data[i] * multiplier
             for n, j in enumerate(ld):
                 if j[0] ** 2 > 1e-8:
@@ -214,161 +256,169 @@ def get_loadcases(mesh, multiplier=1.0):
                 if j[1] ** 2 > 1e-8:
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
 
-            root = np.where(mesh.points[:, 2] == mesh.points[:, 2].min())
-            lbuf += "*boundary,op=new\n"
-            for j in root[0]:
-                lbuf += "%i,1,3\n" % (j + 1)
-
-            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nS,E\n*node print,nset=nall\nrf\n*end step\n"
+            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nE\n*node print,nset=root,totals=yes\nrf\n*end step\n"
+            # \n*node print,nset=nall\nrf
+            # if buckling:
+            #     lbuf += (
+            #         "*step\n*buckle\n5\n*el file\n*node file,output=3d\nu\n*end step\n"
+            #     )
 
             loadcases[i] = lbuf
 
     return loadcases
 
 
-def main():
-    p = argparse.ArgumentParser(description="Translate a blade vtk mesh into ccx")
-    p.add_argument(
-        "grid",
-        help="Grid file (vtu) including shear web(s) and shell (assuming you want to simulate a blade)",
-    )
-    p.add_argument("--out", default="test.inp", help="Output file name (input for ccx)")
-    p.add_argument(
-        "--matmap",
-        default="temp/material_map.json",
-        help="Mapping between material name and id in the vtu file",
-    )
-    p.add_argument(
-        "--merge_adjacent_layers",
-        action="store_true",
-        default=False,
-        help="Merge adjacent layers with same material",
-    )
-    p.add_argument(
-        "--zeroangle",
-        action="store_true",
-        default=False,
-        help="Zero angle set for plies, rather than reference to coordinate system. This can set for abaqus and hyperworks",
-    )
-    p.add_argument(
-        "--single",
-        action="store_true",
-        default=False,
-        help="If set, export all loadcases as *STEPs in a single file rather than making a separate file for each loadcase",
-    )
-    p.add_argument(
-        "--quadratic", action="store_true", default=False, help="Use quadratic elements"
-    )
-    p.add_argument(
-        "--add_centers",
-        action="store_true",
-        default=False,
-        help="Add centers to orientation",
-    )
-    p.add_argument("--force_iso", action="store_true", default=False, help="Force iso")
-    args = p.parse_args()
+def root_clamp(mesh):
+    root = np.where(mesh.points[:, 2] == mesh.points[:, 2].min())
+    lbuf = "*nset, nset=root\n"
+    for n, j in enumerate(root[0]):
+        lbuf += "%i" % (j + 1)
+        if n % 16 == 0:
+            lbuf += "\n"
+        else:
+            lbuf += ","
+    lbuf += "\n"
+    lbuf += "*boundary,op=new\nroot,1,3\n"
+    # for j in root[0]:
+    #     lbuf += "%i,1,3\n" % (j + 1)
+    return lbuf
 
-    grid = args.grid
 
-    # order = 1
+def mesh2ccx(
+    vtu,
+    out="test.inp",
+    matmap="temp/material_map.json",
+    merge_adjacent_layers=False,
+    zeroangle=False,
+    single_step=False,
+    quadratic=False,
+    add_centers=False,
+    force_isotropic=False,
+    export_hyperworks=False,
+    export_plygroups=False,
+    buckling=False,
+    meshonly=False,
+):
+    """
+    Export a grid to ccx input file
 
-    print(pv.read(grid).points.shape)
-
-    gr = pv.read(grid).threshold(value=(1e-6, 1e9), scalars="thickness")
-
-    print(gr.points.shape)
+    :param  grid (_type_): Grid file (vtu)
+    :param out (str, optional): Output file. Defaults to "test.inp".
+    :param matmap (str, optional): material map file. Defaults to "temp/material_map.json".
+    :param merge_adjacent_layers (bool, optional): _description_. Defaults to False.
+    :param zeroangle (bool, optional): _description_. Defaults to False.
+    :param single_step (bool, optional): _description_. Defaults to False.
+    :param quadratic (bool, optional): _description_. Defaults to False.
+    :param add_centers (bool, optional): _description_. Defaults to False.
+    :param force_isotropic (bool, optional): _description_. Defaults to False.
+    :param export_hyperworks (bool, optional): _description_. Defaults to False.
+    :param export_plygroups (bool, optional): _description_. Defaults to False.
+    :param buckling (str, optional): _description_. Defaults to "static".
+    :param meshonly (bool, optional): _description_. Defaults to False.
+    :return: _description_
+    """
+    grid = pv.read(vtu)
+    gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
-    if args.quadratic:
+    print(f"** Exporting {gr.GetNumberOfCells()} elements")
+    if quadratic:
         lf = vtk.vtkLinearToQuadraticCellsFilter()
         lf.SetInputData(gr)
         lf.Update()
         quad = lf.GetOutput()
-        mesh = pv.UnstructuredGrid(quad)
-        # mesh = mesh
+        mesh = zero_midside_loads(pv.UnstructuredGrid(quad))
+        mesh.save(vtu.replace(".vtu", "_quad.vtu"))
     else:
         mesh = pv.UnstructuredGrid(gr)
 
-    # export the nodes
-    buf = "*node,nset=nall\n"
-    for n, i in enumerate(mesh.points):
-        buf += "%i,%f,%f,%f\n" % tuple([n + 1] + list(i))
-
     buf = nodebuffer(mesh)
 
-    if args.quadratic:  # order == 1:
-        buf += element_buffer_quadratic(mesh)
+    if quadratic:
+        buf += element_buffer(mesh, quadratic=True)
     else:
-        buf += element_buffer_linear(mesh)
+        buf += element_buffer(mesh, quadratic=False)
 
-    # else:
-    #     raise ValueError("order must be 1 or 2")
-    print(mesh.GetNumberOfCells())
+    if meshonly:
+        of = out.replace(".inp", "_meshonly.inp")
+        open(of, "w").write(buf)
+        print(f"** written to {of}")
+        return
 
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
 
-    buf += compute_groups(mesh, "slab_thickness_")
+    print(f"** Export plygroups {export_plygroups}")
+    if export_plygroups:
+        plygroups, df = compute_ply_groups(mesh, "ply_")
 
-    buf += compute_groups(mesh, "ply_")
+        slabgroups = compute_slab_groups(mesh, "slab_thickness_")
+
+        buf += plygroups + slabgroups
 
     plykeys = [i for i in mesh.cell_data if i.startswith("ply_")]
 
     plydat = np.stack(mesh.cell_data[i] for i in plykeys)
+
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
-    buf += orientation_buffer(mesh, args.add_centers)
+    buf += orientation_buffer(mesh, add_centers)
 
-    matblock = material_db_to_ccx(
-        materials, matmap=args.matmap, force_iso=args.force_iso
-    )
+    print("** made orientation buffer")
+    matblock = material_db_to_ccx(materials, matmap=matmap, force_iso=force_isotropic)
 
-    # exit()
     buf += matblock
 
     tic = time.perf_counter()
 
-    # p = multiprocessing.Pool()
-
-    # blx = p.map(
-    #     make_shell_section,
-    #     [
-    #         (i, plydat[:, i, :], args.merge_adjacent_layers)
-    #         for i in range(plydat.shape[1])
-    #     ],
-    # )
-
     blx = [
-        make_shell_section(
-            i, plydat[:, i, :], args.merge_adjacent_layers, args.zeroangle
-        )
+        make_shell_section(i, plydat[:, i, :], merge_adjacent_layers, zeroangle)
         for i in range(plydat.shape[1])
     ]
+    print("** made shell sections")
+
+    nplies = np.array([i[0] for i in blx])
+
+    nplmax = nplies.max()
+    npxid = np.where(nplies == nplmax)[0]
+    # print(npxid)
+    print(f"max number of plies: {nplmax}")
+    print(f"associated stack \n{ blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
-    print("time spent creating shell sections %f" % (toc - tic))
-
+    print("** time spent creating shell sections %f" % (toc - tic))
+    # sys.stdout.flush()
     comps = "".join(
-        "*shell section,composite,elset=e%i,offset=-.5\n%s" % (n + 1, i)
+        f"*shell section,composite,elset=e{n+1},offset=-.5"
+        + (f",orientation=or{n+1}\n" if zeroangle else "\n")
+        + i[1]
         for n, i in enumerate(blx)
     )
     buf += comps
+    buf += root_clamp(mesh)
 
-    loadcases = get_loadcases(mesh)
-
-    # print(loadcases)
+    loadcases = get_loadcases(mesh, buckling=buckling)
 
     # write a full ccx file for each loadcase, assuming parallel execution
-    if args.single:
+    if single_step:
         output = buf + "".join(loadcases.values())
-        open(args.out, "w").write(output)
-        print(f"written ccx input file with all loadcases to {args.out}")
+        open(out, "w").write(output)
+        print(f"** written ccx input file with all loadcases to {out}")
+        otb = out.replace(".inp", ".csv")
     else:
         for i in loadcases:
             output = buf + loadcases[i]
-            of = args.out.replace(".inp", f"_{i}.inp")
+            of = out.replace(".inp", f"_{i}.inp")
             open(of, "w").write(output)
-            print(f"written ccx input file to {of}")
+            print(f"** written ccx input file to {of}")
+
+    if export_hyperworks:
+        df.to_csv(otb, index=False)
+        print(f"** written plybook to hyperworks table {otb}")
+
+
+def main():
+    fire.Fire(mesh2ccx)
 
 
 if __name__ == "__main__":

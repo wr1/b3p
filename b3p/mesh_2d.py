@@ -240,31 +240,26 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     print("# creating cross section mesh from %s at r=%.3f" % (vtu, r))
     workdir = os.path.dirname(vtu)
     # read in the mesh
-    if vtu.endswith(".vtu"):
-        rd = vtk.vtkXMLUnstructuredGridReader()
-    elif vtu.endswith(".vtp"):
-        rd = vtk.vtkXMLPolyDataReader()
-
-    rd.SetFileName(vtu)
-    rd.Update()
-    msh = rd.GetOutput()
+    rd = pv.read(vtu)
 
     local_twist = get_local_twist(r, var)
     local_chord = get_local_chord(r, var)
 
-    if not is2d:
-        # slice the mesh at some point
-        cutter = vtk.vtkCutter()
-        plane = vtk.vtkPlane()
-        plane.SetOrigin(0, 0, r)
-        plane.SetNormal(0, 0, 1)
+    sec = rd.slice(normal=[0, 0, 1], origin=[0, 0, r])
 
-        cutter.SetCutFunction(plane)
-        cutter.SetInputData(msh)
-        cutter.Update()
-        sec = cutter.GetOutput()
-    else:
-        sec = msh
+    # if not is2d:
+    #     # slice the mesh at some point
+    #     cutter = vtk.vtkCutter()
+    #     plane = vtk.vtkPlane()
+    #     plane.SetOrigin(0, 0, r)
+    #     plane.SetNormal(0, 0, 1)
+
+    #     cutter.SetCutFunction(plane)
+    #     cutter.SetInputData(msh)
+    #     cutter.Update()
+    #     sec = cutter.GetOutput()
+    # else:
+    #     sec = msh
 
     # first we rotate around the Z axis as if rotating the whole blade (compensate for pck angle)
     transform = vtk.vtkTransform()
@@ -577,8 +572,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
 
     out.GetCellData().AddArray(ang2)
 
-    # mkeys = sorted({mat.GetTuple1(i) for i in range(mat.GetNumberOfTuples())})
-
     if verbose:
         write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
 
@@ -589,7 +582,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     wrt.SetInputData(out)
     wrt.SetFileName(of)
     wrt.Write()
-    # out.save(of)
     print(f"# written vtk to {of}")
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False

@@ -22,6 +22,11 @@ def is_nonzero_array(arr):
 
 
 def combine_meshes(meshes, output_filename):
+    """Combine a series of meshes into a single vtu file.
+
+    meshes: list of vtu files
+    output_filename: name of output file
+    """
     meshes = [pv.read(i) for i in meshes]
     # find all the point and cell data arrays
     all_pd = [
@@ -33,14 +38,7 @@ def combine_meshes(meshes, output_filename):
         (j, x.cell_data[j].shape, x.cell_data[j].dtype)
         for x in meshes
         for j in x.cell_data.keys()
-        # if is_nonzero_array(x.cell_data[j])
     ]
-
-    for i in all_pd + all_cd:
-        if i[0].startswith("is_w"):
-            print(i)
-
-    # print(all_pd, all_cd)
 
     tic = time.time()
 
@@ -66,7 +64,11 @@ def combine_meshes(meshes, output_filename):
 
     toc1 = time.time()
 
-    out = cmeshes[0].merge(cmeshes[1:])
+    out = (
+        cmeshes[0]
+        .merge(cmeshes[1:])
+        .compute_cell_quality(quality_measure="aspect_ratio")
+    )
 
     toc2 = time.time()
 

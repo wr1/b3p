@@ -23,72 +23,22 @@ class blade:
         airfoils,
         chordwise_sampling,
         np_spanwise=100,
-        offset_optimal=True,
-        flatten_lw=True,
-        barrel_length=0.0,
-        offset_clamp_points=None,
     ):
-        """
-        sequence of what needs to be done:
-
-        #. load in airfoils
-
-        #.  resample airfoils to fixed number of points around circumference
-            using spline interpolation
-
-        #. sample thickness, chord, twist and centerline at required z positions
-
-        #. create linear interpolations of the airfoil table at sampled thickness
-            values
-
-        #. scale, rotate, offset sections to exist on the
-
-        Args:
-            chord : chord distribution [(r,chord),..]
-
-            thickness : thickness distribution [(r,t),..] --> relative
-
-            twist : twist distribution [(r,twist),..]
-
-            centerline : centerline spline [(x,y,z),..]
-
-            airfoils : table of airfoils (key is thickness) {.35:'naca35'}
-
-            np_chordwise (int) : number of chordwise points
-
-            np_spanwise (int): number of spanwise points
-
-            chordwise_sampling (list) : chordwise list of t coordinates
-                (overrides np_chordwise)
-
-            offset_optimal (bool): flag indicating whether to run optimal
-                offsetting of the sparcap
-
-            interpolate_method (int): Type of interpolation (1 being linear, 2
-            KochanekSpline , 3 CardinalSpline, 4 SmoothCurve )
-
-            flatten_lw (bool): flag indicating whether to run LW side flattening
-
-            barrel_length (float): length of root that stays cylindrical
-
-            offset_clamp_points (list[float]): list of points closest to which
-                the optimal offsetting points are taken
-
-        """
-        if offset_clamp_points is None:
-            offset_clamp_points = [0.32, 0.55, 0.7]
+        """Build a blade geometry from a yaml file
+        :param chord: list of chord lengths
+        :param thickness: list of relative thicknesses
+        :param twist: list of twist angles
+        :param dx: list of x offsets
+        :param dy: list of y offsets
+        :param z: list of z offsets
+        :param airfoils: dict of airfoils
+        :param chordwise_sampling: list of chordwise sampling points
+        :param np_spanwise: number of spanwise points"""
         self.np_spanwise = np_spanwise
-        self.barrel_length = barrel_length
         self.np_chordwise = len(chordwise_sampling)
-
         self._load_airfoils(airfoils, chordwise_sampling)
-        self._interpolate_planform(
-            chord, thickness, twist, dx, dy, z, flatten_lw=flatten_lw
-        )
-        self._place_airfoils(
-            offset_optimal=offset_optimal,
-            offset_clamp_points=offset_clamp_points,
-        )
+        self._interpolate_planform(chord, thickness, twist, dx, dy, z)
+        self._place_airfoils()
 
     def to_table(self, x, prefix="prebend_out"):
         """
@@ -98,8 +48,6 @@ class blade:
             x (list) : list of sections where airfoils are to be interpolated
             prefix (str) : prefix for output file
         """
-        dxx = (self.dy[0], self.dxf[1] - self.dy[1])
-
         cols = [
             "relative_r",
             "z",
@@ -108,7 +56,6 @@ class blade:
             "relative_thickness",
             "absolute_thickness",
             "twist",
-            "dx",
         ]
         df = pd.DataFrame(
             np.array(
@@ -122,7 +69,6 @@ class blade:
                         self.thickness,
                         self.absolute_thickness,
                         self.twist,
-                        dxx,
                     ]
                 ]
             ).T,
@@ -139,26 +85,25 @@ class blade:
 
             x (list) : list of sections where airfoils are to be interpolated
         """
+        print("** loading airfoils")
         self.airfoils = {}
         for i in sorted(airfoils):
             if type(airfoils[i]) == str:
                 if airfoils[i].find("du") != -1:
-                    print(f"load {airfoils[i]} normalised")
+                    print(f"** load {airfoils[i]} normalised")
                     t = loft_utils.load(airfoils[i], normalise=True)
                 else:
-                    print(f"load {airfoils[i]} unnormalised")
+                    print(f"** load {airfoils[i]} unnormalised")
                     t = loft_utils.load(airfoils[i], normalise=False)  # fix so we don't
                     # normalise flatback root
             else:
                 # load an airfoil from the self-contained format, which is a dict with keys xy
-                print(f"loading airfoil {airfoils[i]['name']} at thickness {i}")
+                print(f"** loading airfoil {airfoils[i]['name']} at thickness {i}")
                 t = airfoils[i]["xy"]
 
             self.airfoils[i] = loft_utils.interp(x, t)[:2]
 
-    def _interpolate_planform(
-        self, chord, thickness, twist, dx, dy, z, flatten_lw=True
-    ):
+    def _interpolate_planform(self, chord, thickness, twist, dx, dy, z):
         """
         spline the planform based on parameters
 
@@ -196,49 +141,6 @@ class blade:
             self.x,
             [i[0] * i[1] for i in zip(self.chord[1], self.thickness[1])],
         ]
-
-        # here we take the thickness, and determine a y offset such that the
-        # suction side sparcap runs flat for the first half of the blade
-        dy_flat = [
-            self.x,
-            [
-                0.5 * self.absolute_thickness[1][0] - 0.5 * i
-                for i in self.absolute_thickness[1]
-            ],
-        ]
-
-        if flatten_lw:
-            self.flatten_lw(dy_flat, dy)
-
-    def flatten_lw(self, dy_flat, dy):
-        """
-        flatten the leeward side of the blade
-
-        parameters:
-            dy_flat (list) : y offset distribution [(r,y),..]
-            dy (list) : y distribution [(r,y),..]
-        """
-        mid_offset = dy_flat[1][len(dy_flat[1]) // 2]
-        dy_flat[1] = [
-            i[1] - 2.0 * i[0] * mid_offset for i in zip(dy_flat[0], dy_flat[1])
-        ]
-
-        dynew = list(zip(dy_flat[0], dy_flat[1]))[: len(self.x) // 2]
-
-        for i in dy:
-            if i[0] > 0.7:
-                dynew.append(i)
-
-        if self.barrel_length > 0.00001:
-            bpnts = [
-                (i, 0)
-                for i in np.linspace(
-                    0, self.barrel_length / (self.z[1][-1] - self.z[1][0]), 20
-                )
-            ]
-            bpnts.extend(i for i in dynew if i[0] > 0.2)
-            dynew = bpnts
-        self.dy = splining.intp_c(self.x, dynew)
 
     def plot(self, name="_dum", fname="_out.png"):
         """
@@ -292,18 +194,6 @@ class blade:
         plt.plot(self.dy[0], self.dy[1], label=f"{name}_y")
         plt.plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
         plt.legend(loc="best").get_frame().set_alpha(0.5)
-        self.title_plot("xy offsets", 6)
-        plt.plot(
-            list(zip(*self.mx_thickness_loc))[0],
-            list(zip(*self.mx_thickness_loc))[1],
-            "o",
-            label="control points",
-        )
-        plt.plot(self.x, self.mmxt, ".", label="sectionwise optimal")
-        plt.plot(self.dxf[0], self.dxf[1], label="offset used")
-        plt.ylabel("dist to 0.3 x chord (m)")
-        plt.legend(loc="best")
-        plt.grid(True)
         plt.savefig(fname, dpi=100)
 
     # TODO Rename this here and in `plot`
@@ -337,51 +227,19 @@ class blade:
 
         return sections
 
-    def _place_airfoils(self, offset_optimal=True, offset_clamp_points=None):
-        if offset_clamp_points is None:
-            offset_clamp_points = [0.32, 0.55, 0.7]
-
+    def _place_airfoils(self):
         self.sections = self._interpolate_airfoils()
 
         # build the blade up out of sections in two loops
         # first, scale and twist the section
-        mx_thickness_loc = []
         # a variable is created, analogous to focus, which represents the
         # fraction of the chord around which the twist is defined
-        twist_center = 0.3
+        twist_center = 0.5
 
-        self.mmxt = []
         for i in zip(self.x, self.chord[1], self.twist[1], self.sections):
-            # with -0.3 (since the section is not scaled, this is 0.3*chord)
             i[3].translate(-twist_center, 0.0, 0.0)
             i[3].twist(i[2])
             i[3].scale((i[1], i[1], 1.0))
-            mxt = i[3].get_max_thickness()
-            self.mmxt.append(mxt)
-            for j in sorted(offset_clamp_points):
-                if i[0] >= j:
-                    mx_thickness_loc.append((i[0], mxt))
-                    offset_clamp_points.remove(j)
-                    break
-        mx_thickness_loc.append((i[0], i[3].get_max_thickness()))
-
-        dxf = list(splining.intp_c(self.x, mx_thickness_loc))
-
-        dxf[1] = np.array(dxf[1])
-
-        if offset_optimal == False:
-            dxf[1] = np.zeros(len(dxf[1]))
-
-        # use the local coordinate to offset the section so that the thickest
-        # point lines up with the pitch axis
-        if offset_optimal:
-            fpx, fpy = [], []
-            for i in zip(self.sections, dxf[1], self.twist[1]):
-                fpx.append(math.sin(math.radians(i[2])) * i[1])
-                fpy.append(-i[1] + (1.0 - np.cos(np.radians(i[2]))) * i[1])
-
-        self.dx = (self.dx[0], np.array(self.dx[1]) - np.array(fpx))
-        self.dy = (self.dy[0], np.array(self.dy[1]) + np.array(fpy))
 
         for i in self.sections:
             i.local_to_global()
@@ -390,13 +248,10 @@ class blade:
         for i in zip(self.sections, self.dx[1], self.dy[1], self.z[1]):
             i[0].translate(i[1], i[2], i[3])
 
-        self.dxf = dxf
-        self.mx_thickness_loc = mx_thickness_loc
-
     def export_variables(self, fname):
         var = {
             "dx": self.dx,
-            "dxf": self.dxf,
+            # "dxf": self.dxf,
             "dy": self.dy,
             "z": self.z,
             "twist": self.twist,

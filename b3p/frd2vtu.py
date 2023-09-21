@@ -6,20 +6,22 @@ from io import StringIO
 import multiprocessing
 import numpy as np
 import vtk
-import argparse
+import fire
 import time
+
+import regex
 
 
 def findall(p, s):
-    i = s.find(p)
-    out = [i]
-    while i != -1:
-        i = s.find(p, i + 1)
-        out.append(i)
-    return out
+    return [m.start() for m in regex.finditer(p, s, overlapped=True)]
 
 
-def load(inp):
+def load_frd(inp):
+    if inp.find("PSTEP") != -1:
+        start_step_line = inp.find("100CL")
+        end_step_line = inp.find("\n", start_step_line)
+        _, solution_type, timestep = inp[start_step_line:end_step_line].split()[:3]
+
     if inp.find("CalculiX") != -1:  # read the nodes
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -53,8 +55,8 @@ def load(inp):
             names=["n", "d1", "d2", "d3"],
             widths=[3, 10, 12, 12, 12],
             index_col=1,
-        )
-        return ("disp", out)
+        ).astype("float32")
+        return (f"disp_{timestep}", out)
     elif inp.find("FORC") != -1:  # forces
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -62,8 +64,8 @@ def load(inp):
             names=["n", "f1", "f2", "f3"],
             widths=[3, 10, 12, 12, 12],
             index_col=1,
-        )
-        return ("force", out)
+        ).astype("float32")
+        return (f"force_{timestep}", out)
     elif inp.find("STRESS") != -1:  # stresses
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -71,8 +73,8 @@ def load(inp):
             names=["n", "sxx", "syy", "szz", "sxy", "syz", "szx"],
             widths=[3, 10, 12, 12, 12, 12, 12, 12],
             index_col=1,
-        )
-        return ("stress", out)
+        ).astype("float32")
+        return (f"stress_{timestep}", out)
     elif inp.find("STRAIN") != -1:  # strains
         out = pd.read_fwf(
             StringIO(inp[inp.find("\n -1") :]),
@@ -80,28 +82,30 @@ def load(inp):
             names=["n", "exx", "eyy", "ezz", "exy", "eyz", "ezx"],
             widths=[3, 10, 12, 12, 12, 12, 12, 12],
             index_col=1,
-        )
-        return ("strain", out)
+        ).astype("float32")
+        return (f"strain_{timestep}", out)
 
     return ("other", None)
 
 
-def main():
-    p = argparse.ArgumentParser(
-        description="Fast translate of frd into vtu file using multiprocessing and pandas parsers, only tested on hex20"
-    )
-    p.add_argument("frd", help="Input file")
-    p.add_argument("--output", default="__temp.vtu", help="Output file name")
+def frd2vtu(frd, output=None, multi=False):
+    if not output:
+        output = frd.replace(".frd", ".vtu")
 
+    print("running frd2vtu on file: ", frd)
     tic = time.perf_counter()
-    args = p.parse_args()
-    x = open(args.frd, "r").read()
+    x = open(frd, "r").read()
     # find all block endings
     min3 = [0] + findall("\n -3", x)
 
     # pass the blocks to a process each
-    p = multiprocessing.Pool()
-    o = dict(p.map(load, [x[i[0] : i[1]] for i in zip(min3, min3[1:])]))
+    if multi:
+        p = multiprocessing.Pool()
+        o = p.map(load_frd, [x[i[0] : i[1]] for i in zip(min3, min3[1:])])
+    else:
+        o = [load_frd(x[i[0] : i[1]]) for i in zip(min3, min3[1:])]
+
+    o = dict(o)
 
     # create a map between ccx node id and vtk
     idmap = pd.DataFrame(o["nodes"].index, o["nodes"]["index"])
@@ -124,34 +128,38 @@ def main():
     wd = idmap.loc[wd.flatten()].values.reshape(wshape)
 
     # use the pyvista dict mesh build interface
-    print(vtk.VTK_QUADRATIC_HEXAHEDRON, hx.shape)
     ogrid = pyvista.UnstructuredGrid(
         {vtk.VTK_QUADRATIC_HEXAHEDRON: hx, vtk.VTK_QUADRATIC_WEDGE: wd},
         o["nodes"][["x", "y", "z"]].values,
     )
-    for i in ["disp", "force", "stress", "strain"]:
-        if i in o:
+
+    for i in o:
+        if any(
+            i.startswith(prefix) for prefix in ["disp", "force", "stress", "strain"]
+        ):
             ogrid.point_data[i] = o[i].values[:, 1:]
 
     # add mises strain and stress
-    for s in [("stress", "s"), ("strain", "e")]:
-        ss = o[s[0]]
-        xx, yy, zz, xy, yz, zx = [
-            ss[f"{s[1]}{i}"] for i in ["xx", "yy", "zz", "xy", "yz", "zx"]
-        ]
-        ogrid.point_data[f"mises_{s[0]}"] = (1.0 / 2.0**0.5) * (
-            (xx - yy) ** 2
-            + (yy - zz) ** 2
-            + (zz - xx) ** 2
-            + 6.0 * (xy**2 + yz**2 + zx**2)
-        ) ** 0.5
 
-    ogrid.save(args.output)
+    # for s in [("stress", "s"), ("strain", "e")]:
+    #     ss = o[s[0]]
+    #     xx, yy, zz, xy, yz, zx = [
+    #         ss[f"{s[1]}{i}"] for i in ["xx", "yy", "zz", "xy", "yz", "zx"]
+    #     ]
+    #     ogrid.point_data[f"mises_{s[0]}"] = (1.0 / 2.0**0.5) * (
+    #         (xx - yy) ** 2
+    #         + (yy - zz) ** 2
+    #         + (zz - xx) ** 2
+    #         + 6.0 * (xy**2 + yz**2 + zx**2)
+    #     ) ** 0.5
 
-    print("written to ", args.output)
+    ogrid.save(output)
+
+    print(f"** written to {output}")
     toc = time.perf_counter()
     print("time for translation %fs" % (toc - tic))
+    return ogrid
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(frd2vtu)

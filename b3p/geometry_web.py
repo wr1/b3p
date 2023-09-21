@@ -2,6 +2,7 @@ import vtk
 import numpy as np
 from b3p import geom_utils
 import pyvista as pv
+import math
 
 
 def equals(v1, v2):
@@ -15,7 +16,6 @@ def mesh_line(pnt1, pnt2, n_cells, id):
     draping
     """
     xyz = []
-    # tol = 1e-6
     web_height = vtk.vtkGeoMath().DistanceSquared(pnt1, pnt2) ** 0.5
 
     for i in zip(pnt1, pnt2):
@@ -32,8 +32,6 @@ def mesh_line(pnt1, pnt2, n_cells, id):
 
     ppl = [-i + pl[-1] for i in pl]
     ml = [abs(i - 0.5 * web_height) for i in pl]  # distance from the web centerline
-
-    # print(len(ml), len(pl))
 
     wh = [web_height for _ in ml]
 
@@ -71,6 +69,7 @@ class web:
         self.evaluations = {}
         self.name = web_name
         self.coordinate = coordinate
+        # self.normal = normal
         self.flip_normal = flip_normal
 
     def average_splits(self):
@@ -96,7 +95,7 @@ class web:
         # log the evaluations of the web position, so that it can be used later
         # to look up the 3D coordinates, store in mm, so that it can be used as
         # an integer key to look up corresponding web split locations
-        self.evaluations[int(round(r * 1e3))] = [out]
+        self.evaluations[int(round(r * 1e2) * 10)] = [out]
         return out
 
     def _find_top_and_bottom_points(self, mesh):
@@ -119,13 +118,13 @@ class web:
             if self.web_root <= rm <= self.web_tip:
                 rd = rel_dist.GetValue(i)
                 pnt = mesh.GetPoint(i)
-                rmm = int(round(rm * 1e3))
+                rmm = int(round(rm * 1e2) * 10)
                 if equals(rd, self.evaluations[rmm][0][0]) or equals(
                     rd, self.evaluations[rmm][0][1]
                 ):
                     self.evaluations[rmm].append(pnt)
 
-    def _create_quad_connectivity(self, n_points, n_total):
+    def _create_quad_connectivity(self, n_points, n_total, flip=False):
         """create quad element connectivity array
 
         parameters:
@@ -142,7 +141,22 @@ class web:
             np.arange(1, nrows).repeat(n_points - 1).reshape(nrows - 1, n_points - 1)
             - 1
         ) * n_points + colids
-        stck = [np.ones_like(npp) * 4, npp, npp + n_points, npp + n_points + 1, npp + 1]
+        if flip:
+            stck = [
+                np.ones_like(npp) * 4,
+                npp + 1,
+                npp + n_points + 1,
+                npp + n_points,
+                npp,
+            ]
+        else:
+            stck = [
+                np.ones_like(npp) * 4,
+                npp,
+                npp + n_points,
+                npp + n_points + 1,
+                npp + 1,
+            ]
         return np.stack(stck).T.flatten()
 
     def _create_points(self, n_cells):
@@ -166,9 +180,9 @@ class web:
 
     def write_mesh(self, vtpfile):
         self.mesh.save(vtpfile)
-        print(f"# wrote mesh to {vtpfile}")
+        print(f"** wrote mesh to {vtpfile}")
 
-    def mesh(self, mesh, n_cells=20):
+    def mesh(self, mesh, n_cells):
         """
         create the mesh for the web
 
@@ -181,9 +195,13 @@ class web:
         """
         self._find_top_and_bottom_points(mesh)
         points, pdata = self._create_points(n_cells)
-        cells = self._create_quad_connectivity(n_cells, len(points))
+
+        cells = self._create_quad_connectivity(n_cells, len(points), self.flip_normal)
+
+        # print(cells)
+        # ccc = cells[::5]
 
         self.mesh = pv.PolyData(points, faces=cells)
+
         for i in pdata:
             self.mesh.point_data[i] = np.array(pdata[i]).astype(np.float32)
-            # print(self.mesh.point_data[i].dtype)

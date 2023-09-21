@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
 from ruamel import yaml
-import argparse
 import numpy as np
 from ruamel.yaml import YAML
 import re
+import fire
+import os
 
 
 def flowlist(listoflists):
@@ -42,45 +43,61 @@ def load_airfoil(af):
     return name, np.loadtxt(af, skiprows=offset).tolist()
 
 
-def load_airfoils(afs):
+def load_airfoils(afs, prefix=""):
     """Load a list of airfoils from a dictionary of xfoil formated text files."""
     dct = {}
     for i in afs:
-        name, xy = load_airfoil(afs[i])
+        if "xy" in afs[i]:
+            return afs
+        name, xy = load_airfoil(os.path.join(prefix, afs[i]))
         dct[i] = {"xy": flowlist(xy)}
         dct[i]["name"] = name
         dct[i]["path"] = afs[i]
-        print(f"imported airfoil {name} at thickness {i}")
+        print(f"\t** imported airfoil {name} at thickness {i}")
 
     return dct
 
 
-def import_linked_yml(yaml_file):
-    y = YAML()
+def yaml_make_portable(yaml_file, safe=False):
+    """Import a yaml file and all linked files, and write to a _portable version of itself.
 
-    d = yaml.round_trip_load(open(yaml_file, "r"), preserve_quotes=True)
+    :param yaml_file: path to yaml file
+    :param safe: if True, use safe loader and basic data types (dict, list, str, int, float)
+    :return: None"""
+    print(f"** Loading yaml file {yaml_file} and loading linked files")
+    prefix = os.path.dirname(yaml_file)
 
-    d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"])
+    if safe:
+        d = yaml.load(open(yaml_file, "r"), Loader=yaml.SafeLoader)
+    else:
+        d = yaml.round_trip_load(open(yaml_file, "r"), preserve_quotes=True)
+
+    d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
 
     if type(d["materials"]) == str:
-        print(f'loading materials from: {d["materials"]}')
+        print(f'\t** loading materials from: {d["materials"]}')
         d["materials"] = yaml.round_trip_load(
-            open(d["materials"], "r"), preserve_quotes=True
+            open(os.path.join(prefix, d["materials"]), "r"), preserve_quotes=True
         )
 
-    d["general"]["workdir"] += "_portable"
+    if d["general"]["workdir"].find("portable") == -1:
+        d["general"]["workdir"] += "_portable"
+
+    return d
+
+
+def save_yaml_portable(yaml_file):
+    d = yaml_make_portable(yaml_file)
+
+    y = YAML()
     of = yaml_file.replace(".yml", "_portable.yml").replace(".yaml", "_portable.yml")
     with open(of, "w") as f:
         y.dump(d, f)
-
-    print(f"written to: {of}")
+    print(f"\twritten to: {of}")
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("yaml_file", help="yaml file to load")
-    args = parser.parse_args()
-    import_linked_yml(args.yaml_file)
+    fire.Fire(save_yaml_portable)
 
 
 if __name__ == "__main__":

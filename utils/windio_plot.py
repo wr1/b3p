@@ -8,8 +8,10 @@ import numpy as np
 
 def plot_planform(bl, prefix):
     odct = {}
-    abs = np.array(bl["chord"]["values"]) * np.array(bl["rthick"]["values"])
-    x, ax = plt.subplots(5, 2, figsize=(10, 12))
+    absolute_thickness = np.array(bl["chord"]["values"]) * np.array(
+        bl["rthick"]["values"]
+    )
+    fig, ax = plt.subplots(5, 2, figsize=(10, 12))
     c = 0
     bl["twist"]["values"] = np.degrees(bl["twist"]["values"]).tolist()
     for i in bl:
@@ -19,7 +21,7 @@ def plot_planform(bl, prefix):
             odct[i] = [list(j) for j in zip(bl[i]["grid"], bl[i]["values"])]
             c += 1
 
-    ax[c][0].plot(bl["chord"]["grid"], abs)
+    ax[c][0].plot(bl["chord"]["grid"], absolute_thickness)
 
     for c, i in enumerate(bl["reference_axis"]):
         ax[c][1].plot(
@@ -33,7 +35,7 @@ def plot_planform(bl, prefix):
             )
         ]
     of = f"{prefix}_planform"
-    plt.savefig(of)
+    fig.savefig(of)
     print(f"written plot to {of}")
 
     odct["thickness"] = odct["rthick"]

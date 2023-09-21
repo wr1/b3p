@@ -5,7 +5,13 @@ from b3p import geom_utils
 
 
 class blade_shape:
-    def __init__(self, sections=None, section_resolution=200, web_resolution=20, added_datums=None):
+    def __init__(
+        self,
+        sections=None,
+        section_resolution=200,
+        web_resolution=20,
+        added_datums=None,
+    ):
         if sections is None:
             sections = []
         if added_datums is None:

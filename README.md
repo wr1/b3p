@@ -18,15 +18,10 @@ make
 which outputs the following targets
 ```
 help                 Show this help
-geom                 create blade shell geometry (no shearwebs)
-mesh                 create blade structure 
-plybook              create a plybook out of slab definition
-drape                drape the shell and the shear web
-combine              add the meshes together 
-mesh2d               extract 2D meshes 
-loads                assign nodal forces to the joined mesh for use in FEA
-ccx                  export a grid to ccx format, solve and postprocess (requires ccx to be installed and be in PATH)
-all                  run all targets in sequence
+build                make self contained yaml file 
+ccx                  prepare and run ccx models
+aero                 run aero analysis
+all                  run all steps
 ```
 To run all steps type:
 ```
