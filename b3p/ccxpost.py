@@ -136,7 +136,6 @@ class plot_ccx:
         for pq in pqs:
             df = pd.read_parquet(pq)
             fig, ax = plt.subplots(figsize=(12, 8))
-            # colors = ["red", "blue", "green", "orange"]
             ax.set_prop_cycle(
                 cycler(color=["red", "blue", "green", "orange"])
                 + cycler(linestyle=["-", "--", ":", "-."])
@@ -144,7 +143,7 @@ class plot_ccx:
             for i in df:
                 if i[2] == "zz":
                     ax.plot(
-                        df[i].index,
+                        df[i].index.values,
                         df[i].values,
                         label=" ".join(i[:2]),
                     )
