@@ -12,8 +12,6 @@ from cycler import cycler
 def get_quadrant(vector):
     ang = np.degrees(np.arctan2(vector[1], vector[0]))
 
-    print(ang)
-
     if np.isclose(ang, -90, atol=15):
         return -180
     elif np.isclose(ang, 90, atol=15):
@@ -22,29 +20,6 @@ def get_quadrant(vector):
         return 90
     elif np.isclose(ang, 180, atol=15):
         return -90
-
-    # x, y = vector[0], vector[1]
-
-    # if x >= 0 and y >= 0:
-    #     return 1
-    # elif x < 0 and y >= 0:
-    #     return 2
-    # elif x < 0 and y < 0:
-    #     return 3
-    # elif x >= 0 and y < 0:
-    #     return 4
-    # angle = np.arctan2(vector[1], vector[0])
-
-    # if angle > 0:
-    #     if angle < np.pi / 2:
-    #         return 1
-    #     else:
-    #         return 2
-    # else:
-    #     if angle > -np.pi / 2:
-    #         return 4
-    #     else:
-    #         return 3
 
 
 class plot_ccx:
@@ -132,7 +107,6 @@ class plot_ccx:
     def plot2d(self, wildcard=""):
         pqs = glob.glob(os.path.join(self.wdir, f"*{wildcard}*eps2d.pq"))
 
-        # dfs = [pd.read_parquet(i) for i in pqs]
         for pq in pqs:
             df = pd.read_parquet(pq)
             fig, ax = plt.subplots(figsize=(12, 8))
