@@ -357,7 +357,7 @@ def mesh2ccx(
 
     plykeys = [i for i in mesh.cell_data if i.startswith("ply_")]
 
-    plydat = np.stack(mesh.cell_data[i] for i in plykeys)
+    plydat = np.stack([mesh.cell_data[i] for i in plykeys])
 
     # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
