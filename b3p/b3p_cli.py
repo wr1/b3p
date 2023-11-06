@@ -138,6 +138,11 @@ class cli:
         """Run ccx on all inp files in workdir that match wildcard"""
 
         inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
+
+        if inps == []:
+            print(f"** No inps found matching {self.prefix}*{wildcard}*inp")
+            return self
+
         inps_to_run = []
         for inp in inps:
             frd_file = inp.replace(".inp", ".frd")

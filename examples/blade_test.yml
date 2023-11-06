@@ -2,7 +2,7 @@ general:
   # prefix for output files
   prefix: test_blade
   # workdirectory for all variants
-  workdir : temp_b50
+  workdir : temp_blade
 
 planform:
   npchord: 100
@@ -10,7 +10,23 @@ planform:
   # offset in prebend direction, negative is upwind
   dx    : [[0.0,0.0],[0.2,0.0],[0.4,0.0],[1.0,-5.0]]
   # offset in chord direction
-  dy    : [[0,0],[1,0]]
+  dy:
+  - [0.0,  0.0] 
+  - - 0.01
+    - 0.0
+  - - 0.3
+    - 0.5860957549908372
+  - - 0.43
+    - 0.5292475355828817
+  - - 0.5599999999999999
+    - 0.4981144528302349
+  - - 0.6900000000000001
+    - 0.43552499282773205
+  - - 0.8199999999999998
+    - 0.32879129475154056
+  - - 0.95
+    - 0.3334681541732368
+
   z     : [[0,3],[1,126]]
   chord : [[0.0,5],[0.03,5.06],[0.2,6.5],[.4,4.4],[.6,2.8],[.75,2.0],[0.94,1.4],[.985,.8],[1,.1]]
   thickness:  [[0.0, 1.0],[.05,.97], [0.2, 0.53], [0.31, 0.39],  [1.0, 0.17]]
@@ -34,7 +50,7 @@ aero:
       0.17 : 'polars/NACA64_A17.dat'}
 
 mesh:
-  radii: np.linspace(0,100, 100) 
+  radii: np.linspace(0,100, 500) 
   webs:
     "w0": 
       origin: [0,0.,0]
@@ -68,7 +84,7 @@ mesh:
       z_end : 105  
 
   n_web_points : 10
-  n_chordwise_points : 60
+  n_chordwise_points : 160
   coordinates:
     d_te_offset:
       base: d_te
