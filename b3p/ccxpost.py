@@ -20,6 +20,8 @@ def get_quadrant(vector):
         return 90
     elif np.isclose(ang, 180, atol=15):
         return -90
+    else:
+        return 45
 
 
 class plot_ccx:
@@ -64,7 +66,7 @@ class plot_ccx:
             quadrant = get_quadrant(deform[whr[0][0]][:2])
 
             # print(quadrant, output_path, deform[whr[0][0]][:2])
-
+            print(quadrant)
             deformed_mesh.rotate_z(quadrant, inplace=True)
 
             deformed_mesh.rotate_y(-110, inplace=True)
