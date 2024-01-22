@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="b3p",
-    packages=["b3p"],
+    packages=["b3p", "utils"],
     install_requires=["fire"],
     entry_points={
         "console_scripts": [
