@@ -74,9 +74,7 @@ def yaml_make_portable(yaml_file, safe=False):
 
     if type(d["materials"]) == str:
         print(f'\t** loading materials from: {d["materials"]}')
-        d["materials"] = yaml.round_trip_load(
-            open(os.path.join(prefix, d["materials"]), "r"), preserve_quotes=True
-        )
+        d["materials"] = yaml.load(open(os.path.join(prefix, d["materials"]), "r"))
 
     if d["general"]["workdir"].find("portable") == -1:
         d["general"]["workdir"] += "_portable"
