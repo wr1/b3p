@@ -67,10 +67,8 @@ def yaml_make_portable(yaml_file, safe=False):
     print(f"** Loading yaml file {yaml_file} and loading linked files")
     prefix = os.path.dirname(yaml_file)
 
-    if safe:
-        d = yaml.load(open(yaml_file, "r"), Loader=yaml.SafeLoader)
-    else:
-        d = yaml.round_trip_load(open(yaml_file, "r"), preserve_quotes=True)
+    yaml = YAML(typ="safe") if safe else YAML(typ="rt")
+    d = yaml.load(open(yaml_file, "r"))
 
     d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
 

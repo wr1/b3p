@@ -4,7 +4,8 @@ import sys
 import numpy as np
 import fire
 
-pv.start_xvfb()
+if pv.OFF_SCREEN:
+    pv.start_xvfb()
 
 
 def visualize_slab_thickness(vtu_file, output_image=None):
