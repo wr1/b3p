@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-from ruamel import yaml
+# from ruamel import YAML as YAML
+from ruamel.yaml import YAML
 import argparse
 from matplotlib import pyplot as plt
 import numpy as np
@@ -105,7 +106,9 @@ if __name__ == "__main__":
     p.add_argument("-o", default="out")
     args = p.parse_args()
 
-    template = yaml.load(open(args.template, "r"), Loader=yaml.RoundTripLoader)
+    yaml = YAML(typ="rt")
+    template = yaml.load(open(args.template, "r"))
+    # , Loader=yaml.RoundTripLoader)
 
     x = yaml.load(open(args.yaml, "r"))
 
@@ -127,6 +130,6 @@ if __name__ == "__main__":
     yaml.dump(
         dict(template),
         open(f"{args.o}.yml", "w"),
-        Dumper=yaml.RoundTripDumper,
-        default_flow_style=None,
+        # Dumper=yaml.RoundTripDumper,
+        # default_flow_style=None,
     )
