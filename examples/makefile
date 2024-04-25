@@ -4,7 +4,7 @@ help: ## Show this help
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 YML = blade_test.yml
-TMP= temp_b50_portable
+TMP= temp_blade_portable
 
 build: ## make self contained yaml file 
 	b3p --yml=$(YML) clean build 
@@ -12,10 +12,10 @@ build: ## make self contained yaml file
 ccx: ccxprep ccxsolve ccxpost ## prepare and run ccx models
 
 ccxprep: ## prepare ccx model
-	b3p --yml=$(YML) ccxprep --buckling=True
+	b3p --yml=$(YML) ccxprep --buckling=False
 
 ccxsolve: ## run ccx on the model
-	b3p --yml=$(YML) ccxsolve forward -n 5  
+	b3p --yml=$(YML) ccxsolve forward_flap -n 5  
 
 ccxpost: ## postprocess ccx output
 	b3p --yml=$(YML) ccxpost

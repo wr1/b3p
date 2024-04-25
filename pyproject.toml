@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "b3p"
 version = "0.1.0"
-description = "Command line tools for preprocessing of wind turbine blades"
+description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
@@ -16,6 +16,9 @@ ruamel-yaml = "^0.18.6"
 fire = "^0.6.0"
 vtk = "^9.3.0"
 pyvista = "^0.43.5"
+ccblade = {git = "https://github.com/WISDEM/CCBlade.git"}
+meshio = "^5.3.5"
+h5py = "^3.11.0"
 
 
 [build-system]

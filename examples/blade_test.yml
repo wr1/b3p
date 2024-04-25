@@ -50,7 +50,7 @@ aero:
       0.17 : 'polars/NACA64_A17.dat'}
 
 mesh:
-  radii: np.linspace(0,100, 500) 
+  radii: np.linspace(0,100, 100) 
   webs:
     "w0": 
       origin: [0,0.,0]
@@ -84,7 +84,7 @@ mesh:
       z_end : 105  
 
   n_web_points : 10
-  n_chordwise_points : 160
+  n_chordwise_points : 100
   coordinates:
     d_te_offset:
       base: d_te
@@ -190,9 +190,6 @@ laminates:
       key: [100,8000]
       grid: w4
       draping: blocks
-
-
-
 
 loads:
   forward_flap:
