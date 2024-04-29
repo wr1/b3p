@@ -11,5 +11,6 @@ regex
 pyarrow
 meshio 
 h5py
+meshio
 
 # git+git@github.com:wr1/CCBlade.git@v1.3

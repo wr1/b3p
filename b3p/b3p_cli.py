@@ -20,7 +20,8 @@ import os
 import pickle
 import numpy as np
 import shutil
-from ruamel import yaml
+
+# from ruamel import yaml
 import glob
 import multiprocessing
 
@@ -50,8 +51,10 @@ class cli:
     def geometry(self):
         """Build blade geometry based on yaml input file"""
         build_blade_geometry.build_blade_geometry(self.dct)
-        y = yaml.YAML()
-        y.dump(self.dct, open(f"{self.prefix}_portable.yml", "w"))
+        # y = yaml.YAML()
+        # y.dump(self.dct, open(f"{self.prefix}_portable.yml", "w"))
+        yml_portable.save_yaml(f"{self.prefix}_portable.yml", self.dct)
+        # yml_portable.save_yaml_portable(f"{self.prefix}_portable.yml")
         return self
 
     def mesh(self):
