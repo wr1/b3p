@@ -15,7 +15,7 @@ ccxprep: ## prepare ccx model
 	b3p --yml=$(YML) ccxprep --buckling=False
 
 ccxsolve: ## run ccx on the model
-	b3p --yml=$(YML) ccxsolve forward_flap -n 5  
+	b3p --yml=$(YML) ccxsolve forward_flap 
 
 ccxpost: ## postprocess ccx output
 	b3p --yml=$(YML) ccxpost
