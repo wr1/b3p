@@ -95,15 +95,28 @@ materials: materials_iso.yml
 
 laminates:
   slabs: 
-    sparcap:
+    sparcap_ss:
       material: carbon_ud
       cover: 
         d_w0: [-0.5, 0.5,0]
+        zone_ss: [0.5,1.5,0]
       slab: [[.03,0],[.10,58],[.7,58],[.9,0]]  
       ply_thickness: 0.73
       key: [100,2000]
       increment: [1,-1]
       grid: shell
+    sparcap_ps:
+      material: carbon_ud
+      cover: 
+        d_w0: [-0.5, 0.5,0]
+        zone_ps: [0.5,1.5,0]
+      slab: [[.03,0],[.10,58],[.7,58],[.9,0]]  
+      ply_thickness: 0.73
+      key: [100,2000]
+      increment: [1,-1]
+      grid: shell
+
+
     trailing_edge_ud:
       material: glass_ud
       cover:
