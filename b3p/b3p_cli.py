@@ -64,6 +64,7 @@ class cli:
 
     def __plybook(self):
         """make plybook"""
+        self.dct = build_plybook.expand_chamfered_cores(self.dct)
         build_plybook.lamplan2plies(self.dct, self.plybookname)
         return self
 

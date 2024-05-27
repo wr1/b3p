@@ -14,19 +14,21 @@ def plot_thresholded(sm, ax, title, material_map=None):
     pk = [i for i in sm.cell_data.keys() if i.startswith("ply_")]
     # get material ids
     mat = [int(sm.cell_data[i][:, 0].max()) for i in pk]
-    pt = np.stack(sm.cell_data[i][:, 1] for i in pk)
+
+    pt = np.stack([sm.cell_data[i][:, 1] for i in pk])
 
     base = np.zeros(pt.shape[1])
     for i in range(pt.shape[0]):
-        ax.fill_between(
-            p[:, 2],
-            y1=base,
-            y2=base + pt[i, :],
-            label=f"{material_map[mat[i]]}",
-            color=f"C{max(mat[i],0)}",
-            alpha=0.3,
-        )
-        base += pt[i, :]
+        if mat[i] in material_map:
+            ax.fill_between(
+                p[:, 2],
+                y1=base,
+                y2=base + pt[i, :],
+                label=f"{material_map[mat[i]]}",
+                color=f"C{max(mat[i],0)}",
+                alpha=0.3,
+            )
+            base += pt[i, :]
 
     ax.set_title(title)
     # get unique labels into legend
@@ -48,6 +50,7 @@ def drape_plot(meshname, output=None):
         output = meshname.replace(".vtu", "_drapeplot.png")
 
     mm = json.load(open(os.path.join(os.path.dirname(meshname), "material_map.json")))
+
     imm = {v: k for k, v in mm.items()}
     imm[-1] = "adhesive"
     # if os.path.exists(os.path.join(os.path.dirname(mesh), 'material_map.json')) is False:

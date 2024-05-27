@@ -283,7 +283,8 @@ class section:
             datums[i] = np.array(web_datums[i]).astype(np.float32)
 
         for i in added_datums.items():
-            offs = np.interp(self.r, i[1][1], i[1][2])
+            # print(self.r_relative, i[1][1], i[1][2])
+            offs = np.interp(self.r_relative, i[1][1], i[1][2])
             datums[i[0]] = np.array(np.array(datums[i[1][0]]) + offs).astype(np.float32)
 
         return out, datums

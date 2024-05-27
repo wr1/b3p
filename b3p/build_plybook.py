@@ -9,6 +9,7 @@ import pickle
 import json
 import shutil
 from numpy import array
+import copy as cp
 
 
 def plyify(r, t, ply_thickness, reverse=False):
@@ -39,6 +40,110 @@ def plyify(r, t, ply_thickness, reverse=False):
         i[1] = round(i[1] * 1e3, -1) * 1e-3
     # reverse the stack so that longest plies get the lowest ply numbers
     return done if reverse else list(reversed(done))
+
+
+def expand_chamfered_core(core):
+    ns = core["nstep"] if "nstep" in core else 4
+
+    # cov1 = find_key(core["coverage"], parameters)
+    rr, tr = np.array(core["slab"]).T
+
+    # print(rr, tr)
+
+    coordinates = []
+    added_cores = []
+    for chmf in core["chamfers"]:
+
+        idx = chmf["id"]
+
+        fr = np.array(chmf["ratio"])
+
+        intrr = np.sort(np.unique(np.hstack([rr, fr[:, 0]])))
+
+        thickness = np.interp(intrr, rr, tr)
+
+        ratio = np.interp(intrr, fr[:, 0], fr[:, 1])
+
+        distance = 1e-3 * ratio * thickness
+
+        # chamfer_step = "chstep"
+        added_coordinates = {}
+        for i in range(0, ns + 1):
+            added_coordinates[f"{idx[0]}_c{i}"] = {
+                "base": idx[0],
+                "points": np.stack([intrr, i * distance / ns]).T.tolist(),
+            }
+        coordinates.append(added_coordinates)
+
+        for j in range(0, ns):
+            # datname_prefix = i["slabname"] + "_chamfer_"
+
+            thic = thickness * ((j + 1.0) / (ns + 1.0))
+
+            print(j, thickness, thic)
+
+            nc = cp.deepcopy(core)
+            del nc["chamfers"]
+
+            nc["slab"] = np.stack([intrr, thic]).T.tolist()
+
+            # print(nc)
+
+            # [[i, j] for i, j in zip(intrr, thic)]
+            # nc["tr"] = thic
+            # nc["rr"] = intrr
+            # nc["scale"][0] = "1"
+            # cc = nc["cover"]  # cp.deepcopy(cov1)
+
+            # print(cc)
+
+            # start = cp.deepcopy(cc[idx[0]][idx[1]])
+            bc = nc["cover"][f"{idx[0]}"]
+
+            nc["cover"][f"{idx[0]}_c{j}"] = bc
+            nc["cover"][f"{idx[0]}_c{j+1}"] = [-1, bc[0], 0]  # nc["cover"][f"{idx[0]}"]
+            del nc["cover"][f"{idx[0]}"]
+
+            added_cores.append(nc)
+
+            print(nc)
+            # cc[idx[0]][idx[1]] = start + sp.var(f"{j}*")
+            # if j < ns - 1:
+            #     cc[idx[0]][idx[1] + 1] = start + sp.var(f"{j + 1}*")
+            # nc["coverage"] = str(cc)
+            # added_cores[i["slabname"] + "_" + str(j)] = nc
+
+    return coordinates, added_cores
+
+
+def expand_chamfered_cores(bldict):
+    dctcopy = cp.deepcopy(bldict)
+    for i in bldict["laminates"]["slabs"]:
+        slab = bldict["laminates"]["slabs"][i]
+        if "chamfers" in slab:
+            coordinates, cores = expand_chamfered_core(slab)
+
+            for j in range(len(cores)):
+                slabname = i + f"_ch{j}"
+                dctcopy["laminates"]["slabs"][slabname] = cores[j]
+
+            for j in range(len(coordinates)):
+                for k in coordinates[j]:
+                    dctcopy["mesh"]["coordinates"][k] = coordinates[j][k]
+                # dctcopy["mesh"]["coordinates"][j] = coordinates[j]
+            # for j in slab["chamfers"]:
+            #     print(j)
+
+        # if "chamfers" in slab:
+        #     chamfer = slab["chamfer"]
+        #     for j in chamfer:
+        #         slab["slab"].extend(chamfer[j]["slab"])
+        #         slab["coverage"].extend(chamfer[j]["coverage"])
+
+    # print(dctcopy)
+
+    yaml.YAML().dump(dctcopy, open("expanded.yml", "w"))
+    return bldict
 
 
 def ply_stack(r, t, t_ply=1.0, reverse=False, subdivisions=5000, material=11):
