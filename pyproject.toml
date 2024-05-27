@@ -22,13 +22,13 @@ ruamel-yaml = "^0.18.6"
 fire = "^0.6.0"
 vtk = "^9.3.0"
 pyvista = "^0.43.5"
-ccblade = {git = "https://github.com/WISDEM/CCBlade.git", branch = "master", optional=true}
+# ccblade = {git = "https://github.com/WISDEM/CCBlade.git", branch = "master", optional=true}
 meshio = "^5.3.5"
 h5py = "^3.11.0"
 
 
-[tool.poetry.extras]
-aero=["ccblade"] 
+# [tool.poetry.extras]
+# aero=["ccblade"] 
 
 
 [build-system]
