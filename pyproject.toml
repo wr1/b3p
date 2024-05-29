@@ -9,8 +9,12 @@ license = "MIT"
 readme = "README.md"
 packages = [
     { include = "b3p" },
-    { include = "utils"}
+    { include = "utils"},
+    # { include = "examples" }
 ]
+include = ["examples/blade_test.yml"]
+
+
 
 [tool.poetry.dependencies]
 python = "^3.9.7"
@@ -46,5 +50,12 @@ build-backend = "poetry.core.masonry.api"
         b3p_slab_plot = "utils.slab_plot:main"
         b3p_drape_plot = "utils.drape_plot:main"
         b3p_aero = "b3p.ccblade_run:main"
+        b3p_example = "utils.b3p_example:main"
+
+# [tool.poetry.build]
+
+# [tool.poetry]
+# include = ["examples/**"]
+
 
 
