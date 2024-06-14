@@ -117,9 +117,6 @@ class cli:
         meshonly=False,
         buckling=False,
     ):
-        grid = add_load_to_mesh.add_load_to_mesh(
-            self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
-        )
         print("** create ccx input file")
         mesh2ccx.mesh2ccx(
             f"{self.prefix}_joined.vtu",
@@ -189,6 +186,10 @@ class cli:
         self.geometry()
         self.mesh()
         self.drape()
+        add_load_to_mesh.add_load_to_mesh(
+            self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
+        )
+
         # self.mesh2d(z_start=0.0001, z_end=100, nsec=50)
         return self
 
