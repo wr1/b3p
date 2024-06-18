@@ -22,7 +22,9 @@ ccxpost: ## postprocess ccx output
 	b3p --yml=$(YML) ccxplot
 
 anba: ## run anba
-	b3p --yml=$(YML) mesh2d --z_start=0.0001 -z_end=99.5 --nsec=50
+	b3p --yml=$(YML) mesh2d 
+	
+# --z_start=0.0001 -z_end=99.5 --nsec=50
 
 aero: ## run aero analysis
 	b3p_aero --blade=$(YML)

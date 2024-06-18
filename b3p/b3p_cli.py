@@ -51,8 +51,6 @@ class cli:
     def geometry(self):
         """Build blade geometry based on yaml input file"""
         build_blade_geometry.build_blade_geometry(self.dct)
-        # y = yaml.YAML()
-        # y.dump(self.dct, open(f"{self.prefix}_portable.yml", "w"))
         yml_portable.save_yaml(f"{self.prefix}_portable.yml", self.dct)
         # yml_portable.save_yaml_portable(f"{self.prefix}_portable.yml")
         return self
@@ -90,14 +88,24 @@ class cli:
 
     def mesh2d(self, z_start=0, z_end=100, nsec=100):
         """Create 2d meshes for calculation of 6x6 stiffness and matrices"""
-        mesh_2d.cut_blade_parallel(
+
+        if "mesh2d" not in self.dct:
+            print("** No mesh2d section in yml file")
+            return self
+        if "sections" not in self.dct["mesh2d"]:
+            print("** No sections in mesh2d section in yml file")
+            return self
+
+        sections = self.dct["mesh2d"]["sections"]
+        section_meshes = mesh_2d.cut_blade_parallel(
             f"{self.prefix}_joined.vtu",
-            np.linspace(z_start, z_end, nsec).tolist(),
+            sections,
             if_bondline=False,
             rotz=0.0,
             var=f"{self.prefix}.var",
         )
-        anba4_prep.anba4_prep(glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
+        anba4_prep.anba4_prep(section_meshes)
+        # glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
         return self
 
     def show(self):
