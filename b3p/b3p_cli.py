@@ -205,7 +205,7 @@ class cli:
         """Calculate mass of the blade, requires drape."""
         mass_table = drape_summary.drape_summary(f"{self.prefix}_joined.vtu")
         mass_table.to_csv(f"{self.prefix}_mass.csv")
-        mass_table.replace(to_replace="_", value="\_", regex=True).to_latex(
+        mass_table.replace(to_replace="_", value="", regex=True).to_latex(
             f"{self.prefix}_mass.tex", index=False
         )
         return self
