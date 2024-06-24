@@ -260,6 +260,7 @@ class section:
         datums = {
             "d_te": te_datum,
             "radius": r,
+            "rr": self.r_relative * np.ones_like(r),
             "d_rel_dist_from_te": rel_dist_from_te,
             "d_abs_dist_from_te": dist,
             "d_abs_dist_from_bte": [-i + mdist for i in dist],
@@ -283,7 +284,6 @@ class section:
             datums[i] = np.array(web_datums[i]).astype(np.float32)
 
         for i in added_datums.items():
-            # print(self.r_relative, i[1][1], i[1][2])
             offs = np.interp(self.r_relative, i[1][1], i[1][2])
             datums[i[0]] = np.array(np.array(datums[i[1][0]]) + offs).astype(np.float32)
 

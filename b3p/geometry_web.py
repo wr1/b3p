@@ -198,9 +198,6 @@ class web:
 
         cells = self._create_quad_connectivity(n_cells, len(points), self.flip_normal)
 
-        # print(cells)
-        # ccc = cells[::5]
-
         self.mesh = pv.PolyData(points, faces=cells)
 
         for i in pdata:
