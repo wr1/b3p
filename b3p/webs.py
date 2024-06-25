@@ -8,6 +8,7 @@ def write_web(
     loc,
     normal,
     mesh,
+    name,
     rootcut=0.0,
     tipcut=100.0,
     tip=0.0,
@@ -88,6 +89,9 @@ def write_web(
     if tip > out[-1][0]:
         out.append((tip, out[-1][1], out[-1][2], out[-1][3]))
 
+    open("%s.txt" % name, "wb").write(str(out).encode("utf-8"))
+    open("%s_points.txt" % name, "wb").write(str([lwp, wwp]).encode("utf-8"))
+
     return out
 
 
@@ -95,6 +99,7 @@ def build_webs(mesh, webs, prefix="__dum"):
     web_meshes = {}
     for i in webs:
         normal = (0, 1, 0)
+        name = prefix + "_" + i
 
         if "orientation" in webs[i]:
             normal = webs[i]["orientation"]
@@ -103,6 +108,7 @@ def build_webs(mesh, webs, prefix="__dum"):
             np.array(webs[i]["origin"]),
             normal,
             mesh,
+            name,
             rootcut=webs[i]["z_start"],
             tipcut=webs[i]["z_follow_blade"],
             tip=webs[i]["z_end"],

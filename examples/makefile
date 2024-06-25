@@ -9,6 +9,9 @@ TMP= temp_blade_portable
 build: ## make self contained yaml file 
 	b3p --yml=$(YML) clean build 
 
+mass:
+	b3p --yml=$(YML) mass
+	
 ccx: ccxprep ccxsolve ccxpost ## prepare and run ccx models
 
 ccxprep: ## prepare ccx model
