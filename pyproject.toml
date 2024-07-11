@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "b3p"
-version = "v0.0.3rc1"
+version = "v0.0.2.post1"
 description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"
@@ -10,9 +10,8 @@ readme = "README.md"
 packages = [
     { include = "b3p" },
     { include = "utils"},
-    # { include = "examples" }
 ]
-include = ["examples/blade_test.yml"]
+include = ["examples/blade_test.yml", "examples/makefile"]
 
 [tool.poetry.dependencies]
 python = "^3.9.7"
