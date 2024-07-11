@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "b3p"
-version = "v0.0.2rc6"
+version = "v0.0.3rc1"
 description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"

@@ -33,8 +33,7 @@ def get_slab_cover(inp):
     material, thickness, rmin, rmax = np.array(stack).T
     rrt = np.array([df.radius.values]).T
 
-    # compute radius coverage    names = [f"ply_%.8i_%s" % (i, name) for i in numbering]
-
+    # compute radius coverage
     rcover = (rrt >= rmin) & (rrt < rmax)
     ply_increments = [cover[i][-1] for i in cover]
 
@@ -119,6 +118,8 @@ def drape_mesh(vtp, stack, key, output_file):
         if key.strip() == i["grid"] and i["stack"] != []
     ]
     print("** assigning ply data to grid")
+
+    # add arrays for each ply, and for each slab
     total_thickness = np.zeros_like(df.radius).astype(np.float32)
     n_plies = np.zeros_like(df.radius).astype(int)
     for i in slab_data:
@@ -131,12 +132,21 @@ def drape_mesh(vtp, stack, key, output_file):
         total_thickness += s_thick
         n_plies += s_thick > 0.0
 
+    # add an array for every material, showing the thickness of the material
+    for i in o.cell_data:
+        if i.startswith("ply_"):
+            mat, t = o.cell_data[i][:, 0], o.cell_data[i][:, 1]
+            mid = np.unique(mat).astype(int)[-1]
+
+            arr = f"mat_{mid}_thickness"
+            if arr not in o.cell_data:
+                o.cell_data[arr] = np.zeros_like(t)
+
+            o.cell_data[arr] += t
+
     o.cell_data["n_plies"] = n_plies
-
     o.cell_data["is_web"] = key.lower() != "shell"
-
     o.cell_data["thickness"] = total_thickness
-
     o.compute_normals(cell_normals=True, inplace=True)
     o = o.compute_cell_sizes()
     n = o.cell_data["Normals"]

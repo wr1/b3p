@@ -24,6 +24,7 @@ import shutil
 # from ruamel import yaml
 import glob
 import multiprocessing
+from ruamel import yaml
 
 
 class cli:
@@ -62,7 +63,7 @@ class cli:
 
     def __plybook(self):
         """make plybook"""
-        self.dct = build_plybook.expand_chamfered_cores(self.dct)
+        # yaml.YAML().dump(self.dct, open("gaai.yml", "w"))
         build_plybook.lamplan2plies(self.dct, self.plybookname)
         return self
 
@@ -191,6 +192,7 @@ class cli:
 
     def build(self):
         """Build the whole model, geometry, mesh, drape"""
+        self.dct = build_plybook.expand_chamfered_cores(self.dct)
         self.geometry()
         self.mesh()
         self.drape()
