@@ -7,7 +7,7 @@ import fire
 import glob
 import os
 import re
-from b3p import frd2vtu
+from b3p import frd2vtu, frdbin2vtu
 
 
 def has_later_vtu(frd):
@@ -66,7 +66,8 @@ class ccx2vtu:
             self.grids[i] = (
                 pyvista.UnstructuredGrid(i.replace(".frd", ".vtu"))
                 if has_later_vtu(i)
-                else frd2vtu.frd2vtu(i, multi=True)
+                else frdbin2vtu.frdbin2vtu(i)
+                # frd2vtu.frd2vtu(i, multi=True)
             )
 
     def tabulate(self, n_bins=50):
@@ -80,6 +81,8 @@ class ccx2vtu:
         for grid in self.grids:
             # Read the input data from the current file
             input_data = self.grids[grid]  # pd.read_csv(file_name)
+
+            print(grid)
             strain0 = next(
                 (s for s in input_data.point_data.keys() if s.startswith("strain")),
                 None,
