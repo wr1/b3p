@@ -9,7 +9,7 @@ from ruamel import yaml
 import numpy as np
 
 
-def build_blade_geometry(config, verbose=False, xfoil=False):
+def build_blade_geometry(config, verbose=False, xfoil=True):
     """
     Perform blade 3d model generation based on b3p dictionary.
 

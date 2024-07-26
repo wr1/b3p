@@ -18,7 +18,8 @@ def get_material_db(material_map):
 
     mat_db = None
     if "matdb" in mm:  # check if the material map file points to a material db
-        mat_db = yaml.load(open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader)
+        mat_db = yaml.safe_load(open(os.path.join(gdir, mm["matdb"])))
+        # , Loader=yaml.CLoader)
 
         # check if there is a -1 material in the matdb, and assign it
         # this material ID is used by the section mesher for the bondlines
@@ -56,9 +57,11 @@ def get_material_db(material_map):
             else:
                 materials[i] = material.IsotropicMaterial(
                     [
-                        matdb_entry["E"] * 1e6
-                        if "E" in matdb_entry
-                        else matdb_entry["Ex"] * 1e6,
+                        (
+                            matdb_entry["E"] * 1e6
+                            if "E" in matdb_entry
+                            else matdb_entry["Ex"] * 1e6
+                        ),
                         matdb_entry["nu"],
                     ],
                     matdb_entry["rho"],

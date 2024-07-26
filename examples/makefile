@@ -9,6 +9,9 @@ TMP= temp_blade_portable
 build: ## make self contained yaml file 
 	b3p --yml=$(YML) clean build 
 
+mass:
+	b3p --yml=$(YML) mass
+	
 ccx: ccxprep ccxsolve ccxpost ## prepare and run ccx models
 
 ccxprep: ## prepare ccx model
@@ -22,7 +25,9 @@ ccxpost: ## postprocess ccx output
 	b3p --yml=$(YML) ccxplot
 
 anba: ## run anba
-	b3p --yml=$(YML) mesh2d --z_start=0.0001 -z_end=99.5 --nsec=50
+	b3p --yml=$(YML) mesh2d 
+	
+# --z_start=0.0001 -z_end=99.5 --nsec=50
 
 aero: ## run aero analysis
 	b3p_aero --blade=$(YML)

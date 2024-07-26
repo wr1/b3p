@@ -28,6 +28,7 @@ class plot_ccx:
     def __init__(self, wdir, wildcard=""):
         self.wdir = wdir
         self.meshes = glob.glob(wdir + f"/*ccx*{wildcard}*.vtu")
+        print(self.meshes)
 
     def plot3d(self):
         for i in self.meshes:
@@ -37,7 +38,8 @@ class plot_ccx:
         return self
 
     def __plot3d(self, mesh, output_path):
-        ts = np.unique([i.split("_")[1] for i in mesh.point_data.keys()])
+        print(mesh.point_data.keys())
+        ts = [i.split("_")[1] for i in mesh.point_data.keys() if i.startswith("disp")]
 
         for i in ts:
             isdisp = i.startswith("0.00000")

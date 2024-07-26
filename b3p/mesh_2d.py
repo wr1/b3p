@@ -587,6 +587,8 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
     )
 
+    return of
+
 
 def cut_blade_parallel(
     vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False
@@ -607,8 +609,8 @@ def cut_blade_parallel(
         pool.close()
         pool.join()
     else:
-        for i in rr:
-            part(i)
+        al = [part(i) for i in rr]
+    return al
 
 
 def main():

@@ -2,15 +2,16 @@
 
 [tool.poetry]
 name = "b3p"
-version = "0.1.0"
+version = "v0.0.3rc2"
 description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
     { include = "b3p" },
-    { include = "utils"}
+    { include = "utils"},
 ]
+include = ["examples/blade_test.yml", "examples/makefile"]
 
 [tool.poetry.dependencies]
 python = "^3.9.7"
@@ -22,13 +23,13 @@ ruamel-yaml = "^0.18.6"
 fire = "^0.6.0"
 vtk = "^9.3.0"
 pyvista = "^0.43.5"
-ccblade = {git = "https://github.com/WISDEM/CCBlade.git", branch = "master", optional=true}
+# ccblade = {git = "https://github.com/WISDEM/CCBlade.git", branch = "master", optional=true}
 meshio = "^5.3.5"
 h5py = "^3.11.0"
+frd2vtu = "^0.1.1rc2"
 
-
-[tool.poetry.extras]
-aero=["ccblade"] 
+# [tool.poetry.extras]
+# aero=["ccblade"] 
 
 
 [build-system]
@@ -46,5 +47,13 @@ build-backend = "poetry.core.masonry.api"
         b3p_slab_plot = "utils.slab_plot:main"
         b3p_drape_plot = "utils.drape_plot:main"
         b3p_aero = "b3p.ccblade_run:main"
+        b3p_example = "utils.b3p_example:main"
+        b3p_bondline = "b3p.add_te_solids:main"
+
+# [tool.poetry.build]
+
+# [tool.poetry]
+# include = ["examples/**"]
+
 
 

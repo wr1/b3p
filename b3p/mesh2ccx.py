@@ -128,9 +128,11 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     0.45,
                     max(
                         0.1,
-                        float(material_properties["nu"])
-                        if "nu" in material_properties
-                        else material_properties["nu12"],
+                        (
+                            float(material_properties["nu"])
+                            if "nu" in material_properties
+                            else material_properties["nu12"]
+                        ),
                     ),
                 )
                 E = float(
@@ -256,7 +258,7 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
                 if j[1] ** 2 > 1e-8:
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
 
-            lbuf += "*node file,output=3d\nU,RF\n*EL FILE\nE\n*node print,nset=root,totals=yes\nrf\n*end step\n"
+            lbuf += "*node output,output=3d\nU\n*element output\nE,S\n*node print,nset=root,totals=yes\nrf\n*end step\n"
             # \n*node print,nset=nall\nrf
             # if buckling:
             #     lbuf += (

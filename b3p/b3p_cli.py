@@ -24,6 +24,7 @@ import shutil
 # from ruamel import yaml
 import glob
 import multiprocessing
+from ruamel import yaml
 
 
 class cli:
@@ -51,8 +52,6 @@ class cli:
     def geometry(self):
         """Build blade geometry based on yaml input file"""
         build_blade_geometry.build_blade_geometry(self.dct)
-        # y = yaml.YAML()
-        # y.dump(self.dct, open(f"{self.prefix}_portable.yml", "w"))
         yml_portable.save_yaml(f"{self.prefix}_portable.yml", self.dct)
         # yml_portable.save_yaml_portable(f"{self.prefix}_portable.yml")
         return self
@@ -64,7 +63,7 @@ class cli:
 
     def __plybook(self):
         """make plybook"""
-        self.dct = build_plybook.expand_chamfered_cores(self.dct)
+        # yaml.YAML().dump(self.dct, open("gaai.yml", "w"))
         build_plybook.lamplan2plies(self.dct, self.plybookname)
         return self
 
@@ -90,14 +89,24 @@ class cli:
 
     def mesh2d(self, z_start=0, z_end=100, nsec=100):
         """Create 2d meshes for calculation of 6x6 stiffness and matrices"""
-        mesh_2d.cut_blade_parallel(
+
+        if "mesh2d" not in self.dct:
+            print("** No mesh2d section in yml file")
+            return self
+        if "sections" not in self.dct["mesh2d"]:
+            print("** No sections in mesh2d section in yml file")
+            return self
+
+        sections = self.dct["mesh2d"]["sections"]
+        section_meshes = mesh_2d.cut_blade_parallel(
             f"{self.prefix}_joined.vtu",
-            np.linspace(z_start, z_end, nsec).tolist(),
+            sections,
             if_bondline=False,
             rotz=0.0,
             var=f"{self.prefix}.var",
         )
-        anba4_prep.anba4_prep(glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
+        anba4_prep.anba4_prep(section_meshes)
+        # glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
         return self
 
     def show(self):
@@ -117,9 +126,6 @@ class cli:
         meshonly=False,
         buckling=False,
     ):
-        grid = add_load_to_mesh.add_load_to_mesh(
-            self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
-        )
         print("** create ccx input file")
         mesh2ccx.mesh2ccx(
             f"{self.prefix}_joined.vtu",
@@ -186,9 +192,14 @@ class cli:
 
     def build(self):
         """Build the whole model, geometry, mesh, drape"""
+        self.dct = build_plybook.expand_chamfered_cores(self.dct)
         self.geometry()
         self.mesh()
         self.drape()
+        add_load_to_mesh.add_load_to_mesh(
+            self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
+        )
+
         # self.mesh2d(z_start=0.0001, z_end=100, nsec=50)
         return self
 
@@ -196,7 +207,7 @@ class cli:
         """Calculate mass of the blade, requires drape."""
         mass_table = drape_summary.drape_summary(f"{self.prefix}_joined.vtu")
         mass_table.to_csv(f"{self.prefix}_mass.csv")
-        mass_table.replace(to_replace="_", value="\_", regex=True).to_latex(
+        mass_table.replace(to_replace="_", value="", regex=True).to_latex(
             f"{self.prefix}_mass.tex", index=False
         )
         return self
