@@ -7,12 +7,11 @@ import fire
 import glob
 import os
 import re
-from b3p import frd2vtu, frdbin2vtu
+from frd2vtu import frd2vtu
 
 
 def has_later_vtu(frd):
     output = frd.replace(".frd", ".vtu")
-    # print(output, os.path.exists(output))
     if not os.path.exists(output):
         return False
     frd_time = os.path.getmtime(frd)
@@ -66,7 +65,7 @@ class ccx2vtu:
             self.grids[i] = (
                 pyvista.UnstructuredGrid(i.replace(".frd", ".vtu"))
                 if has_later_vtu(i)
-                else frdbin2vtu.frdbin2vtu(i)
+                else frd2vtu.frd2vtu(i)
                 # frd2vtu.frd2vtu(i, multi=True)
             )
 
@@ -80,15 +79,21 @@ class ccx2vtu:
         # Loop through the file_list
         for grid in self.grids:
             # Read the input data from the current file
-            input_data = self.grids[grid]  # pd.read_csv(file_name)
+            input_data = self.grids[grid]
+            # pd.read_csv(file_name)
+            # print(grid)
+            # print(input_data.point_data.keys())
 
-            print(grid)
             strain0 = next(
-                (s for s in input_data.point_data.keys() if s.startswith("strain")),
+                (
+                    s
+                    for s in input_data.point_data.keys()
+                    if s.lower().find("strain") != -1
+                ),
                 None,
             )
 
-            z = input_data.points[:, 2]  # input_data['z'].values
+            z = input_data.points[:, 2]
             strain = input_data.point_data[strain0]
 
             # Compute the digitized strain distribution for the current input
