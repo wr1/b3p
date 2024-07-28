@@ -1,4 +1,4 @@
-# b3p (blade3 preprocessor)
+# b3p 
 Command line tools to create models for composite (wind turbine) blades. 
 
 ## Functionality
