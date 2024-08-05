@@ -2,7 +2,7 @@ general:
   # prefix for output files
   prefix: test_blade
   # workdirectory for all variants
-  workdir: temp_blade_lm10000
+  workdir: temp_blade
 
 planform:
   npchord: 100
