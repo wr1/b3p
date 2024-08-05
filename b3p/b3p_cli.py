@@ -144,7 +144,7 @@ class cli:
         )
         return self
 
-    def ccxsolve(self, wildcard="", nproc=3):
+    def ccxsolve(self, wildcard="", nproc=3, ccxexe="ccx"):
         """Run ccx on all inp files in workdir that match wildcard"""
 
         inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
@@ -171,7 +171,7 @@ class cli:
 
         print(f"running ccx on: {inps_to_run} using {wildcard}")
         p = multiprocessing.Pool(nproc)
-        p.map(os.system, [f"ccx {inp.replace('.inp','')}" for inp in inps_to_run])
+        p.map(os.system, [f"{ccxexe} {inp.replace('.inp','')}" for inp in inps_to_run])
         p.close()
         return self
 
