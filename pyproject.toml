@@ -2,15 +2,12 @@
 
 [tool.poetry]
 name = "b3p"
-version = "v0.0.3rc2"
+version = "v0.0.3rc3"
 description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [
-    { include = "b3p" },
-    { include = "utils"},
-]
+packages = [{ include = "b3p" }, { include = "utils" }]
 include = ["examples/blade_test.yml", "examples/makefile"]
 
 [tool.poetry.dependencies]
@@ -33,7 +30,7 @@ frd2vtu = "^0.1.1rc2"
 
 
 [build-system]
-requires = ["poetry-core"] 
+requires = ["poetry-core"]
 # ,"setuptools", "meson>=1.1", "numpy","ninja","wheel"]
 build-backend = "poetry.core.masonry.api"
 
@@ -43,17 +40,14 @@ build-backend = "poetry.core.masonry.api"
 # 
 
 [tool.poetry.scripts]
-        b3p = "b3p.b3p_cli:main"
-        b3p_slab_plot = "utils.slab_plot:main"
-        b3p_drape_plot = "utils.drape_plot:main"
-        b3p_aero = "b3p.ccblade_run:main"
-        b3p_example = "utils.b3p_example:main"
-        b3p_bondline = "b3p.add_te_solids:main"
+b3p = "b3p.b3p_cli:main"
+b3p_slab_plot = "utils.slab_plot:main"
+b3p_drape_plot = "utils.drape_plot:main"
+b3p_aero = "b3p.ccblade_run:main"
+b3p_example = "utils.b3p_example:main"
+b3p_bondline = "b3p.add_te_solids:main"
 
 # [tool.poetry.build]
 
 # [tool.poetry]
 # include = ["examples/**"]
-
-
-
