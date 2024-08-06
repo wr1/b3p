@@ -53,13 +53,6 @@ def drape_summary(vtu, matmap=None):
 
     total_mass1 = df.ply_mass.sum()
 
-    # print(df.ply_mass.sum())
-
-    # print(df)
-
-    # print(len(ply_volumes.sum(axis=1)))
-    # exit()
-
     total_volume = 1e-3 * mat[:, :, 1] * area * (mat[:, :, 0] > 0)
     mat_used = np.unique(mat[:, :, 0])
 
