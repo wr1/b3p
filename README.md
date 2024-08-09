@@ -3,7 +3,7 @@ Command line tools to create models for composite (wind turbine) blades.
 
 ## Functionality
 - Interpolating a blade through a series of airfoils
-- Aligning airfoils to create maximum building height over a straight shearweb
+<!-- - Aligning airfoils to create maximum building height over a straight shearweb -->
 - Creating a quad mesh for the blade
 - Assigning scalable *slab based* laminate plans to the structure
 - Assembling a shell mesh with laminate properties

@@ -2,156 +2,152 @@ general:
   # prefix for output files
   prefix: test_blade
   # workdirectory for all variants
-  workdir : temp_blade
+  workdir: temp_blade
 
 planform:
   npchord: 100
-  npspan : 70 
+  npspan: 70
   # offset in prebend direction, negative is upwind
-  dx:         [[0.0,0.0],[0.2,0.0],[0.4,0.0],[1.0,-5.0]]
+  dx: [[0.0, 0.0], [0.2, 0.0], [0.4, 0.0], [1.0, -5.0]]
   # offset in chord direction
-  dy:         [[0.0, 0.0], [0.01, 0], [0.3, 0.0, 0.5860957549908372], [0.43, 0.5292475355828817], [0.5599999999999999, 0.4981144528302349], [0.6900000000000001, 0.43552499282773205], [0.8199999999999998, 0.32879129475154056], [0.95, 0.3334681541732368]]
-  z:          [[0,3],[1,126]]
-  chord :     [[0.0,5],[0.03,5.06],[0.2,6.5],[.4,4.4],[.6,2.8],[.75,2.0],[0.94,1.4],[.985,.8],[1,.1]]
-  thickness:  [[0.0, 1.0],[.05,.97], [0.2, 0.53], [0.31, 0.39],  [1.0, 0.17]]
-  twist :     [[0.0,10],[.2,2],[.4,1],[0.6,0],[.8,-.5],[.9,-1],[1.,0]]
+  dy: [[0.0, 0.0], [0.01, 0], [0.3, 0.0, 0.5860957549908372], [0.43, 0.5292475355828817],
+    [0.5599999999999999, 0.4981144528302349], [0.6900000000000001, 0.43552499282773205],
+    [0.8199999999999998, 0.32879129475154056], [0.95, 0.3334681541732368]]
+  z: [[0, 3], [1, 126]]
+  chord: [[0.0, 5], [0.03, 5.06], [0.2, 6.5], [.4, 4.4], [.6, 2.8], [.75, 2.0], [
+      0.94, 1.4], [.985, .8], [1, .1]]
+  thickness: [[0.0, 1.0], [.05, .97], [0.2, 0.53], [0.31, 0.39], [1.0, 0.17]]
+  twist: [[0.0, 10], [.2, 2], [.4, 1], [0.6, 0], [.8, -.5], [.9, -1], [1., 0]]
 
 aero:
-  airfoils: {1.0      : 'airfoils/circ_m32.dat',
-             0.25     : 'airfoils/du_91_w2_250_smoothed_dero_0.250.dat',
-             0.21     : 'airfoils/DU93-W-210_smoothed_dero_0.210.dat',
-             0.179928 : 'airfoils/naca633418_te.dat',
-             0.17     : 'airfoils/naca0017.dat'}
-  
+  airfoils: {1.0: airfoils/circ_m32.dat, 0.25: airfoils/du_91_w2_250_smoothed_dero_0.250.dat,
+    0.21: airfoils/DU93-W-210_smoothed_dero_0.210.dat, 0.179928: airfoils/naca633418_te.dat,
+    0.17: airfoils/naca0017.dat}
   bem:
-    polars: {1.0  : 'polars/Cylinder1.dat',
-             0.21 : 'polars/DU21_A17.dat',
-             0.25 : 'polars/DU25_A17.dat',
-             0.30 : 'polars/DU30_A17.dat',
-             0.35 : 'polars/DU35_A17.dat',
-             0.40 : 'polars/DU40_A17.dat',
-             0.17 : 'polars/NACA64_A17.dat'}
+    polars: {1.0: polars/Cylinder1.dat, 0.21: polars/DU21_A17.dat, 0.25: polars/DU25_A17.dat,
+      0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
+      0.17: polars/NACA64_A17.dat}
 
 mesh:
-  radii: np.linspace(0,100, 100) 
+  radii: np.linspace(0,100, 100)
   webs:
-    "w0": 
-      origin: [0,0.,0]
-      orientation: [.02,1,0]
-      z_start: 0 
+    w0:
+      origin: [0, 0., 0]
+      orientation: [.02, 1, 0]
+      z_start: 0
       z_follow_blade: 100
-      z_end : 105
-    "w1": 
-      origin: [0,0.5,0]
-      orientation: [.02,1,0]
-      z_start: 0 
+      z_end: 105
+    w1:
+      origin: [0, 0.5, 0]
+      orientation: [.02, 1, 0]
+      z_start: 0
       z_follow_blade: 100
-      z_end : 105
-    "w2": 
-      origin: [0,-0.5,0]
-      orientation: [.02,1,0]
-      z_start: 0 
+      z_end: 105
+    w2:
+      origin: [0, -0.5, 0]
+      orientation: [.02, 1, 0]
+      z_start: 0
       z_follow_blade: 100
-      z_end : 105
-    "w3": 
-      origin: [0,-0.3,0]
-      orientation: [.02,1,0]
-      z_start: 0 
+      z_end: 105
+    w3:
+      origin: [0, -0.3, 0]
+      orientation: [.02, 1, 0]
+      z_start: 0
       z_follow_blade: 100
-      z_end : 105  
-    "w4": 
-      origin: [0,0.3,0]
-      orientation: [.02,1,0]
-      z_start: 0 
+      z_end: 105
+    w4:
+      origin: [0, 0.3, 0]
+      orientation: [.02, 1, 0]
+      z_start: 0
       z_follow_blade: 100
-      z_end : 105  
+      z_end: 105
 
-  n_web_points : 10
-  n_chordwise_points : 100
+  n_web_points: 10
+  n_chordwise_points: 100
   coordinates:
     d_te_offset:
       base: d_te
-      points: [[0,-0.1],[0.30,-0.2],[0.7,-.3]]
+      points: [[0, -0.1], [0.30, -0.2], [0.7, -.3]]
     d_te_offset1:
       base: d_te_offset
-      points: [[0,-0.1],[0.30,-0.2],[0.7,-0.1]]
+      points: [[0, -0.1], [0.30, -0.2], [0.7, -0.1]]
 
-  bondline_width: [[0,0],[0.2,0.0],[0.4,0.3],[0.6,0.3],[1.0,0.1]]
+  bondline_width: [[0, 0], [0.2, 0.0], [0.4, 0.3], [0.6, 0.3], [1.0, 0.1]]
 
 
 mesh2d:
-  sections: [.1,.5,1,2,5,8,12,15,25,45,60,80,100]
+  sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
 
 materials: materials_si.yml
 
 laminates:
-  slabs: 
+  slabs:
     sparcap_ss:
       material: carbon_ud
-      cover: 
-        d_w0: [-0.5, 0.5,0]
-        zone_ss: [0.5,1.5,0]
-      slab: [[.03,0],[.10,58],[.7,58],[.9,0]]  
+      cover:
+        d_w0: [-0.5, 0.5, 0]
+        zone_ss: [0.5, 1.5, 0]
+      slab: [[.03, 0], [.10, 58], [.7, 58], [.9, 0]]
       ply_thickness: 0.73
-      key: [100,2000]
-      increment: [1,-1]
+      key: [100, 2000]
+      increment: [1, -1]
       grid: shell
     sparcap_ps:
       material: carbon_ud
-      cover: 
-        d_w0: [-0.5, 0.5,0]
-        zone_ps: [0.5,1.5,0]
-      slab: [[.03,0],[.10,58],[.7,58],[.9,0]]  
+      cover:
+        d_w0: [-0.5, 0.5, 0]
+        zone_ps: [0.5, 1.5, 0]
+      slab: [[.03, 0], [.10, 58], [.7, 58], [.9, 0]]
       ply_thickness: 0.73
-      key: [100,2000]
-      increment: [1,-1]
+      key: [100, 2000]
+      increment: [1, -1]
       grid: shell
 
 
     trailing_edge_ud:
       material: glass_ud
       cover:
-        d_te_offset: [0.0,1,0.02]
-        d_te_offset1: [-1,0,0.02]
-      slab: [[.05,0],[.2,20],[.7,15],[.9,0]]
-      key: [300,3000]
-      increment: [1,-1]
+        d_te_offset: [0.0, 1, 0.02]
+        d_te_offset1: [-1, 0, 0.02]
+      slab: [[.05, 0], [.2, 20], [.7, 15], [.9, 0]]
+      key: [300, 3000]
+      increment: [1, -1]
       ply_thickness: 1.15
       grid: shell
     shell_triax:
       material: triax
       cover:
-        d_te_r: [0, 1 , 0]
-      slab: [[.0,4],[.2,4],[.7,4],[1.,0]]
-      key: [0,8000]
-      increment: [1,-1]
-      splitstack: [0.5 , 0.5]
+        d_te_r: [0, 1, 0]
+      slab: [[.0, 4], [.2, 4], [.7, 4], [1., 0]]
+      key: [0, 8000]
+      increment: [1, -1]
+      splitstack: [0.5, 0.5]
       ply_thickness: 1.25
       grid: shell
     transition_triax:
       material: triax_30
       cover:
-        d_te_r: [0, 1 , 0]
-      slab: [[.0,89],[.01,89],[.1,15],[.2,0]]
-      key: [50,7000]
-      increment: [1,-1]
-      splitstack: [0.5 , 0.5]
+        d_te_r: [0, 1, 0]
+      slab: [[.0, 89], [.01, 89], [.1, 15], [.2, 0]]
+      key: [50, 7000]
+      increment: [1, -1]
+      splitstack: [0.5, 0.5]
       ply_thickness: 1.25
       grid: shell
     trailing_edge_core:
       material: pet100
       cover:
-        d_te: [0.15,8,0]
-        d_w0: [-10,-0.5,0]
-      slab: [[.06,0],[.07,20],[.1,20],[.11,50],[.4,50],[.45,20],[1.,20]]
-      key: [900,0]
+        d_te: [0.15, 8, 0]
+        d_w0: [-10, -0.5, 0]
+      slab: [[.06, 0], [.07, 20], [.1, 20], [.11, 50], [.4, 50], [.45, 20], [1., 20]]
+      key: [900, 0]
       ply_thickness: 1.
       draping: blocks
       grid: shell
       chamfers:
-        - ratio: [[0,5],[.6,5],[.601,12],[1,12]]
-          id: ['d_te',0]
-          nstep: 6
+      - ratio: [[0, 5], [.6, 5], [.601, 12], [1, 12]]
+        id: [d_te, 0]
+        nstep: 6
   # - slabname: te_core_ss
   #   chamfer_ratio: [[0,5],[.6,5],[.601,12],[1,12]] 
   #   idx: [1,1]
@@ -166,67 +162,87 @@ laminates:
     leading_edge_core:
       material: balsa110
       cover:
-        d_le_r: [0.1,1,0]
-        d_w0: [.5, 10,0]
-      slab: [[.05,0],[.06,30],[.4,30],[.405,10],[1.,10]]
+        d_le_r: [0.1, 1, 0]
+        d_w0: [.5, 10, 0]
+      slab: [[.05, 0], [.06, 30], [.4, 30], [.405, 10], [1., 10]]
       ply_thickness: 1.
       draping: blocks
-      key: [1100,0]
+      key: [1100, 0]
       grid: shell
     w3_biax:
       material: biax
-      cover: 
-        d_w3_r: [0,1,0]
-      slab: [[.0,4],[1.,4]]
+      cover:
+        d_w3_r: [0, 1, 0]
+      slab: [[.0, 4], [1., 4]]
       ply_thickness: 1.2
-      key: [0,8000]
-      splitstack: [.5,.5]
+      key: [0, 8000]
+      splitstack: [.5, .5]
       grid: w3
       draping: plies
     w3_core:
       material: pet80
-      cover: 
-        d_w3_r: [0,1,0]
-      slab: [[.0,25],[1.,25]]
+      cover:
+        d_w3_r: [0, 1, 0]
+      slab: [[.0, 25], [1., 25]]
       ply_thickness: 1.
-      key: [100,8000]
+      key: [100, 8000]
       grid: w3
       draping: blocks
-      
+
     w4_biax:
       material: biax
-      cover: 
-        d_w4_r: [0,1,0]
-      slab: [[.0,4],[1.,4]]
+      cover:
+        d_w4_r: [0, 1, 0]
+      slab: [[.0, 4], [1., 4]]
       ply_thickness: 1.2
-      key: [0,8000]
-      splitstack: [.5,.5]
+      key: [0, 8000]
+      splitstack: [.5, .5]
       grid: w4
       draping: plies
     w4_core:
       material: pet80
-      cover: 
-        d_w4_r: [0,1,0]
-      slab: [[.0,25],[1.,25]]
+      cover:
+        d_w4_r: [0, 1, 0]
+      slab: [[.0, 25], [1., 25]]
       ply_thickness: 1.
-      key: [100,8000]
+      key: [100, 8000]
       grid: w4
       draping: blocks
 
 loads:
   forward_flap:
     z: [10., 26., 42., 58., 74.]
-    my: [7225., 4761., 2809., 1369.,  441.]
-    mx: [0, 0, 0, 0,0]
+    my:
+    - 72250000.0
+    - 47610000.0
+    - 28090000.0
+    - 13690000.0
+    - 4410000.0
+    mx:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
     apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
       d_w0: [-0.5, 0.1]
-      is_web: [-0.5,0.5]
+      is_web: [-0.5, 0.5]
   forward_edge:
     z: [10., 26., 42., 58., 74.]
-    mx: [7225., 4761., 2809., 1369.,  441.]
-    my: [0, 0, 0, 0,0]
+    mx:
+    - 72250000.0
+    - 47610000.0
+    - 28090000.0
+    - 13690000.0
+    - 4410000.0
+    my:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
     apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
       d_w0: [-0.5, 0.1]
-      is_web: [-0.5,0.5]
+      is_web: [-0.5, 0.5]
 
 
