@@ -27,6 +27,57 @@ def add_zero_arrays(msh, mesh):
             )
 
 
+def split_glueline(fl):
+    p = fl.points
+
+    cn = fl.cell_connectivity.reshape((fl.n_cells, 8))
+
+    start = cn[:, [1, 0, 5, 4]].flatten()
+    end = cn[:, [2, 3, 6, 7]].flatten()
+
+    pr = np.stack([start, end], axis=1)
+    upr = np.unique(pr, axis=0)
+
+    ps = p[upr[:, 0]]
+    pe = p[upr[:, 1]]
+
+    npp = 2
+
+    spc = np.linspace(0, 1, npp + 2)[1:-1]
+
+    intermediate_points = (
+        ps[:, np.newaxis, :] + (pe - ps)[:, np.newaxis, :] * spc[:, np.newaxis]
+    )
+    added_points = intermediate_points.reshape(-1, 3)
+
+    apids = np.arange(fl.points.shape[0], fl.points.shape[0] + added_points.shape[0])
+
+    lkp = np.zeros(upr.max() + 1, dtype=int)
+    lkp[upr[:, 0]] = apids[::2]
+
+    end1 = lkp[cn[:, [1, 0, 5, 4]]]
+
+    cn1 = cn.copy()
+    cn2 = cn.copy()
+    cn[:, [2, 3, 6, 7]] = end1
+    cn1[:, [1, 0, 5, 4]] = end1
+    cn1[:, [2, 3, 6, 7]] = end1 + 1
+    cn2[:, [1, 0, 5, 4]] = end1 + 1
+
+    cells = np.vstack([cn, cn1, cn2])
+
+    n8 = np.array([8 for i in range(cells.shape[0])])
+
+    cells = np.hstack([n8[:, np.newaxis], cells])
+
+    msh = pv.UnstructuredGrid(
+        np.array(cells).flatten(),
+        np.array([pv.CellType.HEXAHEDRON for i in cells]),
+        np.vstack([fl.points, added_points]),
+    )
+    return msh
+
+
 def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]):
     # Load the VTU file
     mesh = pv.read(file_path)
@@ -38,19 +89,17 @@ def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]
     df["is_web"] = mesh.point_data["is_web"]
     df["d_abs_dist_from_te"] = mesh.point_data["d_abs_dist_from_te"]
     df["rr"] = mesh.point_data["rr"]
-    # / mesh.point_data["radius"].max()
 
     bw = np.array(bondline_width)
 
     df["bw"] = np.interp(df.rr, bw[:, 0], bw[:, 1])
-
-    # print(df.bw)
 
     shell_pts = df[df.is_web == 0]
     shell_pts.sort_values("d_abs_dist_from_te", inplace=True)
     grz = [g for g in shell_pts.groupby("z")]
 
     cells = []
+    # added_points = []
     for cg, ng in zip(grz, grz[1:]):
         cgi, ngi = cg[1].index, ng[1].index
         for i in range(200):
@@ -60,6 +109,18 @@ def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]
                 ] = cg[1].iloc[i]["d_abs_dist_from_te"]
 
                 break
+
+            # print(cg[1].loc[cgi[-1 - i]], ng[1].loc[ngi[-1 - i]])
+            # print(
+            #     cgi[-1 - i],
+            #     cgi[-2 - i],
+            #     cgi[1 + i],
+            #     cgi[0 + i],
+            #     ngi[-1 - i],
+            #     ngi[-2 - i],
+            #     ngi[1 + i],
+            #     ngi[0 + i],
+            # )
             cells.append(
                 [
                     8,
@@ -78,7 +139,10 @@ def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]
         np.array([pv.CellType.HEXAHEDRON for i in cells]),
         mesh.points,
     )
+
+    msh = split_glueline(msh)
     add_zero_arrays(msh, mesh)
+    msh.save("msh.vtu")
     out = pv.merge([mesh, msh])
     of = file_path.replace(".vtu", "_bondline.vtu")
     out.save(of)
