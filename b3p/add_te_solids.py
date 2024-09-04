@@ -104,8 +104,6 @@ def add_bondline_to_vtu(
     Returns:
     None
     """
-    # print(bondline_material_id)
-
     # Load the VTU file
     mesh = pv.read(file_path)
     mesh.point_data["bondline_width"] = 0.0
