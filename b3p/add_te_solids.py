@@ -28,6 +28,16 @@ def add_zero_arrays(msh, mesh):
 
 
 def split_glueline(fl):
+    """
+    Splits a glueline row of solids into 3 rows through thickness adding intermediate points.
+    Parameters:
+    - fl (vtk.vtkPolyData): The input glueline as a VTK PolyData object.
+    Returns:
+    - msh (pyvista.UnstructuredGrid): The resulting mesh after splitting the glueline.
+    Raises:
+    - None
+    """
+
     p = fl.points
 
     cn = fl.cell_connectivity.reshape((fl.n_cells, 8))
@@ -79,10 +89,18 @@ def split_glueline(fl):
 
 
 def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]):
+    """
+    Add bondline to a VTU file.
+    Parameters:
+    - file_path (str): The path to the VTU file.
+    - bondline_width (list, optional): The bondline width values. Default is [[0, 0], [0.5, 0.5], [1, 0.1]].
+    Returns:
+    None
+    """
+
     # Load the VTU file
     mesh = pv.read(file_path)
     mesh.point_data["bondline_width"] = 0.0
-    # bondline_width = 0.4
 
     df = pd.DataFrame(mesh.points, columns=["x", "y", "z"])
     df["d_te"] = mesh.point_data["d_te"]
@@ -109,18 +127,6 @@ def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]
                 ] = cg[1].iloc[i]["d_abs_dist_from_te"]
 
                 break
-
-            # print(cg[1].loc[cgi[-1 - i]], ng[1].loc[ngi[-1 - i]])
-            # print(
-            #     cgi[-1 - i],
-            #     cgi[-2 - i],
-            #     cgi[1 + i],
-            #     cgi[0 + i],
-            #     ngi[-1 - i],
-            #     ngi[-2 - i],
-            #     ngi[1 + i],
-            #     ngi[0 + i],
-            # )
             cells.append(
                 [
                     8,
