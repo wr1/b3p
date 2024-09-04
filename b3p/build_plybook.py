@@ -213,11 +213,16 @@ def add_bondline_material(matdb, material_map):
         material_map (dict): material map
         returns:
             material_map (dict): material map with bondline material added"""
-    possible_glue_names = ["-1", "adhesive"]
+    possible_glue_names = ["adhesive", "bonding"]
     for i in matdb:
         for j in possible_glue_names:
-            if matdb[i]["name"] == j:
-                material_map[j] = -1
+            if matdb[i]["name"].find(j) != -1:
+                matkey = i
+                material_map["bondline"] = -1
+
+    if "bondline" in material_map:
+        matdb["bondline"] = cp.deepcopy(matdb[matkey])
+        matdb["bondline"]["name"] = "bondline"
 
     return material_map
 
@@ -236,26 +241,38 @@ def export_matdb(blade, material_map):
             # copy the material db over to the working directory, this means that rerunning
             # a model in a workdir is not affected by changes in the source matdb, this is
             # the desired behaviour
-            shutil.copyfile(
-                blade["materials"], os.path.join(blade["general"]["workdir"], mdb)
-            )
+            # shutil.copyfile(
+            #     blade["materials"], os.path.join(blade["general"]["workdir"], mdb)
+            # )
         else:
             mdbname = "__matdb.yml"
             material_map["matdb"] = mdbname
 
-            yaml.YAML().dump(
-                blade["materials"],
-                open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
-            )
+            # yaml.YAML().dump(
+            #     blade["materials"],
+            #     open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
+            # )
     else:
         print("no material db defined in blade file")
 
     matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
     if type(blade["materials"]) == str:
         blade["materials"] = yaml.round_trip_load(open(blade["materials"]))
+
+    if "bondline" in blade["mesh"]:
+        if "material" in blade["mesh"]["bondline"]:
+            maxid = max([material_map[j] for j in material_map if j != "matdb"])
+            material_map[blade["mesh"]["bondline"]["material"]] = maxid + 1
+
     json.dump(
         add_bondline_material(blade["materials"], material_map), open(matmap, "w")
     )
+
+    yaml.YAML().dump(
+        blade["materials"],
+        open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
+    )
+
     print(f"written material map to {matmap}")
 
 

@@ -6,17 +6,22 @@ import numpy as np
 from ruamel import yaml
 import os
 import glob
+import json
 
 
 def add_zero_arrays(msh, mesh):
     for i in mesh.cell_data.keys():
         s = mesh.cell_data[i].shape
-        if len(s) == 1:
-            msh.cell_data[i] = np.zeros(msh.n_cells, dtype=mesh.cell_data[i].dtype)
+        if i not in msh.cell_data.keys():
+            if len(s) == 1:
+                msh.cell_data[i] = np.zeros(msh.n_cells, dtype=mesh.cell_data[i].dtype)
+            else:
+                msh.cell_data[i] = np.zeros(
+                    (msh.n_cells, s[1]), dtype=mesh.cell_data[i].dtype
+                )
         else:
-            msh.cell_data[i] = np.zeros(
-                (msh.n_cells, s[1]), dtype=mesh.cell_data[i].dtype
-            )
+            msh.cell_data[i] = msh.cell_data[i].astype(mesh.cell_data[i].dtype)
+
     for i in mesh.point_data.keys():
         s = mesh.point_data[i].shape
         if len(s) == 1:
@@ -88,7 +93,9 @@ def split_glueline(fl):
     return msh
 
 
-def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]):
+def add_bondline_to_vtu(
+    file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]], bondline_material_id=0
+):
     """
     Add bondline to a VTU file.
     Parameters:
@@ -97,10 +104,13 @@ def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]
     Returns:
     None
     """
+    # print(bondline_material_id)
 
     # Load the VTU file
     mesh = pv.read(file_path)
     mesh.point_data["bondline_width"] = 0.0
+
+    mesh.cell_data["mat"] = -1
 
     df = pd.DataFrame(mesh.points, columns=["x", "y", "z"])
     df["d_te"] = mesh.point_data["d_te"]
@@ -147,20 +157,50 @@ def add_bondline_to_vtu(file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]]
     )
 
     msh = split_glueline(msh)
+
+    msh.cell_data["mat"] = bondline_material_id
+
     add_zero_arrays(msh, mesh)
-    msh.save("msh.vtu")
+    # msh.save("msh.vtu")
     out = pv.merge([mesh, msh])
     of = file_path.replace(".vtu", "_bondline.vtu")
     out.save(of)
     print(f"Saved {of}")
 
 
+def get_bondline_material(d):
+    mmap = os.path.join(d["general"]["workdir"] + "_portable", "material_map.json")
+
+    if os.path.exists(mmap):
+        material_map = glob.glob(mmap)
+
+        mm = json.load(open(material_map[0], "r"))
+
+        if "bondline" in d["mesh"]:
+
+            bondline_width = d["mesh"]["bondline"]["width"]
+
+            bondline_material = d["mesh"]["bondline"]["material"]
+
+            bondline_material_id = mm[bondline_material]
+
+            return bondline_material_id, bondline_width
+        else:
+            exit("no bondline found")
+    else:
+        exit("no material map found")
+
+
 def add_bondline(yml):
     y = yaml.YAML()
     d = y.load(open(yml, "r"))
     vtu = glob.glob(os.path.join(d["general"]["workdir"] + "_portable", "*joined.vtu"))
-    bondline_width = d["mesh"]["bondline_width"]
-    add_bondline_to_vtu(vtu[0], bondline_width=bondline_width)
+
+    bondline_material_id, bondline_width = get_bondline_material(d)
+    # print(bondline_material_id)
+    add_bondline_to_vtu(
+        vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id
+    )
 
 
 def main():

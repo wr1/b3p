@@ -171,6 +171,12 @@ pet300:
   name: pet300
   nu: 0.7142857142857142
   rho: 300.0
+epoxy_adhesive:
+  E: 3100000000.0
+  G: 1192307692.3
+  name: epoxy_adhesive
+  nu: 0.3
+  rho: 1150.0
 pet80:
   E: 74000000.0
   G: 18000000.0

@@ -72,8 +72,10 @@ mesh:
       base: d_te_offset
       points: [[0, -0.1], [0.30, -0.2], [0.7, -0.1]]
 
-  bondline_width: [[0, 0], [0.2, 0.0], [0.4, 0.3], [0.6, 0.3], [1.0, 0.1]]
-
+  # model a solid bondline
+  bondline:
+    width: [[0, 0], [0.2, 0.0], [0.4, 0.3], [0.6, 0.3], [1.0, 0.1]]
+    material: epoxy_adhesive 
 
 mesh2d:
   sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
