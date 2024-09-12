@@ -186,7 +186,7 @@ class cli:
         plotter = ccxpost.plot_ccx(self.dct["general"]["workdir"], wildcard=wildcard)
         if plot3d:
             plotter.plot3d()
-        if plot2
+        if plot2d:
             plotter.plot2d(wildcard=wildcard)
         return self
 
