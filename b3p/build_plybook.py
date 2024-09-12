@@ -191,17 +191,55 @@ def get_coverage(slab, datums, rr):
     assert "cover" in slab
     cov = slab["cover"]
 
-    if type(cov) != str:
-        return cov
-    for i in datums:
-        if cov.find(i) != -1:
-            xy = np.array(datums[i]["xy"])
-            dst = np.interp(
-                rr, xy[:, 0] / datums[i]["scalex"], xy[:, 1] * datums[i]["scaley"]
-            )
-            cov = cov.replace(i, f"np.array({dst.tolist()})")
+    # print(cov)
+    # print("get coverage", cov, type(cov))
 
-    return dict([(i[0], i[1:]) for i in eval(cov)])
+    # if type(cov) != str:
+    #     return cov
+
+    print(type(datums))
+
+    for d in cov:
+        cc = cov[d]
+        idd = [str(cc[0]), str(cc[1])]
+
+        for j in range(2):
+            jj = idd[j]
+            for i in datums:
+                # print(i)
+                if jj.find(i) != -1:
+                    # print("found", jj, i)
+                    xy = np.array(datums[i]["xy"])
+                    dst = np.interp(
+                        rr,
+                        xy[:, 0] / datums[i]["scalex"],
+                        xy[:, 1] * datums[i]["scaley"],
+                    )
+                    # print(dst)
+                    idd[j] = idd[j].replace(i, f"np.array({dst.tolist()})")
+                    # jj = jj.replace(i, f"np.array({dst.tolist()})")
+                    # print(jj)
+                # cov[d] = np.array(dst.tolist())
+
+        cov[d][0] = eval(idd[0])
+        cov[d][1] = eval(idd[1])
+
+    return cov
+    #     print(idd)
+    # print(cov)
+
+    # for i in datums:
+    #     print(i)
+
+    #     if cov.find(i) != -1:
+    #         print("found", slab["name"], cov, i)
+    #         xy = np.array(datums[i]["xy"])
+    #         dst = np.interp(
+    #             rr, xy[:, 0] / datums[i]["scalex"], xy[:, 1] * datums[i]["scaley"]
+    #         )
+    #         cov = cov.replace(i, f"np.array({dst.tolist()})")
+
+    # return dict([(i[0], i[1:]) for i in eval(cov)])
 
 
 def add_bondline_material(matdb, material_map):
