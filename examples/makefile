@@ -20,7 +20,6 @@ ccxprep: ## prepare ccx model
 ccxprepb: ## prepare ccx model for buckling run
 	b3p --yml=$(YML) ccxprep --buckling=True
 
-
 ccxsolve: ## run ccx on the model
 	b3p --yml=$(YML) ccxsolve forward_flap 
 
