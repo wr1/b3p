@@ -72,8 +72,10 @@ mesh:
       base: d_te_offset
       points: [[0, -0.1], [0.30, -0.2], [0.7, -0.1]]
 
-  bondline_width: [[0, 0], [0.2, 0.0], [0.4, 0.3], [0.6, 0.3], [1.0, 0.1]]
-
+  # model a solid bondline
+  bondline:
+    width: [[0, 0], [0.2, 0.0], [0.4, 0.3], [0.6, 0.3], [1.0, 0.1]]
+    material: epoxy_adhesive 
 
 mesh2d:
   sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
@@ -164,7 +166,7 @@ laminates:
       cover:
         d_le_r: [0.1, 1, 0]
         d_w0: [.5, 10, 0]
-      slab: [[.05, 0], [.06, 30], [.4, 30], [.405, 10], [1., 10]]
+      slab: [[.05, 0], [.06, 30], [.8, 30], [.805, 10], [1., 10]]
       ply_thickness: 1.
       draping: blocks
       key: [1100, 0]
@@ -183,7 +185,7 @@ laminates:
       material: pet80
       cover:
         d_w3_r: [0, 1, 0]
-      slab: [[.0, 25], [1., 25]]
+      slab: [[.0, 50],[.7,50],[.7,25], [1., 25]]
       ply_thickness: 1.
       key: [100, 8000]
       grid: w3
@@ -203,7 +205,7 @@ laminates:
       material: pet80
       cover:
         d_w4_r: [0, 1, 0]
-      slab: [[.0, 25], [1., 25]]
+      slab: [[.0, 50],[.7,50],[.7,25], [1., 25]]
       ply_thickness: 1.
       key: [100, 8000]
       grid: w4

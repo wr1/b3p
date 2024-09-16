@@ -65,8 +65,7 @@ class ccx2vtu:
             self.grids[i] = (
                 pyvista.UnstructuredGrid(i.replace(".frd", ".vtu"))
                 if has_later_vtu(i)
-                else frd2vtu.frd2vtu(i)
-                # frd2vtu.frd2vtu(i, multi=True)
+                else frd2vtu.frdbin2vtu(i)
             )
 
     def tabulate(self, n_bins=50):

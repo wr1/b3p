@@ -25,6 +25,8 @@ def get_slab_cover(inp):
 
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
+
+    print(name, cover)
     one = np.ones_like(rr)
 
     names = ["ply_%.8i_%s" % (i, name) for i in numbering]
@@ -43,6 +45,7 @@ def get_slab_cover(inp):
         cov = np.ones_like(df.radius, dtype=bool)
         for i in cover:
             start, end, __ = cover[i]
+            print(i, cover[i])
             over_start = np.interp(df.radius, rr, one * start) <= df[i].values
             under_end = np.interp(df.radius, rr, one * end) >= df[i].values
             cov = cov & over_start & under_end
