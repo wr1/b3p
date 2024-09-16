@@ -15,7 +15,7 @@ mass:
 ccx: ccxprep ccxsolve ccxpost ## prepare and run ccx models
 
 ccxprep: ## prepare ccx model
-	b3p --yml=$(YML) ccxprep --buckling=False
+	b3p --yml=$(YML) ccxprep --buckling=True
 
 ccxsolve: ## run ccx on the model
 	b3p --yml=$(YML) ccxsolve forward_flap 
