@@ -127,7 +127,7 @@ class cli:
         buckling=False,
     ):
         print("** create ccx input file")
-        mesh2ccx.mesh2ccx(
+        output_files = mesh2ccx.mesh2ccx(
             f"{self.prefix}_joined.vtu",
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
@@ -142,12 +142,15 @@ class cli:
             meshonly=meshonly,
             export_hyperworks=export_hyperworks,
         )
-        return self
+        return output_files
 
-    def ccxsolve(self, wildcard="", nproc=3, ccxexe="ccx"):
+    def ccxsolve(self, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
         """Run ccx on all inp files in workdir that match wildcard"""
 
-        inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
+        if inpfiles == []:
+            inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
+        else:
+            inps = inpfiles
 
         if inps == []:
             print(f"** No inps found matching {self.prefix}*{wildcard}*inp")

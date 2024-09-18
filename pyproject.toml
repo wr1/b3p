@@ -23,7 +23,7 @@ pyvista = "^0.43.5"
 # ccblade = {git = "https://github.com/WISDEM/CCBlade.git", branch = "master", optional=true}
 meshio = "^5.3.5"
 h5py = "^3.11.0"
-frd2vtu = "^0.1.1rc2"
+frd2vtu = "^0.1.1rc4"
 
 # [tool.poetry.extras]
 # aero=["ccblade"] 
