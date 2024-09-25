@@ -87,7 +87,7 @@ class cli:
             raise FileNotFoundError("Plybook not found")
         return self
 
-    def mesh2d(self, z_start=0, z_end=100, nsec=100):
+    def mesh2d(self, rotz=0.0):
         """Create 2d meshes for calculation of 6x6 stiffness and matrices"""
 
         if "mesh2d" not in self.dct:
@@ -102,7 +102,7 @@ class cli:
             f"{self.prefix}_joined.vtu",
             sections,
             if_bondline=False,
-            rotz=0.0,
+            rotz=rotz,
             var=f"{self.prefix}.var",
         )
         anba4_prep.anba4_prep(section_meshes)
