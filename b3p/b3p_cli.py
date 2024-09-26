@@ -128,15 +128,22 @@ class cli:
         export_hyperworks=False,
         meshonly=False,
         buckling=False,
+        bondline=False,
     ):
         print("** create ccx input file")
 
-        available_meshes = glob.glob(f"{self.prefix}_joined*vtu")
+        if bondline:
+            available_meshes = glob.glob(f"{self.prefix}*_bondline.vtu")
+
+        if not bondline or available_meshes == []:
+            available_meshes = glob.glob(f"{self.prefix}*_joined.vtu")
+
+        available_meshes = glob.glob(f"{self.prefix}*_bondline.vtu")
 
         print("available_meshes", available_meshes)
 
         output_files = mesh2ccx.mesh2ccx(
-            available_meshes[-1],  # f"{self.prefix}_joined.vtu",
+            available_meshes[-1],
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
             merge_adjacent_layers=merge_adjacent_layers,

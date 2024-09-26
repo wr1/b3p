@@ -15,7 +15,7 @@ mass:
 ccx: ccxprep ccxsolve ccxpost ## prepare and run ccx models
 
 ccxprep: ## prepare ccx model
-	b3p --yml=$(YML) ccxprep --buckling=False
+	b3p --yml=$(YML) ccxprep --buckling=False --bondline=True
 
 ccxprepb: ## prepare ccx model for buckling run
 	b3p --yml=$(YML) ccxprep --buckling=True
