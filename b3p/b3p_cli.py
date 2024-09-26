@@ -14,6 +14,7 @@ from b3p import (
     ccxpost,
     drape_summary,
     anba4_prep,
+    add_te_solids,
 )
 from utils import yml_portable
 import os
@@ -106,12 +107,14 @@ class cli:
             var=f"{self.prefix}.var",
         )
         anba4_prep.anba4_prep(section_meshes)
-        # glob.glob(self.dct["general"]["workdir"] + "/msec*vtp"))
         return self
 
     def show(self):
         print(self)
         return self
+
+    def bondline(self):
+        add_te_solids.add_bondline(self.dct)
 
     def ccxprep(
         self,
@@ -127,8 +130,13 @@ class cli:
         buckling=False,
     ):
         print("** create ccx input file")
+
+        available_meshes = glob.glob(f"{self.prefix}_joined*vtu")
+
+        print("available_meshes", available_meshes)
+
         output_files = mesh2ccx.mesh2ccx(
-            f"{self.prefix}_joined.vtu",
+            available_meshes[-1],  # f"{self.prefix}_joined.vtu",
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
             merge_adjacent_layers=merge_adjacent_layers,

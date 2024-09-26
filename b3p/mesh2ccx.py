@@ -204,24 +204,66 @@ def nodebuffer(grid):
     )
 
 
-def element_buffer(grid, quadratic=True):
-    conn = grid.cell_connectivity.reshape((grid.GetNumberOfCells(), -1)) + 1
-    eltype = "s8r" if quadratic else "s4"
+def element_buffer(grid):
+
+    # n_el = grid.GetNumberOfCells()
+
+    # buf = ""
+    # for i in range(n_el):
+    #     cell = grid.GetCell(i)
+    #     # print(dir(cell))
+    #     type = cell.GetCellType()
+    #     if type == 23:
+    #         conn = list(cell.GetPointIds())
+    #         buf += f"*element,type=s8r,elset=e{i+1}\n"
+    #         buf += f"{i+1},{','.join(map(str, conn))}\n"
+    # print(type)
+
+    conn = grid.cells_dict
+
+    print(conn)
+
+    extypes = [23]
+
+    vtk_ccx = {23: "s8r"}
+
     buf = ""
-    for n, i in enumerate(conn):
-        buf += f"*element,type={eltype},elset=e{n+1}\n"
-        buf += f"{n+1},{','.join(map(str, i))}\n"
+    for tp in extypes:
+        ccxtype = vtk_ccx[tp]
+        for n, i in enumerate(conn[tp]):
+            conn[tp][n] = np.array(i) + 1
+            buf += f"*element,type={ccxtype},elset=e{n+1}\n"
+            buf += f"{n+1},{','.join(map(str, conn[tp][n]) )}\n"
+
+    # for i in conn['23']
+
+    # print(conn)
+    # # grid.cell_connectivity.reshape((grid.GetNumberOfCells(), -1)) + 1
+
+    # # print(np.unique(grid.celltypes))
+    # # print(conn)
+    # eltype = "s8r" if quadratic else "s4"
+    # buf = ""
+    # for n, i in enumerate(conn):
+    #     type = grid.celltypes[n]
+    #     print(type)
+    #     if type == 23:
+    #         eltype = "s8r"
+    #         buf += f"*element,type={eltype},elset=e{n+1}\n"
+    #         buf += f"{n+1},{','.join(map(str, i))}\n"
 
     return buf
 
 
 def orientation_buffer(grid, add_centers=False):
+
+    shells = grid.extract_cells(grid.cells_dict.get(23, []))
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
-    x_dirs = grid.cell_data["x_dir"]
-    y_dirs = grid.cell_data["y_dir"]
-    centers = grid.cell_data["centers"]
-    num_cells = grid.GetNumberOfCells()
+    x_dirs = shells.cell_data["x_dir"]
+    y_dirs = shells.cell_data["y_dir"]
+    centers = shells.cell_data["centers"]
+    num_cells = shells.GetNumberOfCells()
 
     for n in range(num_cells):
         xdir, ydir = x_dirs[n], y_dirs[n]
@@ -319,9 +361,12 @@ def mesh2ccx(
     :param meshonly (bool, optional): _description_. Defaults to False.
     :return: _description_
     """
+    print(f"** Running {vtu}")
     grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
+
+    print(np.unique(gr.celltypes))
 
     print(f"** Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
@@ -337,9 +382,9 @@ def mesh2ccx(
     buf = nodebuffer(mesh)
 
     if quadratic:
-        buf += element_buffer(mesh, quadratic=True)
+        buf += element_buffer(mesh)  # , quadratic=True)
     else:
-        buf += element_buffer(mesh, quadratic=False)
+        buf += element_buffer(mesh)  # , quadratic=False)
 
     if meshonly:
         of = out.replace(".inp", "_meshonly.inp")
@@ -352,9 +397,7 @@ def mesh2ccx(
     print(f"** Export plygroups {export_plygroups}")
     if export_plygroups:
         plygroups, df = compute_ply_groups(mesh, "ply_")
-
         slabgroups = compute_slab_groups(mesh, "slab_thickness_")
-
         buf += plygroups + slabgroups
 
     plykeys = [i for i in mesh.cell_data if i.startswith("ply_")]
@@ -372,6 +415,8 @@ def mesh2ccx(
     buf += matblock
 
     tic = time.perf_counter()
+
+    print(plydat.shape)
 
     blx = [
         make_shell_section(i, plydat[:, i, :], merge_adjacent_layers, zeroangle)
@@ -398,7 +443,6 @@ def mesh2ccx(
     buf += root_clamp(mesh)
 
     loadcases = get_loadcases(mesh, buckling=buckling)
-
 
     output_files = []
     # write a full ccx file for each loadcase, assuming parallel execution

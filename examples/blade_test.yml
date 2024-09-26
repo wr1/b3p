@@ -150,6 +150,10 @@ laminates:
       - ratio: [[0, 5], [.6, 5], [.601, 12], [1, 12]]
         id: [d_te, 0]
         nstep: 6
+      - ratio: [[0, 5], [.6, 5], [.601, 12], [1, 12]]
+        id: [d_w0, 1]
+        nstep: 6
+
   # - slabname: te_core_ss
   #   chamfer_ratio: [[0,5],[.6,5],[.601,12],[1,12]] 
   #   idx: [1,1]

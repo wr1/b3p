@@ -159,7 +159,7 @@ def add_bondline_to_vtu(
     msh.cell_data["mat"] = bondline_material_id
 
     add_zero_arrays(msh, mesh)
-    # msh.save("msh.vtu")
+
     out = pv.merge([mesh, msh])
     of = file_path.replace(".vtu", "_bondline.vtu")
     out.save(of)
@@ -167,7 +167,13 @@ def add_bondline_to_vtu(
 
 
 def get_bondline_material(d):
-    mmap = os.path.join(d["general"]["workdir"] + "_portable", "material_map.json")
+
+    wd = os.path.join(
+        d["general"]["workdir"] + "_portable"
+        if "_portable" not in d["general"]["workdir"]
+        else d["general"]["workdir"]
+    )
+    mmap = os.path.join(wd, "material_map.json")
 
     if os.path.exists(mmap):
         material_map = glob.glob(mmap)
@@ -189,20 +195,30 @@ def get_bondline_material(d):
         exit("no material map found")
 
 
-def add_bondline(yml):
-    y = yaml.YAML()
-    d = y.load(open(yml, "r"))
-    vtu = glob.glob(os.path.join(d["general"]["workdir"] + "_portable", "*joined.vtu"))
-
-    bondline_material_id, bondline_width = get_bondline_material(d)
-    # print(bondline_material_id)
+def add_bondline(bladedict):
+    wd = os.path.join(
+        bladedict["general"]["workdir"] + "_portable"
+        if "_portable" not in bladedict["general"]["workdir"]
+        else bladedict["general"]["workdir"]
+    )
+    vtu = glob.glob(os.path.join(wd, "*joined.vtu"))
+    bondline_material_id, bondline_width = get_bondline_material(bladedict)
     add_bondline_to_vtu(
         vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id
     )
 
 
+def add_bondline_fromfile(yaml_filename):
+    if not os.path.exists(yaml_filename):
+        exit(f"File {yaml_filename} not found.")
+
+    y = yaml.YAML()
+    d = y.load(open(yaml_filename, "r"))
+    add_bondline(d)
+
+
 def main():
-    fire.Fire(add_bondline)
+    fire.Fire(add_bondline_fromfile)
 
 
 if __name__ == "__main__":
