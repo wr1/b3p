@@ -85,9 +85,13 @@ def yaml_make_portable(yaml_file, safe=False):
 
     d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
 
-    if type(d["materials"]) == str:
-        print(f'\t** loading materials from: {d["materials"]}')
-        d["materials"] = yaml.load(open(os.path.join(prefix, d["materials"]), "r"))
+    subsections = ["materials", "loads", "laminates"]
+
+    for s in subsections:
+        if type(d[s]) == str and d[s].find(".yml") != -1:
+
+            print(f"\t** loading materials from: {d[s]}")
+            d[s] = yaml.load(open(os.path.join(prefix, d[s]), "r"))
 
     if d["general"]["workdir"].find("portable") == -1:
         d["general"]["workdir"] += "_portable"

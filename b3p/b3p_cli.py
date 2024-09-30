@@ -21,8 +21,6 @@ import os
 import pickle
 import numpy as np
 import shutil
-
-# from ruamel import yaml
 import glob
 import multiprocessing
 from ruamel import yaml
@@ -217,8 +215,6 @@ class cli:
         add_load_to_mesh.add_load_to_mesh(
             self.dct, f"{self.prefix}_joined.vtu", f"{self.prefix}_loads.png"
         )
-
-        # self.mesh2d(z_start=0.0001, z_end=100, nsec=50)
         return self
 
     def mass(self):
