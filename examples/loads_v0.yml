@@ -1,0 +1,35 @@
+  forward_flap:
+    z: [10., 26., 42., 58., 74.]
+    my:
+    - 72250000.0
+    - 47610000.0
+    - 28090000.0
+    - 13690000.0
+    - 4410000.0
+    mx:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
+      d_w0: [-0.5, 0.1]
+      is_web: [-0.5, 0.5]
+  forward_edge:
+    z: [10., 26., 42., 58., 74.]
+    mx:
+    - 72250000.0
+    - 47610000.0
+    - 28090000.0
+    - 13690000.0
+    - 4410000.0
+    my:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    apply: # query the nodal coordinate systems to apply a load to a selected set of nodes
+      d_w0: [-0.5, 0.1]
+      is_web: [-0.5, 0.5]
+
