@@ -17,8 +17,6 @@ from b3p import (
     add_te_solids,
     yml_portable,
 )
-
-# from utils import yml_portable
 import os
 import pickle
 import numpy as np
