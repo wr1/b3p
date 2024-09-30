@@ -87,7 +87,7 @@ class cli:
             raise FileNotFoundError("Plybook not found")
         return self
 
-    def mesh2d(self, z_start=0, z_end=100, nsec=100):
+    def mesh2d(self, rotz=0.0):
         """Create 2d meshes for calculation of 6x6 stiffness and matrices"""
 
         if "mesh2d" not in self.dct:
@@ -102,7 +102,7 @@ class cli:
             f"{self.prefix}_joined.vtu",
             sections,
             if_bondline=False,
-            rotz=0.0,
+            rotz=rotz,
             var=f"{self.prefix}.var",
         )
         anba4_prep.anba4_prep(section_meshes)
@@ -127,7 +127,7 @@ class cli:
         buckling=False,
     ):
         print("** create ccx input file")
-        mesh2ccx.mesh2ccx(
+        output_files = mesh2ccx.mesh2ccx(
             f"{self.prefix}_joined.vtu",
             matmap=os.path.join(self.dct["general"]["workdir"], "material_map.json"),
             out=f"{self.prefix}_ccx.inp",
@@ -142,12 +142,15 @@ class cli:
             meshonly=meshonly,
             export_hyperworks=export_hyperworks,
         )
-        return self
+        return output_files
 
-    def ccxsolve(self, wildcard="", nproc=3, ccxexe="ccx"):
+    def ccxsolve(self, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
         """Run ccx on all inp files in workdir that match wildcard"""
 
-        inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
+        if inpfiles == []:
+            inps = glob.glob(f"{self.prefix}*{wildcard}*inp")
+        else:
+            inps = inpfiles
 
         if inps == []:
             print(f"** No inps found matching {self.prefix}*{wildcard}*inp")

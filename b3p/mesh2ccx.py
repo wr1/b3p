@@ -383,13 +383,11 @@ def mesh2ccx(
 
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
-    # print(npxid)
     print(f"max number of plies: {nplmax}")
     print(f"associated stack \n{ blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
     print("** time spent creating shell sections %f" % (toc - tic))
-    # sys.stdout.flush()
     comps = "".join(
         f"*shell section,composite,elset=e{n+1},offset=-.5"
         + (f",orientation=or{n+1}\n" if zeroangle else "\n")
@@ -401,6 +399,8 @@ def mesh2ccx(
 
     loadcases = get_loadcases(mesh, buckling=buckling)
 
+
+    output_files = []
     # write a full ccx file for each loadcase, assuming parallel execution
     if single_step:
         output = buf + "".join(loadcases.values())
@@ -412,11 +412,14 @@ def mesh2ccx(
             output = buf + loadcases[i]
             of = out.replace(".inp", f"_{i}.inp")
             open(of, "w").write(output)
+            output_files.append(of)
             print(f"** written ccx input file to {of}")
 
     if export_hyperworks:
         df.to_csv(otb, index=False)
         print(f"** written plybook to hyperworks table {otb}")
+
+    return output_files
 
 
 def main():
