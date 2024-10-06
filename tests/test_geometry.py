@@ -1,4 +1,4 @@
-from b3p import build_blade_geometry
+from b3p import build_blade_geometry, yml_portable
 import os
 from ruamel import yaml
 import pytest
@@ -10,9 +10,8 @@ absolute_path = os.path.dirname(__file__)
 
 @pytest.fixture(scope="session")
 def get_yaml():
-    fn = os.path.join(absolute_path, "../examples/blade_test_portable.yml")
-    yml = yaml.YAML(typ="rt")
-    return yml.load(open(fn, "rb"))
+    fn = os.path.join(absolute_path, "../examples/blade_test.yml")
+    return yml_portable.yaml_make_portable(fn)
 
 
 @pytest.fixture(scope="session")
@@ -21,20 +20,35 @@ def build_blade(get_yaml):
     return build_blade_geometry.build_blade_geometry(get_yaml)
 
 
-def test_build_blade_geometry_key_parameters(build_blade):
-    """Check some of the global parameters defining the geometry"""
-    assert build_blade.np_chordwise == 100
+def test_yaml_loadable(get_yaml):
+    """check that the yaml file contains the right sections"""
+    sections = ["general", "aero", "materials", "mesh", "mesh2d", "loads", "laminates"]
+    for s in sections:
+        assert s in get_yaml
 
 
-def test_build_blade_geometry_planform(build_blade):
-    """"""
-    assert build_blade.dx[1][12] == -0.18536853892047267
+def test_build_blade_planform_interpolate(build_blade):
+    """Checks some values of the interpolated planform, in order to check consistency"""
+    assert build_blade.dx[1][12] == -0.011400483062328838
+    assert build_blade.dy[1][25] == 0.2716041985416647
+    assert build_blade.chord[1][4] == 5.234238195149214
 
 
-def test_build_blade_geometry_mesh(build_blade):
-    assert build_blade.poly.points[50, 1] == -2.340645738717508
+def test_build_blade_geometry_point_on_mesh(build_blade):
+    """Check a point somewhere in the mesh, not the root or tip"""
+    assert build_blade.poly.points[50, 1] == -2.4598988864366738
+
+
+def test_build_blade_mesh_generation_bounding_box(build_blade):
+    """Check that the blade sits in the exact same bounding box"""
     assert build_blade.poly.points.max(axis=0).tolist() == [
-        2.514195211238277,
-        3.6879477184670346,
+        2.499435016496742,
+        3.0673998220471317,
         126.0,
     ]
+
+
+def test_build_blade_mesh_size(build_blade):
+    """Check that the blade has the right number of points and cells"""
+    assert build_blade.poly.n_points == 7000
+    assert build_blade.poly.n_cells == 6900

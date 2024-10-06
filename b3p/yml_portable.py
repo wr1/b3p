@@ -5,35 +5,7 @@ import re
 import fire
 import os
 
-# import yaml
 from ruamel.yaml import YAML
-
-
-# def deep_convert_to_float(data):
-#     """
-#     Recursively convert all string representations of numbers in a nested data structure
-#     (including dictionaries and lists) to floats.
-#     """
-#     if isinstance(data, dict):
-#         return {k: deep_convert_to_float(v) for k, v in data.items()}
-#     elif isinstance(data, list):
-#         return [deep_convert_to_float(item) for item in data]
-#     elif isinstance(data, str):
-#         try:
-#             return float(data)
-#         except ValueError:
-#             return data  # Return the original string if conversion is not possible
-#     else:
-#         return data  # Return the data as is if it's not a list, dict, or string
-
-
-# # Define a custom representer for lists to make them inline
-# def custom_list_representer(dumper, data):
-#     return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
-
-
-# # Register the custom list representer with the PyYAML dumper
-# yaml.add_representer(list, custom_list_representer)
 
 
 def load_airfoil(af):
@@ -90,7 +62,7 @@ def yaml_make_portable(yaml_file, safe=False):
     for s in subsections:
         if type(d[s]) == str and d[s].find(".yml") != -1:
 
-            print(f"\t** loading materials from: {d[s]}")
+            print(f"\t** loading {s} from: {d[s]}")
             d[s] = yaml.load(open(os.path.join(prefix, d[s]), "r"))
 
     if d["general"]["workdir"].find("portable") == -1:
