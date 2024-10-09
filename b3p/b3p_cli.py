@@ -136,8 +136,6 @@ class cli:
         if not bondline or available_meshes == []:
             available_meshes = glob.glob(f"{self.prefix}*_joined.vtu")
 
-        available_meshes = glob.glob(f"{self.prefix}*_bondline.vtu")
-
         print("available_meshes", available_meshes)
 
         output_files = mesh2ccx.mesh2ccx(
