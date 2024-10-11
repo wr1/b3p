@@ -2,6 +2,7 @@
 import pyvista as pv
 import argparse
 import multiprocessing
+import os
 
 
 def conv3d_2d(mesh):
@@ -20,16 +21,22 @@ def conv3d_2d(mesh):
 def vtp2xdmf(vtp):
     """convert a vtp file to xdmf format and translate to 2D"""
     assert vtp.endswith(".vtp")
+    xd = vtp.replace(".vtp", ".xdmf")
+    if os.path.exists(xd):
+        print(f"\t** ANBA mesh {xd} already exists - skipping")
+        return
+
     mesh = pv.read(vtp)
     tri = mesh.triangulate()  # fenics doesn't do mixed element types
     tri.points[:, 2] = 0
-    xd = vtp.replace(".vtp", ".xdmf")
     pv.save_meshio(xd, tri, data_format="XML")
     conv3d_2d(xd)
-    print(f"converted {vtp} to {xd}")
+    print(f"\t**converted {vtp} to {xd}")
 
 
 def anba4_prep(section_meshes):
+    """convert a list of section meshes to xdmf format"""
+    print("** converting section meshes to XDMF")
     p = multiprocessing.Pool()
     p.map(vtp2xdmf, section_meshes)
     p.close()

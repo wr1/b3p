@@ -41,7 +41,7 @@ def load_airfoils(afs, prefix=""):
     return dct
 
 
-def yaml_make_portable(yaml_file, safe=False):
+def yaml_make_portable(yaml_file):
     """Import a yaml file and all linked files, and write to a _portable version of itself.
 
     :param yaml_file: path to yaml file
@@ -50,7 +50,8 @@ def yaml_make_portable(yaml_file, safe=False):
     print(f"** Loading yaml file {yaml_file} and loading linked files")
     prefix = os.path.dirname(yaml_file)
 
-    yaml = YAML()  # typ="safe")
+    yaml = YAML()
+    # typ="safe")
     # typ="safe")  # YAML(typ="safe") if safe else YAML(typ="rt")
     d = yaml.load(open(yaml_file, "r"))
     # yaml.load(open(yaml_file, "r"), Loader=yaml.CLoader)

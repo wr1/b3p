@@ -196,12 +196,11 @@ def get_bondline_material(d):
 
 
 def add_bondline(bladedict):
-    wd = os.path.join(
-        bladedict["general"]["workdir"] + "_portable"
-        if "_portable" not in bladedict["general"]["workdir"]
-        else bladedict["general"]["workdir"]
+    # wd = prefix
+    prefix = os.path.join(
+        bladedict["general"]["workdir"], bladedict["general"]["prefix"]
     )
-    vtu = glob.glob(os.path.join(wd, "*joined.vtu"))
+    vtu = glob.glob(prefix + "*joined.vtu")
     bondline_material_id, bondline_width = get_bondline_material(bladedict)
     add_bondline_to_vtu(
         vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id

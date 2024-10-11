@@ -310,8 +310,6 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
 
     datums = blade["laminates"]["datums"] if "datums" in blade["laminates"] else {}
 
-    # print(datums)
-
     allstacks = []
 
     # use a multiple of lamplan length as radius grid to interpolate geometric variables to
