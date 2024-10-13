@@ -19,14 +19,10 @@ from b3p import (
 )
 import os
 import pickle
-
-# import numpy as np
 import shutil
 import glob
 import multiprocessing
 import os
-
-# from ruamel import yaml
 
 
 class cli:
@@ -67,7 +63,6 @@ class cli:
 
     def __plybook(self):
         """make plybook"""
-        # yaml.YAML().dump(self.dct, open("gaai.yml", "w"))
         build_plybook.lamplan2plies(self.dct, self.plybookname)
         return self
 

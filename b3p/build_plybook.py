@@ -7,7 +7,6 @@ import os
 from itertools import chain, zip_longest
 import pickle
 import json
-import shutil
 from numpy import array
 import copy as cp
 

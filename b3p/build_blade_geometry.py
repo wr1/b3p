@@ -2,10 +2,8 @@
 
 import os
 from copy import deepcopy as dc
-import fire
 import b3p.blade
 import b3p.loft_utils
-from ruamel import yaml
 import numpy as np
 
 
@@ -50,13 +48,3 @@ def build_blade_geometry(config, xfoil=True):
     n_sections = 50
     blade.to_table(np.linspace(0, 1, n_sections), "%s_sca_%i" % (wdp, n_sections))
     return blade
-
-
-def run_blade_geometry(yamlfile, verbose=False):
-    """Build a blade geometry from a yaml file"""
-    config = yaml.load(open(yamlfile, "r"), Loader=yaml.CLoader)
-    _ = build_blade_geometry(config, verbose=verbose)
-
-
-def main():
-    fire.Fire(run_blade_geometry)

@@ -1,9 +1,7 @@
 #! /usr/bin/env python
-import fire
 import pyvista as pv
 import pandas as pd
 import numpy as np
-from ruamel import yaml
 import os
 import glob
 import json
@@ -207,18 +205,18 @@ def add_bondline(bladedict):
     )
 
 
-def add_bondline_fromfile(yaml_filename):
-    if not os.path.exists(yaml_filename):
-        exit(f"File {yaml_filename} not found.")
+# def add_bondline_fromfile(yaml_filename):
+#     if not os.path.exists(yaml_filename):
+#         exit(f"File {yaml_filename} not found.")
 
-    y = yaml.YAML()
-    d = y.load(open(yaml_filename, "r"))
-    add_bondline(d)
-
-
-def main():
-    fire.Fire(add_bondline_fromfile)
+#     y = yaml.YAML()
+#     d = y.load(open(yaml_filename, "r"))
+#     add_bondline(d)
 
 
-if __name__ == "__main__":
-    main()
+# def main():
+#     fire.Fire(add_bondline_fromfile)
+
+
+# if __name__ == "__main__":
+#     main()
