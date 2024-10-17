@@ -1,3 +1,5 @@
+![PyPI](https://img.shields.io/pypi/v/b3p)
+
 # b3p 
 Command line tools to create models for composite (wind turbine) blades. 
 
