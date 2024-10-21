@@ -116,8 +116,8 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 )
                 matblock += (
                     f"{material_properties['e11']:.4g},{material_properties['e22']:.4g},{material_properties['e33']:.4g},"
-                    + f"{material_properties['nu12']:.4g},{material_properties['nu31']:.4g},{material_properties['nu23']:.4g},"
-                    + f"{material_properties['g12']:.4g},{material_properties['g31']:.4g},\n"
+                    + f"{material_properties['nu12']:.4g},{material_properties['nu13']:.4g},{material_properties['nu23']:.4g},"
+                    + f"{material_properties['g12']:.4g},{material_properties['g13']:.4g},\n"
                     + f"{material_properties['g23']:.4g},293\n"
                 )
 
