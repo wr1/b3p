@@ -86,9 +86,8 @@ class cli:
             raise FileNotFoundError("Plybook not found")
         return self
 
-    def mesh2d(self, rotz=0.0):
+    def mesh2d(self, rotz=0.0, parallel=True):
         """Create 2d meshes for calculation of 6x6 stiffness and matrices"""
-
         if "mesh2d" not in self.dct:
             print("** No mesh2d section in yml file")
             return self
@@ -103,6 +102,7 @@ class cli:
             if_bondline=False,
             rotz=rotz,
             var=f"{self.prefix}.var",
+            parallel=parallel,
         )
         anba4_prep.anba4_prep(section_meshes)
         return self
