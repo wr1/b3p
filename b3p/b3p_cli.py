@@ -108,7 +108,6 @@ class cli:
         return self
 
     def show(self):
-        print(self)
         return self
 
     def bondline(self):

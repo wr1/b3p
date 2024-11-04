@@ -82,8 +82,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
             if (
                 # "vf" in material_properties
                 # or
-                "C" in material_properties
-                and not force_iso
+                "C" in material_properties and not force_iso
             ):
                 print(material_properties["name"], "is assumed to be orthotropic")
                 C = np.array(material_properties["C"])
@@ -205,7 +204,6 @@ def nodebuffer(grid):
 
 
 def element_buffer(grid):
-
     # n_el = grid.GetNumberOfCells()
 
     # buf = ""
@@ -256,7 +254,6 @@ def element_buffer(grid):
 
 
 def orientation_buffer(grid, add_centers=False):
-
     shells = grid.extract_cells(grid.cells_dict.get(23, []))
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
@@ -412,11 +409,13 @@ def mesh2ccx(
     print("** made orientation buffer")
     matblock = material_db_to_ccx(materials, matmap=matmap, force_iso=force_isotropic)
 
+    buf += "** START MATERIALS\n"
     buf += matblock
+    buf += "** END MATERIALS\n"
 
     tic = time.perf_counter()
 
-    print(plydat.shape)
+    # print(plydat.shape)
 
     blx = [
         make_shell_section(i, plydat[:, i, :], merge_adjacent_layers, zeroangle)
@@ -439,7 +438,9 @@ def mesh2ccx(
         + i[1]
         for n, i in enumerate(blx)
     )
+    buf += "** START SHELL SECTIONS\n"
     buf += comps
+    buf += "** END SHELL SECTIONS\n"
     buf += root_clamp(mesh)
 
     loadcases = get_loadcases(mesh, buckling=buckling)
