@@ -19,8 +19,6 @@
       key: [100, 2000]
       increment: [1, -1]
       grid: shell
-
-
     trailing_edge_ud:
       material: glass_ud
       cover:
