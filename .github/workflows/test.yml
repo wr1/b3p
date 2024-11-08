@@ -33,4 +33,4 @@ jobs:
       # Run tests
       - name: Run tests with pytest
         run: |
-          poetry run pytest --cov=my_package
+          poetry run pytest --cov=b3p
