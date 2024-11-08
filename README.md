@@ -1,6 +1,4 @@
-[![Deploy](https://github.com/wr1/b3p/actions/workflows/publish.yml/badge.svg)](https://github.com/wr1/b3p/actions/workflows/publish.yml)
-[![Test](https://github.com/wr1/b3p/actions/workflows/test.yml/badge.svg)](https://github.com/wr1/b3p/actions/workflows/test.yml
-![PyPI](https://img.shields.io/pypi/v/b3p)
+[![Deploy](https://github.com/wr1/b3p/actions/workflows/publish.yml/badge.svg)](https://github.com/wr1/b3p/actions/workflows/publish.yml)[![Test](https://github.com/wr1/b3p/actions/workflows/test.yml/badge.svg)](https://github.com/wr1/b3p/actions/workflows/test.yml)![PyPI](https://img.shields.io/pypi/v/b3p)
 
 # b3p 
 Command line tools to create models for composite (wind turbine) blades. 
@@ -23,14 +21,7 @@ git clone https://github.com/wr1/b3p.git
 cd b3p 
 pip install -e .
 ``` 
-
-
 ## How to run
-<!-- ```sh
-pip install b3p
-cd examples
-make
-``` -->
 ```sh 
 Usage: b3p COMMAND
 
@@ -51,25 +42,8 @@ cd examples
 b3p build blade_test.yml
 # run the ccx fea analysis
 b3p ccx blade_test.yml  
-
 ```
 
-
-
-
-
-<!-- which outputs the following targets
-```
-help                 Show this help
-build                make self contained yaml file 
-ccx                  prepare and run ccx models
-aero                 run aero analysis
-all                  run all steps
-```
-To run all steps type:
-```
-make all
-```  -->
 ## Output
 Plot of geometric input parameters for the example blade
 ![test_blade](https://user-images.githubusercontent.com/8971152/148471383-7f652a84-447a-4db0-81e2-2e27b1785745.png)
@@ -82,9 +56,5 @@ Visualisation of a 2d cross section mesh
 
 [CalculiX](http://www.dhondt.de/) results (very coarse mesh)
 ![zstrain](https://user-images.githubusercontent.com/8971152/151350188-0a6f31bf-5f0e-457b-b6cb-438bb10b4c91.png)
-
-
-<!-- ## Input file format
-Take a look at ```examples/blade_test.yml``` -->
 
 
