@@ -25,6 +25,7 @@ cyclopts = "^2.9.9"
 
 ccblade = {git = "https://github.com/WISDEM/CCBlade.git"}
 pytest = "^8.3.3"
+pytest-cov = "^6.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
