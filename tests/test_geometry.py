@@ -1,40 +1,23 @@
-from b3p import build_blade_geometry
+from .test_build import run_test_build, workdir
 import os
-from ruamel import yaml
 import pytest
 import pyvista as pv
-import numpy as np
-
-absolute_path = os.path.dirname(__file__)
 
 
 @pytest.fixture(scope="session")
-def get_yaml():
-    fn = os.path.join(absolute_path, "../examples/blade_test_portable.yml")
-    yml = yaml.YAML(typ="rt")
-    return yml.load(open(fn, "rb"))
+def load_geometry(run_test_build):
+    """Fixture to run step s2. Checks if output exists to avoid re-running."""
+    return pv.read(os.path.join(workdir, "test_blade_joined.vtu"))
 
 
-@pytest.fixture(scope="session")
-def build_blade(get_yaml):
-    """Build a blade, using the yml input file in examples/"""
-    return build_blade_geometry.build_blade_geometry(get_yaml)
+def test_geometry_bounding_box(load_geometry):
+    """Test if the geometry bounding box is correct."""
 
-
-def test_build_blade_geometry_key_parameters(build_blade):
-    """Check some of the global parameters defining the geometry"""
-    assert build_blade.np_chordwise == 100
-
-
-def test_build_blade_geometry_planform(build_blade):
-    """"""
-    assert build_blade.dx[1][12] == -0.18536853892047267
-
-
-def test_build_blade_geometry_mesh(build_blade):
-    assert build_blade.poly.points[50, 1] == -2.340645738717508
-    assert build_blade.poly.points.max(axis=0).tolist() == [
-        2.514195211238277,
-        3.6879477184670346,
-        126.0,
-    ]
+    assert load_geometry.bounds == (
+        -3.0369677543640137,
+        2.499872922897339,
+        -3.3991336822509766,
+        3.0669267177581787,
+        0.0,
+        100.0,
+    )

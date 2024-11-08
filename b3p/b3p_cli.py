@@ -15,34 +15,35 @@ from b3p import (
     drape_summary,
     anba4_prep,
     add_te_solids,
+    yml_portable,
 )
-from utils import yml_portable
 import os
 import pickle
-import numpy as np
 import shutil
 import glob
 import multiprocessing
-from ruamel import yaml
+import os
 
 
 class cli:
     """Fire command line interface for b3p"""
 
     def __init__(self, yml):
-        self.dct = yml_portable.yaml_make_portable(yml, True)
+        self.dct = yml_portable.yaml_make_portable(yml)
         self.plybookname = "__plybook.pck"
         self.prefix = os.path.join(
-            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
+            self.dct["general"]["workdir"],
+            self.dct["general"]["prefix"],
         )
 
     def clean(self):
         """Clean up workdir"""
-        if os.path.isdir(self.dct["general"]["workdir"]):
-            shutil.rmtree(self.dct["general"]["workdir"])
-            print(f"** Removing workdir {self.dct['general']['workdir']}")
+        wd = self.dct["general"]["workdir"]
+        if os.path.isdir(wd):
+            shutil.rmtree(wd)
+            print(f"** Removing workdir {wd}")
         else:
-            print(f"** Workdir {self.dct['general']['workdir']} does not exist")
+            print(f"** Workdir {wd} does not exist")
         return self
 
     def __str__(self):
@@ -62,7 +63,6 @@ class cli:
 
     def __plybook(self):
         """make plybook"""
-        # yaml.YAML().dump(self.dct, open("gaai.yml", "w"))
         build_plybook.lamplan2plies(self.dct, self.plybookname)
         return self
 
@@ -136,9 +136,7 @@ class cli:
         if not bondline or available_meshes == []:
             available_meshes = glob.glob(f"{self.prefix}*_joined.vtu")
 
-        available_meshes = glob.glob(f"{self.prefix}*_bondline.vtu")
-
-        print("available_meshes", available_meshes)
+        # print("\tavailable_meshes", available_meshes)
 
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],

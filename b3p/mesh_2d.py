@@ -201,6 +201,10 @@ def get_local_chord(r, var):
     return np.interp(r, var["z"][1] - np.min(var["z"][1]), var["chord"][1])
 
 
+def get_local_thickness(r, var):
+    return np.interp(r, var["z"][1] - np.min(var["z"][1]), var["thickness"][1])
+
+
 def write_vtp(section, vtp):
     wr = vtk.vtkXMLPolyDataWriter()
     wr.SetFileName(vtp)
@@ -239,11 +243,19 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
         var = {}
     print("# creating cross section mesh from %s at r=%.3f" % (vtu, r))
     workdir = os.path.dirname(vtu)
+
+    output_file = os.path.join(workdir, "msec_%i.vtp" % (1e3 * r))
+
+    if os.path.exists(output_file):
+        print(f"\t** 2d mesh {output_file} already exists - skipping ")
+        return output_file
+
     # read in the mesh
     rd = pv.read(vtu)
 
     local_twist = get_local_twist(r, var)
     local_chord = get_local_chord(r, var)
+    local_thickness = get_local_thickness(r, var)
 
     sec = rd.slice(normal=[0, 0, 1], origin=[0, 0, r])
 
@@ -286,10 +298,20 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
         [
             [r]
             + list(mid_position)
-            + [local_twist, local_chord]
+            + [local_twist, local_chord, local_thickness]
             + [bnds[1] - bnds[0], bnds[3] - bnds[2]],
         ],
-        columns=["r", "xavg", "yavg", "zavg", "twist_angle", "local_chord", "dx", "dy"],
+        columns=[
+            "r",
+            "xavg",
+            "yavg",
+            "zavg",
+            "twist_angle",
+            "local_chord",
+            "local_thickness",
+            "dx",
+            "dy",
+        ],
     )
 
     # get a handle with plydata on points and cells
@@ -577,17 +599,16 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
 
     align_normals(out)
 
-    of = os.path.join(workdir, "msec_%i.vtp" % (1e3 * r))
     wrt = vtk.vtkXMLPolyDataWriter()
     wrt.SetInputData(out)
-    wrt.SetFileName(of)
+    wrt.SetFileName(output_file)
     wrt.Write()
-    print(f"# written vtk to {of}")
+    print(f"# written vtk to {output_file}")
     table_out.to_csv(
         os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
     )
 
-    return of
+    return output_file
 
 
 def cut_blade_parallel(

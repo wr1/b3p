@@ -2,13 +2,13 @@
 
 [tool.poetry]
 name = "b3p"
-version = "v0.0.3rc10"
+version = "v0.0.3rc14"
 description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "b3p" }, { include = "utils" }]
-include = ["examples/blade_test.yml", "examples/makefile"]
+packages = [{ include = "b3p" }]
+include = ["examples/*.yml", "examples/makefile"]
 
 [tool.poetry.dependencies]
 python = "^3.9.7"
@@ -17,7 +17,7 @@ pandas = "^2.2.1"
 numpy = "^1.26.4"
 scipy = "^1.13.0"
 ruamel-yaml = "^0.18.6"
-fire = "^0.6.0"
+fire = "^0.7.0"
 vtk = "^9.3.0"
 pyvista = "^0.43.5"
 # ccblade = {git = "https://github.com/WISDEM/CCBlade.git", branch = "master", optional=true}

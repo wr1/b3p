@@ -116,22 +116,22 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 )
                 matblock += (
                     f"{material_properties['e11']:.4g},{material_properties['e22']:.4g},{material_properties['e33']:.4g},"
-                    + f"{material_properties['nu12']:.4g},{material_properties['nu31']:.4g},{material_properties['nu23']:.4g},"
-                    + f"{material_properties['g12']:.4g},{material_properties['g31']:.4g},\n"
+                    + f"{material_properties['pr12']:.4g},{material_properties['pr13']:.4g},{material_properties['pr23']:.4g},"
+                    + f"{material_properties['g12']:.4g},{material_properties['g13']:.4g},\n"
                     + f"{material_properties['g23']:.4g},293\n"
                 )
 
             else:
                 print(material_properties["name"], "is assumed to be isotropic")
                 # print(material_properties)
-                nu = min(
+                pr = min(
                     0.45,
                     max(
                         0.1,
                         (
-                            float(material_properties["nu"])
-                            if "nu" in material_properties
-                            else material_properties["nu12"]
+                            float(material_properties["pr"])
+                            if "pr" in material_properties
+                            else material_properties["pr12"]
                         ),
                     ),
                 )
@@ -142,7 +142,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 )
                 matblock += "** isotropic material\n"
                 matblock += "*material,name=m%i\n*elastic,type=iso\n" % i
-                matblock += f"{E:.4g},{nu:.4g},293\n"
+                matblock += f"{E:.4g},{pr:.4g},293\n"
 
     return matblock
 

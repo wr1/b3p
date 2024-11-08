@@ -7,7 +7,6 @@ import os
 from itertools import chain, zip_longest
 import pickle
 import json
-import shutil
 from numpy import array
 import copy as cp
 
@@ -309,8 +308,6 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
     slabs = blade["laminates"]["slabs"]
 
     datums = blade["laminates"]["datums"] if "datums" in blade["laminates"] else {}
-
-    # print(datums)
 
     allstacks = []
 
