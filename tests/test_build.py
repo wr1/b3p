@@ -1,6 +1,5 @@
 import pytest
 import glob
-import subprocess
 import os
 from b3p import b3p_cli
 
@@ -13,12 +12,12 @@ def run_tbuild():
     """Run step s1."""
     cd = os.getcwd()
     os.chdir(example_dir)
-    cli = b3p_cli.cli("blade_test.yml")
-    cli.build()
-    cli.bondline()
-    cli.ccxprep()
+    cli = b3p_cli.build("blade_test.yml")
+    # cli.build()
+    # cli.bondline()
+    # cli.ccxprep()
     # cli.ccxrun()
-    cli.mesh2d(90.0, parallel=False)
+    # cli.mesh2d(90.0, parallel=False)
     os.chdir(cd)
 
 
@@ -37,10 +36,7 @@ def build_output_exists():
 @pytest.fixture(scope="session")
 def run_test_build():
     """Fixture to run blade build."""
-    if not build_output_exists():
-        run_tbuild()
-    else:
-        print("build output exists.")
+    run_tbuild()
 
 
 def test_build_success(run_test_build):

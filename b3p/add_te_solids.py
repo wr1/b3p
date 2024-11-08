@@ -204,19 +204,3 @@ def add_bondline(bladedict):
         vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id
     )
 
-
-# def add_bondline_fromfile(yaml_filename):
-#     if not os.path.exists(yaml_filename):
-#         exit(f"File {yaml_filename} not found.")
-
-#     y = yaml.YAML()
-#     d = y.load(open(yaml_filename, "r"))
-#     add_bondline(d)
-
-
-# def main():
-#     fire.Fire(add_bondline_fromfile)
-
-
-# if __name__ == "__main__":
-#     main()
