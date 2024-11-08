@@ -23,7 +23,7 @@ frd2vtu = "^0.1.1rc7"
 
 cyclopts = "^2.9.9"
 
-ccblade = {git = "https://github.com/WISDEM/CCBlade.git"}
+# ccblade = {git = "https://github.com/WISDEM/CCBlade.git"}
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
 pyyaml = "^6.0.2"
