@@ -121,9 +121,9 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     max(
                         0.1,
                         (
-                            float(material_properties["pr"])
-                            if "pr" in material_properties
-                            else material_properties["pr12"]
+                            float(material_properties["nu"])
+                            if "nu" in material_properties
+                            else material_properties["nu12"]
                         ),
                     ),
                 )
@@ -317,7 +317,7 @@ def mesh2ccx(
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
-    print(np.unique(gr.celltypes))
+    # print(np.unique(gr.celltypes))
 
     print(f"** Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:

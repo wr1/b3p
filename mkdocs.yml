@@ -1,0 +1,10 @@
+site_name: b3p
+
+theme:
+  name: material
+nav:
+- Home: index.md
+- Installation: installation.md
+- Blade building: build.md
+- FEA analysis: fea.md
+# - API Reference: api.md

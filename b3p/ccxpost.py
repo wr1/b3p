@@ -28,7 +28,7 @@ class plot_ccx:
     def __init__(self, wdir, wildcard=""):
         self.wdir = wdir
         self.meshes = glob.glob(wdir + f"/*ccx*{wildcard}*.vtu")
-        print(self.meshes)
+        # print(self.meshes)
 
     def plot3d(self):
         for i in self.meshes:

@@ -293,7 +293,7 @@ class controloptimize:
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
             of=os.path.join(self.workdir, "out.png"),
         )
-        print(out_pc.keys())
+        # print(out_pc.keys())
         print(f"pitch {self.pitch}")
         return out_pc
 
