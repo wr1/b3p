@@ -1,0 +1,36 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main  # Run tests on pushes to the main branch
+      - cli 
+  pull_request:
+    branches:
+      - main  # Run tests on pull requests targeting the main branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9  # Specify your Python version
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install
+
+      # Run tests
+      - name: Run tests with pytest
+        run: |
+          poetry run pytest --cov=my_package
