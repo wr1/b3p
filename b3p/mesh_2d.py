@@ -612,7 +612,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
 
 
 def cut_blade_parallel(
-    vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, debug=False
+    vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, parallel=False
 ):
     var = eval(open(var, "r").read())
     part = partial(
@@ -624,7 +624,7 @@ def cut_blade_parallel(
         is2d=is2d,
         verbose=verbose,
     )
-    if debug == False:
+    if parallel:
         pool = multiprocessing.Pool()
         al = pool.map(part, rr)
         pool.close()

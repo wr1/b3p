@@ -5,7 +5,6 @@ from copy import deepcopy as dc
 from b3p import mesh_from_loft
 from b3p import webs
 from ruamel import yaml
-import fire
 import numpy as np
 
 
@@ -63,6 +62,3 @@ def run_struct(yamlfile):
     bladeconfig = yaml.round_trip_load(open(yamlfile, "r"))
     build_blade_structure(bladeconfig)
 
-
-def main():
-    fire.Fire(run_struct)

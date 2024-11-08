@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from utils import yml_portable
+from b3p import yml_portable
 import fire
 import numpy as np
 import os
@@ -301,9 +301,7 @@ class controloptimize:
 def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
     lab = [i for i in labels if i in op]
 
-    # fig, ax = plt.subplots(len(lab), 1, figsize=(10, 10))
     fig, ax = plot_grid(len(lab), figsize=(10, 10))
-    # print(len(ax), len(lab), rows, columns)
     for n, i in enumerate(lab):
         ax[n].plot(uinf, op[i], label=f"{i} max={op[i].max():.2f}")
         ax[n].legend()
@@ -395,18 +393,6 @@ class ccblade_run:
 
     def __str__(self):
         return ""
-
-
-# def main(blade):
-#     ccblade_run(blade=blade)
-
-
-# def ccblade_run_test():
-#     ccblade_run()
-
-
-# if __name__ == "__main__":
-#     fire.Fire(main)
 
 
 def main():

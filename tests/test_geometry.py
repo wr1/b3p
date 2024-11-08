@@ -12,7 +12,6 @@ def load_geometry(run_test_build):
 
 def test_geometry_bounding_box(load_geometry):
     """Test if the geometry bounding box is correct."""
-
     assert load_geometry.bounds == (
         -3.0369677543640137,
         2.499872922897339,

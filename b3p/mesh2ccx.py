@@ -72,18 +72,12 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
     for i in materials:
         if i > 1e-6:
             material_properties = mat_db[mm_inv[int(i)]]
-
-            # print(material_properties)
             matblock += (
                 f'** material: {mm_inv[int(i)]} {i} {material_properties["name"]}\n'
             )
-            # matblock += f"** {str(material_properties)}\n"
 
             if (
-                # "vf" in material_properties
-                # or
-                "C" in material_properties
-                and not force_iso
+                "C" in material_properties and not force_iso
             ):
                 print(material_properties["name"], "is assumed to be orthotropic")
                 C = np.array(material_properties["C"])
@@ -100,7 +94,6 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 D[2, 5] = C[2, 3]
                 D[3, 3] = C[5, 5]
                 D[5, 5] = C[3, 3]
-                # D *= 1e6
                 matblock += (
                     f"{D[0,0]:.4g},{D[0,1]:.4g},{D[1,1]:.4g},"
                     + f"{D[0,2]:.4g},{D[1,2]:.4g},{D[2,2]:.4g},"
@@ -116,15 +109,14 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 )
                 matblock += (
                     f"{material_properties['e11']:.4g},{material_properties['e22']:.4g},{material_properties['e33']:.4g},"
-                    + f"{material_properties['pr12']:.4g},{material_properties['pr13']:.4g},{material_properties['pr23']:.4g},"
+                    + f"{material_properties['nu12']:.4g},{material_properties['nu13']:.4g},{material_properties['nu23']:.4g},"
                     + f"{material_properties['g12']:.4g},{material_properties['g13']:.4g},\n"
                     + f"{material_properties['g23']:.4g},293\n"
                 )
 
             else:
                 print(material_properties["name"], "is assumed to be isotropic")
-                # print(material_properties)
-                pr = min(
+                nu = min(
                     0.45,
                     max(
                         0.1,
@@ -142,7 +134,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 )
                 matblock += "** isotropic material\n"
                 matblock += "*material,name=m%i\n*elastic,type=iso\n" % i
-                matblock += f"{E:.4g},{pr:.4g},293\n"
+                matblock += f"{E:.4g},{nu:.4g},293\n"
 
     return matblock
 
@@ -205,23 +197,7 @@ def nodebuffer(grid):
 
 
 def element_buffer(grid):
-
-    # n_el = grid.GetNumberOfCells()
-
-    # buf = ""
-    # for i in range(n_el):
-    #     cell = grid.GetCell(i)
-    #     # print(dir(cell))
-    #     type = cell.GetCellType()
-    #     if type == 23:
-    #         conn = list(cell.GetPointIds())
-    #         buf += f"*element,type=s8r,elset=e{i+1}\n"
-    #         buf += f"{i+1},{','.join(map(str, conn))}\n"
-    # print(type)
-
     conn = grid.cells_dict
-
-    print(conn)
 
     extypes = [23]
 
@@ -235,28 +211,10 @@ def element_buffer(grid):
             buf += f"*element,type={ccxtype},elset=e{n+1}\n"
             buf += f"{n+1},{','.join(map(str, conn[tp][n]) )}\n"
 
-    # for i in conn['23']
-
-    # print(conn)
-    # # grid.cell_connectivity.reshape((grid.GetNumberOfCells(), -1)) + 1
-
-    # # print(np.unique(grid.celltypes))
-    # # print(conn)
-    # eltype = "s8r" if quadratic else "s4"
-    # buf = ""
-    # for n, i in enumerate(conn):
-    #     type = grid.celltypes[n]
-    #     print(type)
-    #     if type == 23:
-    #         eltype = "s8r"
-    #         buf += f"*element,type={eltype},elset=e{n+1}\n"
-    #         buf += f"{n+1},{','.join(map(str, i))}\n"
-
     return buf
 
 
 def orientation_buffer(grid, add_centers=False):
-
     shells = grid.extract_cells(grid.cells_dict.get(23, []))
     buf = ""
     # write orientation TODO match with element orientation, for now just align with z-axis
@@ -301,11 +259,6 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
                     lbuf += "%i,2,%f\n" % (n + 1, j[1])
 
             lbuf += "*node output,output=3d\nU\n*element output\nE,S\n*node print,nset=root,totals=yes\nrf\n*end step\n"
-            # \n*node print,nset=nall\nrf
-            # if buckling:
-            #     lbuf += (
-            #         "*step\n*buckle\n5\n*el file\n*node file,output=3d\nu\n*end step\n"
-            #     )
 
             loadcases[i] = lbuf
 
@@ -323,8 +276,6 @@ def root_clamp(mesh):
             lbuf += ","
     lbuf += "\n"
     lbuf += "*boundary,op=new\nroot,1,3\n"
-    # for j in root[0]:
-    #     lbuf += "%i,1,3\n" % (j + 1)
     return lbuf
 
 
@@ -412,11 +363,11 @@ def mesh2ccx(
     print("** made orientation buffer")
     matblock = material_db_to_ccx(materials, matmap=matmap, force_iso=force_isotropic)
 
+    buf += "** START MATERIALS\n"
     buf += matblock
+    buf += "** END MATERIALS\n"
 
     tic = time.perf_counter()
-
-    print(plydat.shape)
 
     blx = [
         make_shell_section(i, plydat[:, i, :], merge_adjacent_layers, zeroangle)
@@ -439,7 +390,9 @@ def mesh2ccx(
         + i[1]
         for n, i in enumerate(blx)
     )
+    buf += "** START SHELL SECTIONS\n"
     buf += comps
+    buf += "** END SHELL SECTIONS\n"
     buf += root_clamp(mesh)
 
     loadcases = get_loadcases(mesh, buckling=buckling)
@@ -465,10 +418,8 @@ def mesh2ccx(
 
     return output_files
 
-
 def main():
     fire.Fire(mesh2ccx)
-
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import fire
 import numpy as np
 from ruamel import yaml
 import os
@@ -392,9 +391,3 @@ def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
 
     print(f"written plydrape to {outputfile}")
 
-
-def main():
-    """Main function for the plybook command line tool, reads the yaml file and uses the laminate block.
-    Each of the laminate blocks is then split up into plies and blocks and written to a .pck file for use in draping
-    """
-    fire.Fire(slab2plybook)
