@@ -1,25 +1,64 @@
 [![Deploy](https://github.com/wr1/b3p/actions/workflows/publish.yml/badge.svg)](https://github.com/wr1/b3p/actions/workflows/publish.yml)
+[![Test](https://github.com/wr1/b3p/actions/workflows/test.yml/badge.svg)](https://github.com/wr1/b3p/actions/workflows/test.yml
 ![PyPI](https://img.shields.io/pypi/v/b3p)
-
 
 # b3p 
 Command line tools to create models for composite (wind turbine) blades. 
 
 ## Functionality
-- Interpolating a blade through a series of airfoils
-<!-- - Aligning airfoils to create maximum building height over a straight shearweb -->
+- Building 3D models of wind turbine blades
 - Creating a quad mesh for the blade
 - Assigning scalable *slab based* laminate plans to the structure
 - Assembling a shell mesh with laminate properties
 - Writing mesh information to VTK files
 
-## How to run
+## Install
+From pypi
 ```sh
-pip install -e . 
+pip install b3p
+``` 
+From source
+```sh
+git clone https://github.com/wr1/b3p.git
+cd b3p 
+pip install -e .
+``` 
+
+
+## How to run
+<!-- ```sh
+pip install b3p
 cd examples
 make
+``` -->
+```sh 
+Usage: b3p COMMAND
+
+╭─ Commands ──────────────────────────────────────────────────╮
+│ 2d         Create 2d meshes for calculation of 6x6 matrices │
+│ build      Build the blade model, geometry, mesh, drape     │
+│ ccx        Run the ccx analysis                             │
+│ clean      Clean the working directory.                     │
+│ shell      Start an interactive shell.                      │
+│ --help,-h  Display this message and exit.                   │
+│ --version  Display application version.                     │
+╰─────────────────────────────────────────────────────────────╯
 ```
-which outputs the following targets
+In a cloned repository:
+```sh
+cd examples
+# build the blade model, geometry, mesh, drape
+b3p build blade_test.yml
+# run the ccx fea analysis
+b3p ccx blade_test.yml  
+
+```
+
+
+
+
+
+<!-- which outputs the following targets
 ```
 help                 Show this help
 build                make self contained yaml file 
@@ -30,7 +69,7 @@ all                  run all steps
 To run all steps type:
 ```
 make all
-``` 
+```  -->
 ## Output
 Plot of geometric input parameters for the example blade
 ![test_blade](https://user-images.githubusercontent.com/8971152/148471383-7f652a84-447a-4db0-81e2-2e27b1785745.png)
@@ -45,7 +84,7 @@ Visualisation of a 2d cross section mesh
 ![zstrain](https://user-images.githubusercontent.com/8971152/151350188-0a6f31bf-5f0e-457b-b6cb-438bb10b4c91.png)
 
 
-## Input file format
-Take a look at ```examples/blade_test.yml```
+<!-- ## Input file format
+Take a look at ```examples/blade_test.yml``` -->
 
 

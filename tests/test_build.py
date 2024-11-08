@@ -12,12 +12,7 @@ def run_tbuild():
     """Run step s1."""
     cd = os.getcwd()
     os.chdir(example_dir)
-    cli = b3p_cli.build("blade_test.yml")
-    # cli.build()
-    # cli.bondline()
-    # cli.ccxprep()
-    # cli.ccxrun()
-    # cli.mesh2d(90.0, parallel=False)
+    b3p_cli.build("blade_test.yml")
     os.chdir(cd)
 
 
