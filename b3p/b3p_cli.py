@@ -22,7 +22,6 @@ import pickle
 import shutil
 import glob
 import multiprocessing
-import os
 from pathlib import Path
 
 app = cyclopts.App()
@@ -37,26 +36,31 @@ app.command(m2dapp)
 app.command(ccxapp)
 
 
-dct = None 
+dct = None
+
+
+def get_prefix():
+    global dct
+    return os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
+
 
 def has_mesh(dct):
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
     return glob.glob(f"{prefix}*.vtu") != []
 
 
-
 @app.command
-def clean(yml : Path):
-    """Clean the working directory. 
+def clean(yml: Path):
+    """Clean the working directory.
 
     Args:
         yml (Path): b3p input file
     """
-    global dct 
+    global dct
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
-    
-    prefix =  dct["general"]["workdir"] #, dct["general"]["prefix"])
+
+    prefix = dct["general"]["workdir"]  # , dct["general"]["prefix"])
     if os.path.isdir(prefix):
         shutil.rmtree(prefix)
         print(f"** Removing workdir {prefix}")
@@ -64,9 +68,8 @@ def clean(yml : Path):
         print(f"** Workdir {prefix} does not exist")
 
 
-
-@buildapp.command 
-def geometry(yml : Path):
+@buildapp.command
+def geometry(yml: Path):
     """Build blade geometry
 
     Args:
@@ -77,16 +80,17 @@ def geometry(yml : Path):
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
 
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
     build_blade_geometry.build_blade_geometry(dct)
     yml_portable.save_yaml(f"{prefix}_portable.yml", dct)
 
-@buildapp.command 
-def mesh(yml : Path):
+
+@buildapp.command
+def mesh(yml: Path):
     """Mesh blade
 
     Args:
-        yml (Path): b3p input file 
+        yml (Path): b3p input file
     """
     global dct
     if dct is None:
@@ -95,8 +99,8 @@ def mesh(yml : Path):
     build_blade_structure.build_blade_structure(dct)
 
 
-@buildapp.command 
-def drape(yml : Path, bondline: bool = False):
+@buildapp.command
+def drape(yml: Path, bondline: bool = False):
     """Drape plies onto mesh
 
     Args:
@@ -107,7 +111,7 @@ def drape(yml : Path, bondline: bool = False):
         dct = yml_portable.yaml_make_portable(yml)
 
     plybookname = "__plybook.pck"
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
     build_plybook.lamplan2plies(dct, plybookname)
     slb = dct["laminates"]["slabs"]
     used_grids = {slb[i]["grid"] for i in slb}
@@ -127,8 +131,62 @@ def drape(yml : Path, bondline: bool = False):
     else:
         raise FileNotFoundError("Plybook not found")
 
+
+@buildapp.command
+def mass(yml: Path):
+    """Calculate mass of the blade, requires drape."""
+    global dct
+    if dct is None:
+        dct = yml_portable.yaml_make_portable(yml)
+
+    wd = Path(dct["general"]["workdir"])
+    prefix = wd / dct["general"]["prefix"]
+
+    if not wd.is_dir():
+        # exit("** Workdir does not exist, cannot compute mass")
+        print("\n" * 10 + "** no workdir found, building new" + "\n" * 10)
+        build(yml)
+
+    mass_table = drape_summary.drape_summary(f"{prefix}_joined.vtu")
+    mass_table.to_csv(f"{prefix}_mass.csv")
+    mass_table.replace(to_replace="_", value="", regex=True).to_latex(
+        f"{prefix}_mass.tex", index=False
+    )
+    print("Mass table per material")
+    print(mass_table)
+
+
+def getdct(yml: Path):
+    global dct
+    if dct is None:
+        dct = yml_portable.yaml_make_portable(yml)
+    return dct
+    # return has_mesh(dct)
+
+
+@buildapp.default
+def build(yml: Path, bondline: bool = True):
+    """Build the blade model, geometry, mesh, drape
+
+    Args:
+        yml (Path): b3p input file
+    """
+    global dct
+    if dct is None:
+        dct = yml_portable.yaml_make_portable(yml)
+
+    geometry(yml)
+    mesh(yml)
+    drape(yml, bondline=bondline)
+    mass(yml)
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
+    add_load_to_mesh.add_load_to_mesh(
+        dct, f"{prefix}_joined.vtu", f"{prefix}_loads.png"
+    )
+
+
 @m2dapp.command
-def mesh2d(yml : Path, rotz=0.0, parallel=True):
+def mesh2d(yml: Path, rotz=0.0, parallel=True):
     """Create 2d meshes for calculation of 6x6 matrices
 
     Args:
@@ -145,13 +203,13 @@ def mesh2d(yml : Path, rotz=0.0, parallel=True):
 
     if "mesh2d" not in dct:
         print("** No mesh2d section in yml file")
-        return 
+        return
     if "sections" not in dct["mesh2d"]:
         print("** No sections in mesh2d section in yml file")
-        return 
+        return
 
     sections = dct["mesh2d"]["sections"]
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
     section_meshes = mesh_2d.cut_blade_parallel(
         f"{prefix}_joined.vtu",
         sections,
@@ -162,8 +220,9 @@ def mesh2d(yml : Path, rotz=0.0, parallel=True):
     )
     anba4_prep.anba4_prep(section_meshes)
 
+
 @m2dapp.default
-def m2d(yml : Path):
+def m2d(yml: Path):
     """Create 2d meshes for calculation of 6x6 matrices
 
     Args:
@@ -175,14 +234,27 @@ def m2d(yml : Path):
 
     mesh2d(yml)
 
-@ccxapp.command 
-def ccxprep(yml: Path, merge_adjacent_layers=True, single_step=False, quadratic=True, force_isotropic=False, zeroangle=False, add_centers=False, export_plygroups=False, export_hyperworks=False, meshonly=False, buckling=False, bondline=False):
+
+@ccxapp.command
+def ccxprep(
+    yml: Path,
+    merge_adjacent_layers=True,
+    single_step=False,
+    quadratic=True,
+    force_isotropic=False,
+    zeroangle=False,
+    add_centers=False,
+    export_plygroups=False,
+    export_hyperworks=False,
+    meshonly=False,
+    buckling=False,
+    bondline=False,
+):
     global dct
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
 
-
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
 
     if not has_mesh(dct):
         build(yml)
@@ -192,10 +264,25 @@ def ccxprep(yml: Path, merge_adjacent_layers=True, single_step=False, quadratic=
 
     if not bondline or available_meshes == []:
         available_meshes = glob.glob(f"{prefix}*_joined.vtu")
-    
-    output_files = mesh2ccx.mesh2ccx( available_meshes[-1], matmap=os.path.join(dct["general"]["workdir"], "material_map.json"), out=f"{prefix}_ccx.inp", merge_adjacent_layers=merge_adjacent_layers, single_step=single_step, quadratic=quadratic, force_isotropic=force_isotropic, zeroangle=zeroangle, add_centers=add_centers, export_plygroups=export_plygroups, buckling=buckling, meshonly=meshonly, export_hyperworks=export_hyperworks)
-    print(f"written "+'\n'.join(output_files))
+
+    output_files = mesh2ccx.mesh2ccx(
+        available_meshes[-1],
+        matmap=os.path.join(dct["general"]["workdir"], "material_map.json"),
+        out=f"{prefix}_ccx.inp",
+        merge_adjacent_layers=merge_adjacent_layers,
+        single_step=single_step,
+        quadratic=quadratic,
+        force_isotropic=force_isotropic,
+        zeroangle=zeroangle,
+        add_centers=add_centers,
+        export_plygroups=export_plygroups,
+        buckling=buckling,
+        meshonly=meshonly,
+        export_hyperworks=export_hyperworks,
+    )
+    print(f"written " + "\n".join(output_files))
     return output_files
+
 
 @ccxapp.command
 def ccxsolve(yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
@@ -211,8 +298,8 @@ def ccxsolve(yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
     global dct
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
-    
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
+
+    prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
     if inpfiles == []:
         inps = glob.glob(f"{prefix}*{wildcard}*inp")
     else:
@@ -221,7 +308,7 @@ def ccxsolve(yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
     if inps == []:
         print(f"** No inps found matching {prefix}*{wildcard}*inp")
         return
-    
+
     inps_to_run = []
     for inp in inps:
         frd_file = inp.replace(".inp", ".frd")
@@ -243,6 +330,7 @@ def ccxsolve(yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
     p.map(os.system, [f"{ccxexe} {inp.replace('.inp','')}" for inp in inps_to_run])
     p.close()
 
+
 @ccxapp.command
 def ccx_post(yml: Path, wildcard="", nbins=60):
     """Postprocess ccx results
@@ -255,13 +343,14 @@ def ccx_post(yml: Path, wildcard="", nbins=60):
     global dct
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
-    
+
     ccxpost = ccx2vtu.ccx2vtu(dct["general"]["workdir"], wildcard=wildcard)
     ccxpost.load_grids()
     ccxpost.tabulate(nbins)
 
+
 @ccxapp.command
-def ccxplot(yml : Path , wildcard = "", plot3d=True, plot2d=True):
+def ccxplot(yml: Path, wildcard="", plot3d=True, plot2d=True):
     """Plot ccx results
 
     Args:
@@ -273,7 +362,7 @@ def ccxplot(yml : Path , wildcard = "", plot3d=True, plot2d=True):
     global dct
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
-    
+
     plotter = ccxpost.plot_ccx(dct["general"]["workdir"], wildcard=wildcard)
     if plot3d:
         plotter.plot3d()
@@ -281,9 +370,8 @@ def ccxplot(yml : Path , wildcard = "", plot3d=True, plot2d=True):
         plotter.plot2d(wildcard=wildcard)
 
 
-
 @ccxapp.default
-def ccx(yml: Path ):
+def ccx(yml: Path):
     """Run the ccx analysis
 
     Args:
@@ -292,29 +380,11 @@ def ccx(yml: Path ):
     global dct
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
-    
+
     ccxprep(yml)
     ccxsolve(yml)
     ccx_post(yml)
     ccxplot(yml)
-
-@buildapp.default
-def build(yml : Path):
-    """Build the blade model, geometry, mesh, drape
-
-    Args:
-        yml (Path): b3p input file
-    """
-    global dct
-    if dct is None:
-        dct = yml_portable.yaml_make_portable(yml)
-
-    geometry(yml)
-    mesh(yml)
-    drape(yml)
-
-    prefix = os.path.join( dct["general"]["workdir"], dct["general"]["prefix"])
-    add_load_to_mesh.add_load_to_mesh( dct, f"{prefix}_joined.vtu", f"{prefix}_loads.png")
 
 
 @app.command
@@ -323,7 +393,6 @@ def shell():
     Start an interactive shell.
     """
     app.interactive_shell(quit=["q", "quit", "exit"])
-
 
 
 # class cli:
@@ -525,19 +594,14 @@ def shell():
 #         return self
 
 
-
-
-
 # # def main():
 # #     fire.core.Display = lambda lines, out: print(*lines, file=out)
 # #     fire.Fire(cli)
 
 
-
-
 def main():
     app()
 
+
 if __name__ == "__main__":
     main()
-

@@ -83,7 +83,7 @@ class section:
     ):
         if panel_mesh_scale is None:
             panel_mesh_scale = []
-        tol = 1e-9
+        # tol = 1e-9
         if webs == []:
             return np.linspace(0.0, 1.0, n_points)
         # compute where the web splits are on average (assuming they don't

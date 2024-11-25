@@ -56,9 +56,9 @@ def build_blade_structure(config):
     )
 
 
-def run_struct(yamlfile):
-    """run the build_blade_structure function from the command line
-    :param yamlfile: path to the yaml file"""
-    bladeconfig = yaml.round_trip_load(open(yamlfile, "r"))
-    build_blade_structure(bladeconfig)
+# def run_struct(yamlfile):
+#     """run the build_blade_structure function from the command line
+#     :param yamlfile: path to the yaml file"""
+#     bladeconfig = yaml.round_trip_load(open(yamlfile, "r"))
+#     build_blade_structure(bladeconfig)
 

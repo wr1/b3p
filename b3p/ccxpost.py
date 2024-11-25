@@ -67,8 +67,6 @@ class plot_ccx:
             whr = np.where(nrm == nrm.max())
             quadrant = get_quadrant(deform[whr[0][0]][:2])
 
-            # print(quadrant, output_path, deform[whr[0][0]][:2])
-            print(quadrant)
             deformed_mesh.rotate_z(quadrant, inplace=True)
 
             deformed_mesh.rotate_y(-110, inplace=True)

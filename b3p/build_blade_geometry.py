@@ -6,6 +6,8 @@ import b3p.blade
 import b3p.loft_utils
 import numpy as np
 
+import pickle
+
 
 def build_blade_geometry(config, xfoil=True):
     """
@@ -14,7 +16,6 @@ def build_blade_geometry(config, xfoil=True):
     :param config: b3p dictionary
     """
     pln = config["planform"]
-
     blade = b3p.blade.blade(
         pln["chord"],
         pln["thickness"],
@@ -47,4 +48,7 @@ def build_blade_geometry(config, xfoil=True):
     blade.plot(f"{wdp}", fname=f"{wdp}.png")
     n_sections = 50
     blade.to_table(np.linspace(0, 1, n_sections), "%s_sca_%i" % (wdp, n_sections))
+
+    # pickle.dump(blade, open(f"{wdp}_blade.pck", "wb"))
+
     return blade

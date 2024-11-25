@@ -2,30 +2,27 @@ import pytest
 import glob
 import os
 from b3p import b3p_cli
+from pathlib import Path
 
-
-example_dir = "examples"
-workdir = os.path.join(example_dir, "temp_blade_portable")
-
-
-def run_tbuild():
-    """Run step s1."""
-    cd = os.getcwd()
-    os.chdir(example_dir)
-    b3p_cli.build("blade_test.yml")
-    os.chdir(cd)
-
-
-# def model_bondline():
-# subprocess.run(
-#     ["b3p", "--yml=blade_test.yml", "build"], check=True, cwd=example_dir
-# )
+example_dir = Path("examples")
+workdir = example_dir / "temp_blade_portable"
 
 
 def build_output_exists():
     """Check if the output of the build exists."""
     print(workdir)
     return os.path.exists(workdir)
+
+
+def run_tbuild():
+    """Run step s1."""
+    if not build_output_exists():
+        cd = os.getcwd()
+        os.chdir(example_dir)
+        b3p_cli.build("blade_test.yml")
+        os.chdir(cd)
+    else:
+        print("Output already exists.")
 
 
 @pytest.fixture(scope="session")
