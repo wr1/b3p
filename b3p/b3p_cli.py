@@ -301,7 +301,7 @@ def ccxsolve(yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=[]):
 
     prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
     if inpfiles == []:
-        inps = glob.glob(f"{prefix}*{wildcard}*inp")
+        inps = glob.glob(f"{prefix}*ccx*{wildcard}*inp")
     else:
         inps = inpfiles
 
