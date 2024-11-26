@@ -371,7 +371,7 @@ def ccxplot(yml: Path, wildcard="", plot3d=True, plot2d=True):
 
 
 @ccxapp.default
-def ccx(yml: Path):
+def ccx(yml: Path, wildcard=""):
     """Run the ccx analysis
 
     Args:
@@ -382,7 +382,7 @@ def ccx(yml: Path):
         dct = yml_portable.yaml_make_portable(yml)
 
     ccxprep(yml)
-    ccxsolve(yml)
+    ccxsolve(yml, wildcard=wildcard)
     ccx_post(yml)
     ccxplot(yml)
 

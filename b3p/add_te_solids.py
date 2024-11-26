@@ -119,7 +119,7 @@ def add_bondline_to_vtu(
     df["bw"] = np.interp(df.rr, bw[:, 0], bw[:, 1])
 
     shell_pts = df[df.is_web == 0]
-    shell_pts.sort_values("d_abs_dist_from_te", inplace=True)
+    shell_pts = shell_pts.sort_values("d_abs_dist_from_te")
     grz = [g for g in shell_pts.groupby("z")]
 
     cells = []
@@ -165,7 +165,6 @@ def add_bondline_to_vtu(
 
 
 def get_bondline_material(d):
-
     wd = os.path.join(
         d["general"]["workdir"] + "_portable"
         if "_portable" not in d["general"]["workdir"]
@@ -179,7 +178,6 @@ def get_bondline_material(d):
         mm = json.load(open(material_map[0], "r"))
 
         if "bondline" in d["mesh"]:
-
             bondline_width = d["mesh"]["bondline"]["width"]
 
             bondline_material = d["mesh"]["bondline"]["material"]
@@ -203,4 +201,3 @@ def add_bondline(bladedict):
     add_bondline_to_vtu(
         vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id
     )
-
