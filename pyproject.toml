@@ -38,7 +38,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-b3p = "b3p.b3p_cli:main"
+b3p = "b3p.cli2:main"
 ccblade_install = "scripts.ccblade_install:build_ccblade_dependency"
 # b3p_slab_plot = "utils.slab_plot:main"
 # b3p_drape_plot = "utils.drape_plot:main"

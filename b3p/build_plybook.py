@@ -8,6 +8,7 @@ import pickle
 import json
 from numpy import array
 import copy as cp
+from pathlib import Path
 
 
 def plyify(r, t, ply_thickness, reverse=False):
@@ -118,7 +119,10 @@ def expand_chamfered_cores(bldict):
                 for k in coordinates[j]:
                     dctcopy["mesh"]["coordinates"][k] = coordinates[j][k]
 
-    yaml.YAML().dump(dctcopy, open("expanded.yml", "w"))
+    ofile = os.path.join(
+        dctcopy["general"]["workdir"], dctcopy["general"]["prefix"] + "_expanded.yml"
+    )
+    yaml.YAML().dump(dctcopy, open(ofile, "w"))
     return dctcopy
 
 
@@ -390,4 +394,3 @@ def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
     allstacks = lamplan2plies(blade, outputfile)
 
     print(f"written plydrape to {outputfile}")
-

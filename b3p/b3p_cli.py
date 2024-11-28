@@ -175,6 +175,7 @@ def build(yml: Path, bondline: bool = True):
     if dct is None:
         dct = yml_portable.yaml_make_portable(yml)
 
+    dct = build_plybook.expand_chamfered_cores(dct)
     geometry(yml)
     mesh(yml)
     drape(yml, bondline=bondline)
