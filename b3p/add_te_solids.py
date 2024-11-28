@@ -165,11 +165,7 @@ def add_bondline_to_vtu(
 
 
 def get_bondline_material(d):
-    wd = os.path.join(
-        d["general"]["workdir"] + "_portable"
-        if "_portable" not in d["general"]["workdir"]
-        else d["general"]["workdir"]
-    )
+    wd = d["general"]["workdir"]
     mmap = os.path.join(wd, "material_map.json")
 
     if os.path.exists(mmap):
@@ -192,7 +188,6 @@ def get_bondline_material(d):
 
 
 def add_bondline(bladedict):
-    # wd = prefix
     prefix = os.path.join(
         bladedict["general"]["workdir"], bladedict["general"]["prefix"]
     )
