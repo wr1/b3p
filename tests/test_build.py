@@ -1,7 +1,7 @@
 import pytest
 import glob
 import os
-from b3p import b3p_cli
+from b3p.cli2 import AppState, BuildApp
 from pathlib import Path
 
 example_dir = Path("examples")
@@ -19,7 +19,8 @@ def run_tbuild():
     if not build_output_exists():
         cd = os.getcwd()
         os.chdir(example_dir)
-        b3p_cli.build("blade_test.yml")
+        BuildApp(AppState()).build("blade_test.yml")
+        # b3p_cli.build("blade_test.yml")
         os.chdir(cd)
     else:
         print("Output already exists.")

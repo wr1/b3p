@@ -76,9 +76,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 f'** material: {mm_inv[int(i)]} {i} {material_properties["name"]}\n'
             )
 
-            if (
-                "C" in material_properties and not force_iso
-            ):
+            if "C" in material_properties and not force_iso:
                 print(material_properties["name"], "is assumed to be orthotropic")
                 C = np.array(material_properties["C"])
                 # https://github.com/rsmith-nl/lamprop/blob/410ebfef2e14d7cc2988489ca2c31103056da38f/lp/text.py#L96
@@ -198,7 +196,7 @@ def nodebuffer(grid):
 
 def element_buffer(grid):
     conn = grid.cells_dict
-
+    print(conn)
     extypes = [23]
 
     vtk_ccx = {23: "s8r"}
@@ -283,10 +281,10 @@ def mesh2ccx(
     vtu,
     out="test.inp",
     matmap="temp/material_map.json",
-    merge_adjacent_layers=False,
+    merge_adjacent_layers=True,
     zeroangle=False,
     single_step=False,
-    quadratic=False,
+    quadratic=True,
     add_centers=False,
     force_isotropic=False,
     export_hyperworks=False,
@@ -418,8 +416,10 @@ def mesh2ccx(
 
     return output_files
 
+
 def main():
     fire.Fire(mesh2ccx)
+
 
 if __name__ == "__main__":
     main()
