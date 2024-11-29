@@ -112,9 +112,7 @@ class BuildApp:
         """Calculate mass of the blade."""
         dct = self.state.load_yaml(yml)
         wd = Path(dct["general"]["workdir"])
-
         prefix = self.state.get_prefix()
-
         if not wd.is_dir():
             print("\n** No workdir found, building new\n")
             self.build(yml)
@@ -170,12 +168,17 @@ class CcxApp:
         self.state = state
 
     def ccx(self, yml: Path, **kwargs):
-        self.ccxprep(yml, **kwargs)
-        self.ccxsolve(yml, **kwargs)
-        self.ccxpost(yml, **kwargs)
-        self.ccxplot(yml, **kwargs)
+        """Run Calculix on this model
 
-    def ccxprep(self, yml: Path, **kwargs):
+        Args:
+            yml (Path): Path to the input file.
+        """
+        self.prep(yml, **kwargs)
+        self.solve(yml, **kwargs)
+        self.post(yml, **kwargs)
+        self.plot(yml, **kwargs)
+
+    def prep(self, yml: Path, **kwargs):
         """Prepare CCX input files."""
         dct = self.state.load_yaml(yml)
         prefix = self.state.get_prefix()
@@ -195,7 +198,7 @@ class CcxApp:
         )
         print(f"Written: {', '.join(output_files)}")
 
-    def ccxsolve(self, yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=None):
+    def solve(self, yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=None):
         """Run CCX on all input files in the workdir that match the wildcard."""
         dct = self.state.load_yaml(yml)
 
@@ -234,14 +237,14 @@ class CcxApp:
         p.map(os.system, [f"{ccxexe} {inp.replace('.inp','')}" for inp in inps_to_run])
         p.close()
 
-    def ccxpost(self, yml: Path, wildcard="", nbins=60):
+    def post(self, yml: Path, wildcard="", nbins=60):
         """Postprocess CCX results."""
         dct = self.state.load_yaml(yml)
         ccxpost = ccx2vtu.ccx2vtu(dct["general"]["workdir"], wildcard=wildcard)
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 
-    def ccxplot(self, yml: Path, wildcard="", plot3d=True, plot2d=True):
+    def plot(self, yml: Path, wildcard="", plot3d=True, plot2d=True):
         """Plot CCX results."""
         dct = self.state.load_yaml(yml)
         plotter = ccxpost.plot_ccx(dct["general"]["workdir"], wildcard=wildcard)
@@ -315,10 +318,10 @@ build_app.default(build.build)
 
 # Register CCX Commands
 ccx = CcxApp(state)
-ccx_app.command(ccx.ccxprep)
-ccx_app.command(ccx.ccxsolve)
-ccx_app.command(ccx.ccxpost)
-ccx_app.command(ccx.ccxplot)
+ccx_app.command(ccx.prep)
+ccx_app.command(ccx.solve)
+ccx_app.command(ccx.post)
+ccx_app.command(ccx.plot)
 ccx_app.default(ccx.ccx)
 
 d2d = TwoDApp(state)
