@@ -2,9 +2,26 @@ site_name: b3p
 
 theme:
   name: material
+
+# markdown_extensions:
+#   - mermaid
+
+# plugins:
+#   - mermaid2:
+#     javascript: https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
 nav:
 - Home: index.md
 - Installation: installation.md
-- Blade building: build.md
-- FEA analysis: fea.md
+- Usage: 
+  - Build: use/build.md
+  - Input file: use/inputfile.md
+  - FEA: use/fea.md
+
 # - API Reference: api.md
