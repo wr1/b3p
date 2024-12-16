@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "b3p"
-version = "v0.0.4rc4"
+version = "v0.0.4rc5"
 description = "Command line tools for preprocessing of wind turbine blade models"
 authors = ["wr1 <8971152+wr1@users.noreply.github.com>"]
 license = "MIT"
@@ -11,7 +11,7 @@ include = ["examples/*.yml", "examples/makefile"]
 
 [tool.poetry.dependencies]
 python = "^3.9.7"
-# pyarrow = ">15.*"
+pyarrow = ">18.*"
 pandas = "^2.2.3"
 numpy = ">2.0.0"
 scipy = "^1.13.0"
@@ -27,6 +27,7 @@ cyclopts = "^2.9.9"
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
 pyyaml = "^6.0.2"
+jinja2 = "^3.1.4"
 
 
 [tool.poetry.group.dev.dependencies]

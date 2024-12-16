@@ -198,19 +198,27 @@ class CcxApp:
         )
         print(f"Written: {', '.join(output_files)}")
 
-    def solve(self, yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=None):
-        """Run CCX on all input files in the workdir that match the wildcard."""
+    def solve(
+        self,
+        yml: Path,
+        wildcard="",
+        nproc=2,
+        ccxexe="ccx",
+        inpfiles=None,
+        merged_plies=True,
+    ):
+        """Run CCX on all input files in the workdir where the loadcase name matches the loadcase wildcard."""
         dct = self.state.load_yaml(yml)
 
         prefix = self.state.get_prefix()
 
         if inpfiles is None:
-            inpfiles = glob.glob(f"{prefix}*{wildcard}*.inp")
+            inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
 
-        if inpfiles == []:
-            inps = glob.glob(f"{prefix}*ccx*{wildcard}*inp")
-        else:
-            inps = inpfiles
+        inps = [inp for inp in inpfiles if glob.fnmatch.fnmatch(inp, f"*{wildcard}*")]
+
+        if merged_plies:
+            inps = [inp for inp in inps if "_mp_" in inp]
 
         if inps == []:
             print(f"** No inps found matching {prefix}*{wildcard}*inp")
