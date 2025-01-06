@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import pyvista as pv
 from dolfin import *
 from anba4 import *
 import argparse
@@ -7,7 +8,6 @@ import json
 import numpy as np
 import yaml
 import os
-import pyvista as pv
 from functools import partial
 
 
@@ -74,6 +74,7 @@ def run_mesh(meshname, matdb):
     print(f"run {meshname}")
 
     infile = XDMFFile(meshname)
+
     mesh = Mesh()
     infile.read(mesh)
 
@@ -88,7 +89,8 @@ def run_mesh(meshname, matdb):
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
 
-    matuniq = np.unique(pvmesh.cell_data["mat"])  # material indices (from material_map)
+    # material indices (from material_map)
+    matuniq = np.unique(pvmesh.cell_data["mat"])  
 
     # map for materials in anba (index in matuniq)
     mat_map_0 = dict(zip(matuniq, range(len(matuniq))))
@@ -149,17 +151,19 @@ def main():
 
     mdb = get_material_db(args.matdb)
 
+    print(args.meshes)
+
     part = partial(run_mesh, matdb=mdb)
     if args.debug:
         for i in args.meshes:
             part(i)
     else:
-        p = multiprocessing.Pool()
-        # run async seems to avoid a sporadic blocking error
-        # p.map(part, args.meshes)
-        r = p.map_async(part, args.meshes)
-        r.wait()
+        with multiprocessing.Pool() as p:
+            # run async seems to avoid a sporadic blocking error
 
+            p.map(part, args.meshes)
+            # p.join()
+            # r.join()
 
 if __name__ == "__main__":
     main()
