@@ -9,6 +9,7 @@ import json
 from numpy import array
 import copy as cp
 from pathlib import Path
+from sympy import symbols, sympify
 
 
 def plyify(r, t, ply_thickness, reverse=False):
@@ -42,7 +43,6 @@ def plyify(r, t, ply_thickness, reverse=False):
 
 
 def expand_chamfered_core(core):
-
     rr, tr = np.array(core["slab"]).T
 
     coordinates = []
@@ -193,45 +193,63 @@ def number_stack(stack, splitstack, key, increment):
     return [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
 
 
+from sympy import symbols, sympify, lambdify
+import numpy as np
+
+
 def get_coverage(slab, datums, rr):
-    """Get the coverage of the slab and insert the datums.
+    """
+    Get the coverage of the slab and insert the datums.
     :param slab: slab dictionary
     :param datums: datums dictionary
-    :param rr: radius distribution"""
+    :param rr: radius distribution
+    """
     assert "cover" in slab
     cov = slab["cover"]
 
+    # Create symbolic variables for all datum keys
+    symbols_dict = {k: symbols(k) for k in datums}
+
     for d in cov:
         cc = cov[d]
-        idd = [str(cc[0]), str(cc[1])]
+        # Parse the expressions symbolically
+        idd = [sympify(cc[0], locals=symbols_dict), sympify(cc[1], locals=symbols_dict)]
 
         for j in range(2):
-            jj = idd[j]
-            for i in datums:
-                if jj.find(i) != -1:
-                    xy = np.array(datums[i]["xy"])
+            expr = idd[j]  # Symbolic expression
+
+            # Replace symbols with interpolated numerical arrays
+            substitutions = {}
+            for key, sym in symbols_dict.items():
+                if sym in expr.free_symbols:  # Check if the symbol is present
+                    xy = np.array(datums[key]["xy"])
                     dst = np.interp(
                         rr,
-                        xy[:, 0] / datums[i]["scalex"],
-                        xy[:, 1] * datums[i]["scaley"],
+                        xy[:, 0] / datums[key]["scalex"],
+                        xy[:, 1] * datums[key]["scaley"],
                     )
-                    idd[j] = idd[j].replace(i, f"np.array({dst.tolist()})")
+                    substitutions[sym] = dst  # Store the substitution separately
 
-        cov[d][0] = eval(idd[0])
-        cov[d][1] = eval(idd[1])
+            # Perform the substitutions numerically after creating a callable function
+            func = lambdify(list(substitutions.keys()), expr, modules="numpy")
+            idd[j] = func(*substitutions.values())  # Pass the numerical arrays
+
+        cov[d][0], cov[d][1] = idd  # Assign the evaluated results
 
     return cov
 
 
 def add_bondline_material(matdb, material_map):
-    """Add a bondline material to the material map, if it is not already there,
+    """
+    Add a bondline material to the material map, if it is not already there,
     this is needed because the 2d mesher adds elements with -1 material ID to connect the webs to the shell
 
     params:
         matdb (dict): material database
         material_map (dict): material map
         returns:
-            material_map (dict): material map with bondline material added"""
+            material_map (dict): material map with bondline material added
+    """
     possible_glue_names = ["adhesive", "bonding"]
     for i in matdb:
         for j in possible_glue_names:
