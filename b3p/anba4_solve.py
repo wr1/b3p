@@ -2,6 +2,7 @@
 import pyvista as pv
 from dolfin import *
 from anba4 import *
+from anba4.voight_notation import *
 import argparse
 import multiprocessing
 import json
@@ -19,7 +20,6 @@ def get_material_db(material_map):
     mat_db = None
     if "matdb" in mm:  # check if the material map file points to a material db
         mat_db = yaml.safe_load(open(os.path.join(gdir, mm["matdb"])))
-        # , Loader=yaml.CLoader)
 
         # check if there is a -1 material in the matdb, and assign it
         # this material ID is used by the section mesher for the bondlines
@@ -70,6 +70,28 @@ def get_material_db(material_map):
     return materials
 
 
+def export_unit_strains(anba, result_file_name):
+    result_file = XDMFFile(result_file_name)
+    result_file.parameters["functions_share_mesh"] = True
+    result_file.parameters["rewrite_function_mesh"] = False
+    result_file.parameters["flush_output"] = True
+
+    # anba.stress_field([1., 0., 0.,], [0., 0., 0.], "local", "paraview")
+    anba.strain_field([0, 0, 0], [1, 0, 0], "local", "paraview")
+
+    result_file.write(anba.STRAIN, t=0.0)
+
+    anba.strain_field([0, 0, 0], [0, 1, 0], "local", "paraview")
+
+    result_file.write(anba.STRAIN, t=1.0)
+
+    anba.strain_field([0, 0, 0], [0, 0, 1], "local", "paraview")
+
+    result_file.write(anba.STRAIN, t=2.0)
+
+    print(f"writing results to {result_file_name}")
+
+
 def run_mesh(meshname, matdb):
     print(f"run {meshname}")
 
@@ -80,8 +102,6 @@ def run_mesh(meshname, matdb):
 
     pvmesh = pv.read(meshname)
 
-    # matid = MeshFunction("size_t", mesh, mesh.topology().dim())
-
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
     # Meshing domain.
@@ -90,7 +110,7 @@ def run_mesh(meshname, matdb):
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
 
     # material indices (from material_map)
-    matuniq = np.unique(pvmesh.cell_data["mat"])  
+    matuniq = np.unique(pvmesh.cell_data["mat"])
 
     # map for materials in anba (index in matuniq)
     mat_map_0 = dict(zip(matuniq, range(len(matuniq))))
@@ -113,6 +133,10 @@ def run_mesh(meshname, matdb):
 
     anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
     stiff = anba.compute()
+
+    resfilename = meshname.replace(".xdmf", "_results.xdmf")
+
+    export_unit_strains(anba, resfilename)
 
     stiffness_matrix = stiff.getDenseArray()
 
@@ -158,12 +182,15 @@ def main():
         for i in args.meshes:
             part(i)
     else:
-        with multiprocessing.Pool() as p:
-            # run async seems to avoid a sporadic blocking error
+        processes = []
+        for mesh in args.meshes:
+            p = multiprocessing.Process(target=part, args=(mesh,))
+            p.start()
+            processes.append(p)
 
-            p.map(part, args.meshes)
-            # p.join()
-            # r.join()
+        for p in processes:
+            p.join()
+
 
 if __name__ == "__main__":
     main()
