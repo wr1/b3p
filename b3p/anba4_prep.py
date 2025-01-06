@@ -24,7 +24,7 @@ def vtp2xdmf(vtp):
     xd = vtp.replace(".vtp", ".xdmf")
     if os.path.exists(xd):
         print(f"\t** ANBA mesh {xd} already exists - skipping")
-        return
+        return xd
 
     mesh = pv.read(vtp)
     tri = mesh.triangulate()  # fenics doesn't do mixed element types
@@ -32,14 +32,16 @@ def vtp2xdmf(vtp):
     pv.save_meshio(xd, tri, data_format="XML")
     conv3d_2d(xd)
     print(f"\t**converted {vtp} to {xd}")
+    return xd
 
 
 def anba4_prep(section_meshes):
     """convert a list of section meshes to xdmf format"""
     print("** converting section meshes to XDMF")
     p = multiprocessing.Pool()
-    p.map(vtp2xdmf, section_meshes)
+    xds = p.map(vtp2xdmf, section_meshes)
     p.close()
+    return xds
 
 
 def main():
@@ -48,7 +50,7 @@ def main():
     )
     p.add_argument("sections", nargs="*", help="section meshes in .vtp format")
     args = p.parse_args()
-    anba4_prep(args.sections)
+    return anba4_prep(args.sections)
 
 
 if __name__ == "__main__":

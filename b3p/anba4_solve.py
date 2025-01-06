@@ -92,8 +92,9 @@ def export_unit_strains(anba, result_file_name):
     print(f"writing results to {result_file_name}")
 
 
-def run_mesh(meshname, matdb):
+def run_mesh(meshname, matdb_name):
     print(f"run {meshname}")
+    matdb = get_material_db(matdb_name)
 
     infile = XDMFFile(meshname)
 
@@ -104,7 +105,6 @@ def run_mesh(meshname, matdb):
 
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
-    # Meshing domain.
     materials = MeshFunction("size_t", mesh, mesh.topology().dim())
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
@@ -173,11 +173,9 @@ def main():
     p.add_argument("--debug", action="store_true")
     args = p.parse_args()
 
-    mdb = get_material_db(args.matdb)
-
     print(args.meshes)
 
-    part = partial(run_mesh, matdb=mdb)
+    part = partial(run_mesh, args.matdb)
     if args.debug:
         for i in args.meshes:
             part(i)

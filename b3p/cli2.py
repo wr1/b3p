@@ -18,6 +18,7 @@ from b3p import (
     ccxpost,
     drape_summary,
     anba4_prep,
+    anba4_solve,
     add_te_solids,
     yml_portable,
 )
@@ -288,7 +289,20 @@ class TwoDApp:
             var=f"{prefix}.var",
             parallel=parallel,
         )
-        anba4_prep.anba4_prep(section_meshes)
+        return anba4_prep.anba4_prep(section_meshes)
+
+    def run_anba4(self, yml: Path):
+        """Run ANBA4 on the 2D meshes."""
+        dct = self.state.load_yaml(yml)
+        section_meshes = self.mesh2d(yml)
+        for i in section_meshes:
+            print(f"Running ANBA4 on {i}")
+
+            mm = os.path.join(dct["general"]["workdir"], "material_map.json")
+            print(i, mm)
+            anba4_solve.run_mesh(i, mm)
+
+        # anba4_solve.anba4_solve(section_meshes)
 
 
 class CleanApp:
@@ -333,8 +347,8 @@ ccx_app.command(ccx.plot)
 ccx_app.default(ccx.ccx)
 
 d2d = TwoDApp(state)
-twod_app.default(d2d.mesh2d)
-
+twod_app.command(d2d.mesh2d)
+twod_app.default(d2d.run_anba4)
 
 # Register Clean Command
 clean = CleanApp(state)
