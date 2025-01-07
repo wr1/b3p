@@ -300,9 +300,7 @@ class TwoDApp:
 
             mm = os.path.join(dct["general"]["workdir"], "material_map.json")
             print(i, mm)
-            anba4_solve.run_mesh(i, mm)
-
-        # anba4_solve.anba4_solve(section_meshes)
+            anba4_solve.solve_anba4(i, mm)
 
 
 class CleanApp:
