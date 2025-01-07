@@ -1,12 +1,8 @@
 #! /usr/bin/env python3
-import os
-import argparse
-import multiprocessing
-import json
-from functools import partial
-from dolfin import Mesh, XDMFFile, MeshFunction
 import pyvista as pv
-import numpy as np
+from dolfin import Mesh, XDMFFile, MeshFunction
+
+
 from anba4 import (
     material,
     anbax,
@@ -16,9 +12,42 @@ from anba4 import (
     ComputeTensionCenter,
     ComputeShearCenter,
 )
+import argparse
+import json
+import yaml
+import multiprocessing
+import os
+import numpy as np
 
 
 def get_material_db(material_map):
+    """
+    Loads and processes a material database from a given material map file.
+
+    Args:
+        material_map (str): Path to the material map file. The file should be a JSON file
+                            containing a mapping of material IDs to material properties.
+
+    Returns:
+        dict: A dictionary where keys are material IDs and values are material objects.
+              The material objects can be either OrthotropicMaterial or IsotropicMaterial
+              depending on the properties defined in the material database.
+
+    Raises:
+        AssertionError: If the material_map file does not exist.
+        SystemExit: If the material map does not contain a link to a material database.
+
+    Notes:
+        - The material map file should contain a key "matdb" that points to the material
+          database file (YAML format).
+        - If the material database contains a material with ID "-1", it is assigned to
+          the material map with the same ID.
+        - The material properties for orthotropic materials are expected to include
+          "tEx", "tEy", "tEz", "tGxy", "tGxz", "tGyz", "tnuxy", "tnuxz", and "tnuyz".
+        - The material properties for isotropic materials are expected to include "E" or
+          "Ex", and "nu".
+        - The density of the material is expected to be defined by the "rho" key.
+    """
     assert os.path.isfile(material_map)
     mm = json.load(open(material_map, "r"))
     gdir = os.path.dirname(material_map)
@@ -77,6 +106,20 @@ def get_material_db(material_map):
 
 
 def export_unit_strains(anba, result_file_name):
+    """
+    Export unit strain fields to an XDMF file.
+
+    This function computes and writes the strain fields for three unit directions
+    ([1, 0, 0], [0, 1, 0], [0, 0, 1]) to an XDMF file. The strain fields are written
+    at different time steps (0.0, 1.0, 2.0) to the specified result file.
+
+    Parameters:
+    anba (object): An object that contains the method `strain_field` and attribute `STRAIN`.
+    result_file_name (str): The name of the XDMF file to write the results to.
+
+    Returns:
+    None
+    """
     result_file = XDMFFile(result_file_name)
     result_file.parameters["functions_share_mesh"] = True
     result_file.parameters["rewrite_function_mesh"] = False
@@ -98,29 +141,63 @@ def export_unit_strains(anba, result_file_name):
     print(f"writing results to {result_file_name}")
 
 
-def solve_anba4(meshname, matdb_name):
-    if not os.path.isfile(meshname):
-        print(f"** Mesh file {meshname} not found")
+def solve_anba4(mesh_filename, material_db_filename):
+    """
+    Solves the ANBA4 problem for a given mesh and material database.
+
+    Parameters:
+    mesh_filename (str): The filename of the mesh file in XDMF format.
+    material_db_filename (str): The filename of the material database file.
+
+    Returns:
+    None
+
+    The function performs the following steps:
+    1. Checks if the mesh and material database files exist.
+    2. Checks if the output JSON file already exists.
+    3. Reads the mesh and material database.
+    4. Initializes material parameters and orientations.
+    5. Maps material indices from the mesh file.
+    6. Sets material IDs and plane angles.
+    7. Builds the material property library.
+    8. Computes the stiffness and mass matrices.
+    9. Decouples the stiffness matrix.
+    10. Computes principal axes rotation angle, mass center, tension center, and shear center.
+    11. Exports the results to an XDMF file.
+    12. Writes the results to a JSON file.
+
+    The output JSON file contains:
+    - name: The name of the mesh file.
+    - stiffness: The stiffness matrix.
+    - mass_matrix: The mass matrix.
+    - decoupled_stiffness: The decoupled stiffness matrix.
+    - principal_axes_rotation: The principal axes rotation angle.
+    - mass_center: The mass center.
+    - tension_center: The tension center.
+    - shear_center: The shear center.
+    """
+    if not os.path.isfile(mesh_filename):
+        print(f"** Mesh file {mesh_filename} not found")
         return
 
-    if not os.path.isfile(matdb_name):
-        print(f"** Material database file {matdb_name} not found")
+    if not os.path.isfile(material_db_filename):
+        print(f"** Material database file {material_db_filename} not found")
         return
 
-    jsonfilename = f"{meshname}.json"
-    if os.path.isfile(jsonfilename):
-        print(f"** Output file {jsonfilename} already exists, skipping")
+    json_output_filename = f"{mesh_filename}.json"
+    if os.path.isfile(json_output_filename):
+        print(f"** Output file {json_output_filename} already exists, skipping")
         return
 
-    print(f"run {meshname}")
-    matdb = get_material_db(matdb_name)
+    print(f"run {mesh_filename}")
+    material_db = get_material_db(material_db_filename)
 
-    infile = XDMFFile(meshname)
+    infile = XDMFFile(mesh_filename)
 
     mesh = Mesh()
     infile.read(mesh)
 
-    pvmesh = pv.read(meshname)
+    pv_mesh = pv.read(mesh_filename)
 
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
@@ -129,16 +206,18 @@ def solve_anba4(meshname, matdb_name):
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
 
     # material indices (from material_map)
-    matuniq = np.unique(pvmesh.cell_data["mat"])
+    material_unique_indices = np.unique(pv_mesh.cell_data["mat"])
 
-    # map for materials in anba (index in matuniq)
-    mat_map_0 = dict(zip(matuniq, range(len(matuniq))))
+    # map for materials in anba (index in material_unique_indices)
+    material_map_0 = dict(
+        zip(material_unique_indices, range(len(material_unique_indices)))
+    )
 
-    matids = [mat_map_0[i] for i in pvmesh.cell_data["mat"].tolist()]
+    material_ids = [material_map_0[i] for i in pv_mesh.cell_data["mat"].tolist()]
 
-    plane_angles = list(pvmesh.cell_data["angle2"])
+    plane_angles = list(pv_mesh.cell_data["angle2"])
 
-    materials.set_values(matids)
+    materials.set_values(material_ids)
 
     # TODO, doesn't work for off axis laminates for now
     fiber_orientations.set_all(0.0)
@@ -148,66 +227,68 @@ def solve_anba4(meshname, matdb_name):
 
     # Build material property library.
 
-    matLibrary = [matdb[i] for i in matuniq]
+    material_library = [material_db[i] for i in material_unique_indices]
 
-    anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
-    stiff = anba.compute()
+    anba = anbax(
+        mesh, 2, material_library, materials, plane_orientations, fiber_orientations
+    )
+    stiffness = anba.compute()
 
-    resfilename = meshname.replace(".xdmf", "_results.xdmf")
+    result_filename = mesh_filename.replace(".xdmf", "_results.xdmf")
 
-    export_unit_strains(anba, resfilename)
+    export_unit_strains(anba, result_filename)
 
-    stiffness_matrix = stiff.getDenseArray()
+    stiffness_matrix = stiffness.getDenseArray()
 
     mass = anba.inertia()
 
     mass_matrix = mass.getDenseArray()
 
-    decoupled_stiff = DecoupleStiffness(stiff)
+    decoupled_stiffness = DecoupleStiffness(stiffness)
 
-    angle = PrincipalAxesRotationAngle(decoupled_stiff)
+    principal_axes_rotation_angle = PrincipalAxesRotationAngle(decoupled_stiffness)
 
     mass_center = ComputeMassCenter(mass)
     tension_center = ComputeTensionCenter(stiffness_matrix)
     shear_center = ComputeShearCenter(stiffness_matrix)
 
     output = {
-        "name": meshname,
+        "name": mesh_filename,
         "stiffness": stiffness_matrix.tolist(),
         "mass_matrix": mass_matrix.tolist(),
-        "decoupled_stiffness": decoupled_stiff.tolist(),
-        "principal_axes_rotation": angle,
+        "decoupled_stiffness": decoupled_stiffness.tolist(),
+        "principal_axes_rotation": principal_axes_rotation_angle,
         "mass_center": mass_center,
         "tension_center": tension_center,
         "shear_center": shear_center,
     }
 
-    with open(jsonfilename, "w") as write_file:
+    with open(json_output_filename, "w") as write_file:
         json.dump(output, write_file, indent=4)
 
 
-def main():
-    p = argparse.ArgumentParser(description="run a series of sections through anba4")
-    p.add_argument("meshes", nargs="*", help="List of mesh files")
-    p.add_argument("matdb", help="Material map JSON file")
-    p.add_argument("--debug", action="store_true", help="Run in debug mode")
-    args = p.parse_args()
+def main(args):
+    """
+    Main function to solve ANBA4 problems using multiprocessing.
 
-    print(args.meshes)
+    Args:
+        args: An object containing the following attributes:
+            - material_db: The material database to be used in the solver.
+            - meshes: A list of mesh objects to be processed.
 
-    if args.debug:
-        for mesh in args.meshes:
-            solve_anba4(mesh, args.matdb)
-    else:
-        processes = []
-        for mesh in args.meshes:
-            p = multiprocessing.Process(target=solve_anba4, args=(mesh, args.matdb))
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
+    The function utilizes all available CPU cores to parallelize the solving process.
+    Each mesh is processed using the `solve_anba4` function with the provided material database.
+    """
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        pool.starmap(solve_anba4, [(mesh, args.material_db) for mesh in args.meshes])
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="run a series of sections through anba4"
+    )
+    parser.add_argument("meshes", nargs="*", help="List of mesh files")
+    parser.add_argument("material_db", help="Material map JSON file")
+    # parser.add_argument("--debug", action="store_true", help="Run in debug mode")
+    args = parser.parse_args()
+    main(args)
