@@ -1,6 +1,12 @@
 #! /usr/bin/env python3
-import pyvista as pv
+import os
+import argparse
+import multiprocessing
+import json
+from functools import partial
 from dolfin import Mesh, XDMFFile, MeshFunction
+import pyvista as pv
+import numpy as np
 from anba4 import (
     material,
     anbax,
@@ -10,13 +16,6 @@ from anba4 import (
     ComputeTensionCenter,
     ComputeShearCenter,
 )
-import argparse
-import multiprocessing
-import json
-import numpy as np
-import yaml
-import os
-from functools import partial
 
 
 def get_material_db(material_map):
@@ -99,18 +98,21 @@ def export_unit_strains(anba, result_file_name):
     print(f"writing results to {result_file_name}")
 
 
-def solve_anba4(meshname, matdb_name, overwrite=False):
-    print(f"run {meshname}")
-
-    resfilename = meshname.replace(".xdmf", "_results.xdmf")
-    jsonfilename = meshname.replace(".xdmf", "_anb.json")
-
-    if (os.path.exists(resfilename) and os.path.exists(jsonfilename)) and not overwrite:
-        print(
-            f"** ANBA results {resfilename} and {jsonfilename} already exists - skipping"
-        )
+def solve_anba4(meshname, matdb_name):
+    if not os.path.isfile(meshname):
+        print(f"** Mesh file {meshname} not found")
         return
 
+    if not os.path.isfile(matdb_name):
+        print(f"** Material database file {matdb_name} not found")
+        return
+
+    jsonfilename = f"{meshname}.json"
+    if os.path.isfile(jsonfilename):
+        print(f"** Output file {jsonfilename} already exists, skipping")
+        return
+
+    print(f"run {meshname}")
     matdb = get_material_db(matdb_name)
 
     infile = XDMFFile(meshname)
@@ -151,6 +153,8 @@ def solve_anba4(meshname, matdb_name, overwrite=False):
     anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
     stiff = anba.compute()
 
+    resfilename = meshname.replace(".xdmf", "_results.xdmf")
+
     export_unit_strains(anba, resfilename)
 
     stiffness_matrix = stiff.getDenseArray()
@@ -184,21 +188,20 @@ def solve_anba4(meshname, matdb_name, overwrite=False):
 
 def main():
     p = argparse.ArgumentParser(description="run a series of sections through anba4")
-    p.add_argument("meshes", nargs="*")
-    p.add_argument("matdb", help="material map json file")
-    p.add_argument("--debug", action="store_true")
+    p.add_argument("meshes", nargs="*", help="List of mesh files")
+    p.add_argument("matdb", help="Material map JSON file")
+    p.add_argument("--debug", action="store_true", help="Run in debug mode")
     args = p.parse_args()
 
     print(args.meshes)
 
-    part = partial(solve_anba4, args.matdb)
     if args.debug:
-        for i in args.meshes:
-            part(i)
+        for mesh in args.meshes:
+            solve_anba4(mesh, args.matdb)
     else:
         processes = []
         for mesh in args.meshes:
-            p = multiprocessing.Process(target=part, args=(mesh,))
+            p = multiprocessing.Process(target=solve_anba4, args=(mesh, args.matdb))
             p.start()
             processes.append(p)
 
