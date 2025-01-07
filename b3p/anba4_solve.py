@@ -1,8 +1,15 @@
 #! /usr/bin/env python3
 import pyvista as pv
-from dolfin import *
-from anba4 import *
-from anba4.voight_notation import *
+from dolfin import Mesh, XDMFFile, MeshFunction
+from anba4 import (
+    material,
+    anbax,
+    DecoupleStiffness,
+    PrincipalAxesRotationAngle,
+    ComputeMassCenter,
+    ComputeTensionCenter,
+    ComputeShearCenter,
+)
 import argparse
 import multiprocessing
 import json
@@ -92,8 +99,18 @@ def export_unit_strains(anba, result_file_name):
     print(f"writing results to {result_file_name}")
 
 
-def run_mesh(meshname, matdb_name):
+def solve_anba4(meshname, matdb_name, overwrite=False):
     print(f"run {meshname}")
+
+    resfilename = meshname.replace(".xdmf", "_results.xdmf")
+    jsonfilename = meshname.replace(".xdmf", "_anb.json")
+
+    if (os.path.exists(resfilename) and os.path.exists(jsonfilename)) and not overwrite:
+        print(
+            f"** ANBA results {resfilename} and {jsonfilename} already exists - skipping"
+        )
+        return
+
     matdb = get_material_db(matdb_name)
 
     infile = XDMFFile(meshname)
@@ -134,8 +151,6 @@ def run_mesh(meshname, matdb_name):
     anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
     stiff = anba.compute()
 
-    resfilename = meshname.replace(".xdmf", "_results.xdmf")
-
     export_unit_strains(anba, resfilename)
 
     stiffness_matrix = stiff.getDenseArray()
@@ -151,6 +166,7 @@ def run_mesh(meshname, matdb_name):
     mass_center = ComputeMassCenter(mass)
     tension_center = ComputeTensionCenter(stiffness_matrix)
     shear_center = ComputeShearCenter(stiffness_matrix)
+
     output = {
         "name": meshname,
         "stiffness": stiffness_matrix.tolist(),
@@ -162,7 +178,7 @@ def run_mesh(meshname, matdb_name):
         "shear_center": shear_center,
     }
 
-    with open(f"{meshname}.json", "w") as write_file:
+    with open(jsonfilename, "w") as write_file:
         json.dump(output, write_file, indent=4)
 
 
@@ -175,7 +191,7 @@ def main():
 
     print(args.meshes)
 
-    part = partial(run_mesh, args.matdb)
+    part = partial(solve_anba4, args.matdb)
     if args.debug:
         for i in args.meshes:
             part(i)
