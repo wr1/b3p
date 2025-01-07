@@ -20,7 +20,6 @@ from b3p import (
     ccxpost,
     drape_summary,
     anba4_prep,
-    # anba4_solve,
     add_te_solids,
     yml_portable,
 )
@@ -302,7 +301,6 @@ class CcxApp:
         )
         print(f"Written: {', '.join(output_files)}")
 
-    # def solve(        self,        yml: Path,        wildcard="",        nproc=2,        ccxexe="ccx",        inpfiles=None,        merged_plies=True):
     def solve(
         self,
         yml: Path,
@@ -459,13 +457,11 @@ class TwoDApp:
 
         dct = self.state.load_yaml(yml)
         section_meshes = self.mesh2d(yml)
-        # for mesh2d in section_meshes:
-        #     print(f"Running ANBA4 on {mesh2d}")
 
         material_map = os.path.join(dct["general"]["workdir"], "material_map.json")
-        # print(i, mm)
 
         # Call the new CLI script using the conda environment
+
         subprocess.run(
             [
                 "conda",
@@ -477,7 +473,13 @@ class TwoDApp:
                 "b3p.anba4_solve",
                 *section_meshes,
                 material_map,
-            ]
+            ],
+            env={
+                **os.environ,
+                "OPENBLAS_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "OMP_NUM_THREADS": "1",
+            },
         )
 
 
