@@ -4,6 +4,7 @@ import glob
 import shutil
 import pickle
 import multiprocessing
+import subprocess
 from cyclopts import App
 from b3p import (
     build_blade_geometry,
@@ -34,11 +35,30 @@ class AppState:
 
     @classmethod
     def get_instance(cls):
+        """
+        Returns a singleton instance of the class.
+
+        If the class instance does not already exist, it creates one and stores it
+        in the class attribute `_state`. If the instance already exists, it returns
+        the existing instance.
+
+        Returns:
+            cls: The singleton instance of the class.
+        """
         if cls._state is None:
             cls._state = cls()
         return cls._state
 
     def load_yaml(self, yml: Path):
+        """
+        Loads and processes a YAML file.
+
+        Args:
+            yml (Path): The path to the YAML file to be loaded.
+
+        Returns:
+            dict: A dictionary representation of the processed YAML file.
+        """
         if self.dct is None:
             self.dct = yml_portable.yaml_make_portable(yml)
             self.make_workdir(yml)
@@ -46,10 +66,34 @@ class AppState:
         return self.dct
 
     def expand_chamfered_cores(self):
+        """
+        Expands the chamfered cores in the design dictionary.
+
+        This method modifies the `dct` attribute by expanding the chamfered cores
+        using the `build_plybook.expand_chamfered_cores` function.
+
+        Returns:
+            None
+        """
         if self.dct:
             self.dct = build_plybook.expand_chamfered_cores(self.dct)
 
     def make_workdir(self, yml: Path):
+        """
+        Creates a working directory based on the provided YAML configuration.
+
+        This method constructs a directory path using the 'workdir' and 'prefix'
+        values from the loaded YAML configuration. If the directory does not
+        already exist, it will be created.
+
+        Args:
+            yml (Path): The path to the YAML file containing the configuration.
+
+        Raises:
+            FileNotFoundError: If the YAML file does not exist.
+            KeyError: If the required keys ('general', 'workdir', 'prefix') are
+                      not present in the YAML configuration.
+        """
         if self.dct is None:
             self.load_yaml(yml)
         prefix = os.path.join(
@@ -59,6 +103,13 @@ class AppState:
             os.makedirs(prefix)
 
     def get_prefix(self):
+        """
+        Retrieves the prefix path from the configuration dictionary.
+
+        Returns:
+            Path or None: The prefix path if the configuration dictionary is not None,
+                          otherwise None.
+        """
         if self.dct is None:
             return None
         wd = Path(self.dct["general"]["workdir"])
@@ -74,19 +125,52 @@ class BuildApp:
         self.state = state
 
     def geometry(self, yml: Path):
-        """Build blade geometry."""
+        """
+        Build blade geometry from a YAML configuration file.
+
+        Args:
+            yml (Path): Path to the YAML file containing the blade geometry configuration.
+
+        This method performs the following steps:
+        1. Loads the YAML configuration file into a dictionary.
+        2. Builds the blade geometry using the configuration dictionary.
+        3. Constructs a file path prefix using the 'workdir' and 'prefix' values from the configuration.
+        4. Saves the modified configuration dictionary to a new YAML file with a '_portable' suffix.
+
+        Raises:
+            FileNotFoundError: If the specified YAML file does not exist.
+            KeyError: If required keys are missing in the YAML configuration.
+        """
         dct = self.state.load_yaml(yml)
         build_blade_geometry.build_blade_geometry(dct)
         prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
         yml_portable.save_yaml(f"{prefix}_portable.yml", dct)
 
     def mesh(self, yml: Path):
-        """Mesh blade structure."""
+        """
+        Mesh blade structure.
+
+        Parameters:
+        yml (Path): The path to the YAML file containing the blade structure configuration.
+
+        Returns:
+        None
+        """
         dct = self.state.load_yaml(yml)
         build_blade_structure.build_blade_structure(dct)
 
     def drape(self, yml: Path, bondline: bool = False):
-        """Drape plies onto mesh."""
+        """
+        Drape plies onto mesh.
+
+        Args:
+            yml (Path): Path to the YAML file containing configuration data.
+            bondline (bool, optional): If True, add bondline to the mesh. Defaults to False.
+
+        Raises:
+            FileNotFoundError: If the plybook file is not found.
+
+        """
         dct = self.state.load_yaml(yml)
         plybookname = "__plybook.pck"
         prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
@@ -110,7 +194,22 @@ class BuildApp:
             raise FileNotFoundError("Plybook not found")
 
     def mass(self, yml: Path):
-        """Calculate mass of the blade."""
+        """
+        Calculate the mass of the blade and generate summary tables.
+
+        This method loads a YAML configuration file, checks for the existence of a working directory,
+        and if not found, builds a new one. It then calculates the mass of the blade using the drape
+        summary and generates CSV and LaTeX files with the mass data.
+
+        Args:
+            yml (Path): The path to the YAML configuration file.
+
+        Raises:
+            FileNotFoundError: If the working directory specified in the YAML file does not exist.
+
+        Returns:
+            None
+        """
         dct = self.state.load_yaml(yml)
         wd = Path(dct["general"]["workdir"])
         prefix = self.state.get_prefix()
@@ -127,7 +226,16 @@ class BuildApp:
         print(mass_table)
 
     def build(self, yml: Path, bondline: bool = True):
-        """Build the blade model: geometry, mesh, drape, and mass."""
+        """
+        Build the blade model: geometry, mesh, drape, and mass.
+
+        Args:
+            yml (Path): The path to the YAML configuration file.
+            bondline (bool, optional): A flag indicating whether to include bondline in the drape. Defaults to True.
+
+        Returns:
+            None
+        """
         dct = self.state.load_yaml(yml)
         self.geometry(yml)
         self.mesh(yml)
@@ -138,30 +246,6 @@ class BuildApp:
             f"{self.state.get_prefix()}_joined.vtu",
             f"{self.state.get_prefix()}_loads.png",
         )
-
-    def mesh2d(self, yml: Path, rotz=0.0, parallel=True):
-        """Create 2D meshes for calculation of 6x6 matrices."""
-        dct = self.state.load_yaml(yml)
-
-        if "mesh2d" not in dct:
-            print("** No mesh2d section in yml file")
-            return
-
-        if "sections" not in dct["mesh2d"]:
-            print("** No sections in mesh2d section in yml file")
-            return
-
-        sections = dct["mesh2d"]["sections"]
-        prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
-        section_meshes = mesh_2d.cut_blade_parallel(
-            f"{prefix}_joined.vtu",
-            sections,
-            if_bondline=False,
-            rotz=rotz,
-            var=f"{prefix}.var",
-            parallel=parallel,
-        )
-        anba4_prep.anba4_prep(section_meshes)
 
 
 class CcxApp:
@@ -265,10 +349,29 @@ class CcxApp:
 
 class TwoDApp:
     def __init__(self, state):
+        """
+        Initialize the instance with the given state.
+        Args:
+            state: The initial state to be assigned to the instance.
+        """
         self.state = state
 
     def mesh2d(self, yml: Path, rotz=0.0, parallel=True):
-        """Create 2D meshes for calculation of 6x6 matrices."""
+        """
+        Create 2D meshes for calculation of 6x6 matrices.
+
+        Args:
+            yml (Path): Path to the YAML file containing mesh configuration.
+            rotz (float, optional): Rotation around the Z-axis in degrees. Defaults to 0.0.
+            parallel (bool, optional): Flag to enable parallel processing. Defaults to True.
+
+        Returns:
+            list: A list of section meshes prepared for anba4 calculations.
+
+        Raises:
+            FileNotFoundError: If the YAML file does not exist.
+            KeyError: If required sections are missing in the YAML file.
+        """
         dct = self.state.load_yaml(yml)
 
         if "mesh2d" not in dct:
@@ -291,24 +394,82 @@ class TwoDApp:
         )
         return anba4_prep.anba4_prep(section_meshes)
 
-    def run_anba4(self, yml: Path):
-        """Run ANBA4 on the 2D meshes."""
+    def run_anba4(self, yml: Path, anba_env="anba4-env"):
+        """
+        Run ANBA4 on the 2D meshes.
+
+        Parameters:
+        yml (Path): Path to the YAML configuration file.
+        anba_env (str): Name of the conda environment to use for running ANBA4. Default is "anba4-env".
+
+        Returns:
+        None
+
+        This method performs the following steps:
+        1. Checks if Conda is installed on the system.
+        2. Verifies if the specified Conda environment exists.
+        3. Loads the YAML configuration file.
+        4. Extracts the 2D meshes from the YAML file.
+        5. Constructs the path to the material map JSON file.
+        6. Runs the ANBA4 solver using the specified Conda environment and the extracted meshes and material map.
+        """
+        # check if system has conda
+        if shutil.which("conda") is None:
+            print("** Conda not found - please install conda")
+            return
+
+        # check if the conda environment exists
+        if subprocess.run(["conda", "env", "list"]).returncode != 0:
+            print(f"** Conda environment {anba_env} not found - please create it")
+            return
+        else:
+            print(f"** Using Conda environment for running anba4 {anba_env}")
+
         dct = self.state.load_yaml(yml)
         section_meshes = self.mesh2d(yml)
-        for i in section_meshes:
-            print(f"Running ANBA4 on {i}")
+        # for mesh2d in section_meshes:
+        #     print(f"Running ANBA4 on {mesh2d}")
 
-            mm = os.path.join(dct["general"]["workdir"], "material_map.json")
-            print(i, mm)
-            anba4_solve.solve_anba4(i, mm)
+        material_map = os.path.join(dct["general"]["workdir"], "material_map.json")
+        # print(i, mm)
+
+        # Call the new CLI script using the conda environment
+        subprocess.run(
+            [
+                "conda",
+                "run",
+                "-n",
+                anba_env,
+                "python",
+                "-m",
+                "b3p.anba4_solve",
+                " ".join(section_meshes),
+                material_map,
+            ]
+        )
 
 
 class CleanApp:
     def __init__(self, state):
+        """
+        Initializes a new instance of the class with the given state.
+
+        Args:
+            state: The initial state to be assigned to the instance.
+        """
         self.state = state
 
     def clean(self, yml: Path):
-        """Clean the working directory."""
+        """
+        Clean the working directory specified in the YAML configuration file.
+
+        Args:
+            yml (Path): Path to the YAML configuration file.
+
+        The method loads the YAML file to retrieve the working directory path.
+        If the directory exists, it is removed along with all its contents.
+        If the directory does not exist, a message is printed indicating so.
+        """
         dct = self.state.load_yaml(yml)
         prefix = dct["general"]["workdir"]
         if os.path.isdir(prefix):
@@ -332,7 +493,6 @@ build_app.command(build.geometry)
 build_app.command(build.mesh)
 build_app.command(build.drape)
 build_app.command(build.mass)
-build_app.command(build.mesh2d)
 build_app.default(build.build)
 
 
