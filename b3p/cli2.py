@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import os
 import glob
 import shutil
@@ -19,7 +20,7 @@ from b3p import (
     ccxpost,
     drape_summary,
     anba4_prep,
-    anba4_solve,
+    # anba4_solve,
     add_te_solids,
     yml_portable,
 )
@@ -264,7 +265,25 @@ class CcxApp:
         self.plot(yml, **kwargs)
 
     def prep(self, yml: Path, **kwargs):
-        """Prepare CCX input files."""
+        """
+        Prepare CCX input files.
+
+        This method loads a YAML configuration file, determines the appropriate mesh files,
+        and generates CCX input files using the mesh2ccx utility.
+
+        Args:
+            yml (Path): Path to the YAML configuration file.
+            **kwargs: Additional keyword arguments to pass to the mesh2ccx function.
+
+        Keyword Args:
+            bondline (bool): If True, use bondline meshes instead of joined meshes.
+
+        Returns:
+            None
+
+        Prints:
+            A message indicating the output files that were written.
+        """
         dct = self.state.load_yaml(yml)
         prefix = self.state.get_prefix()
         # os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
@@ -283,6 +302,7 @@ class CcxApp:
         )
         print(f"Written: {', '.join(output_files)}")
 
+    # def solve(        self,        yml: Path,        wildcard="",        nproc=2,        ccxexe="ccx",        inpfiles=None,        merged_plies=True):
     def solve(
         self,
         yml: Path,
@@ -292,7 +312,19 @@ class CcxApp:
         inpfiles=None,
         merged_plies=True,
     ):
-        """Run CCX on all input files in the workdir where the loadcase name matches the loadcase wildcard."""
+        """
+        Solves the problem defined by the input files using the specified solver.
+        Parameters:
+        yml (Path): Path to the YAML file containing the state configuration.
+        wildcard (str, optional): Wildcard pattern to filter input files. Defaults to "".
+        nproc (int, optional): Number of processes to use for parallel execution. Defaults to 2.
+        ccxexe (str, optional): Name of the solver executable. Defaults to "ccx".
+        inpfiles (list, optional): List of input files to process. If None, files are globbed based on the prefix and wildcard. Defaults to None.
+        merged_plies (bool, optional): If True, only process input files with "_mp_" in their name. Defaults to True.
+        Returns:
+        None
+        """
+
         dct = self.state.load_yaml(yml)
 
         prefix = self.state.get_prefix()
@@ -443,7 +475,7 @@ class TwoDApp:
                 "python",
                 "-m",
                 "b3p.anba4_solve",
-                " ".join(section_meshes),
+                *section_meshes,
                 material_map,
             ]
         )
@@ -480,7 +512,11 @@ class CleanApp:
 
 
 # Initialize Main App
-app = App()
+app = App(
+    help="""Blade Design CLI
+
+          """
+)
 build_app = App(name="build")
 ccx_app = App(name="ccx")
 twod_app = App(name="2d")
