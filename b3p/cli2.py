@@ -357,7 +357,7 @@ class CcxApp:
 
         print(f"running ccx on: {inps_to_run} using {wildcard}")
         p = multiprocessing.Pool(nproc)
-        p.map(os.system, [f"{ccxexe} {inp.replace('.inp','')}" for inp in inps_to_run])
+        p.map(os.system, [f"{ccxexe} {inp.replace('.inp', '')}" for inp in inps_to_run])
         p.close()
 
     def post(self, yml: Path, wildcard="", nbins=60):
@@ -462,25 +462,67 @@ class TwoDApp:
 
         # Call the new CLI script using the conda environment
 
-        subprocess.run(
-            [
-                "conda",
-                "run",
-                "-n",
-                anba_env,
-                "python",
-                "-m",
-                "b3p.anba4_solve",
-                *section_meshes,
-                material_map,
-            ],
-            env={
-                **os.environ,
-                "OPENBLAS_NUM_THREADS": "1",
-                "MKL_NUM_THREADS": "1",
-                "OMP_NUM_THREADS": "1",
-            },
-        )
+        if os.name == "nt":
+            subprocess.run(
+                [
+                    "wsl",
+                    "conda",
+                    "run",
+                    "-n",
+                    anba_env,
+                    "python",
+                    "-m",
+                    "b3p.anba4_solve",
+                    *section_meshes,
+                    material_map,
+                ],
+                env={
+                    **os.environ,
+                    "OPENBLAS_NUM_THREADS": "1",
+                    "MKL_NUM_THREADS": "1",
+                    "OMP_NUM_THREADS": "1",
+                },
+            )
+        else:
+            subprocess.run(
+                [
+                    "conda",
+                    "run",
+                    "-n",
+                    anba_env,
+                    "python",
+                    "-m",
+                    "b3p.anba4_solve",
+                    *section_meshes,
+                    material_map,
+                ],
+                env={
+                    **os.environ,
+                    "OPENBLAS_NUM_THREADS": "1",
+                    "MKL_NUM_THREADS": "1",
+                    "OMP_NUM_THREADS": "1",
+                },
+            )
+
+        # subprocess.run(
+        #     [
+        #         "conda",
+        #         "run",
+        #         "-n",
+        #         anba_env,
+        #         "python",
+        #         "-m",
+        #         "b3p.anba4_solve",
+        #         *section_meshes,
+        #         material_map,
+        #     ],
+        #     env={
+        #         **os.environ,
+        #         "OPENBLAS_NUM_THREADS": "1",
+        #         "MKL_NUM_THREADS": "1",
+        #         "OMP_NUM_THREADS": "1",
+        #     },
+        # )
 
 
 class CleanApp:
@@ -514,11 +556,7 @@ class CleanApp:
 
 
 # Initialize Main App
-app = App(
-    help="""Blade Design CLI
-
-          """
-)
+app = App(help="""Blade Design CLI""")
 build_app = App(name="build")
 ccx_app = App(name="ccx")
 twod_app = App(name="2d")

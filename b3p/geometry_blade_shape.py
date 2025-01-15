@@ -12,6 +12,14 @@ class blade_shape:
         web_resolution=20,
         added_datums=None,
     ):
+        """
+        Initialize the geometry blade shape.
+        Args:
+            sections (list, optional): A list of sections defining the blade shape. Defaults to None.
+            section_resolution (int, optional): The resolution of the sections. Defaults to 200.
+            web_resolution (int, optional): The resolution of the webs. Defaults to 20.
+            added_datums (dict, optional): Additional datum points. Defaults to None.
+        """
         if sections is None:
             sections = []
         if added_datums is None:

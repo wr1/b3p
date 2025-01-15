@@ -3,8 +3,6 @@ import vtk
 import numpy as np
 import math
 import pyvista as pv
-
-# from matplotlib import pyplot as plt
 import copy
 
 
@@ -23,7 +21,7 @@ class section:
 
     """
 
-    def __init__(self, r, r_relative, points, min_te_thickness=0.002, open_te=True):
+    def __init__(self, r, r_relative, points, min_te_thickness=0.002, open_te=False):
         self.r = r
         self.r_relative = r_relative
         if open_te:
@@ -35,6 +33,8 @@ class section:
         for i in self.base_points:
             self.points.InsertNextPoint((i[0], i[1], r))
         self.poly = vtk.vtkPolyData()
+
+        # print(self.points)
         self.poly.SetPoints(self.points)
 
     def _open_te(self, points, te_thickness):

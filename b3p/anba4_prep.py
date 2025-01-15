@@ -6,9 +6,18 @@ import os
 
 
 def conv3d_2d(mesh):
-    """hack to translate a mesh to 2D format, which is what fenics/anba needs
-    :param mesh: path to the mesh file
-    """
+    """Hack to translate a 3D mesh to 2D format, which is required by fenics/anba.
+
+    This function reads a mesh file, modifies its content to convert it from
+    3D to 2D format, and writes the modified content back to the file.
+
+    Parameters:
+    mesh (str): The path to the mesh file.
+
+    The function performs the following modifications:
+    - Removes occurrences of "0.0000000e+00\n".
+    - Replaces ' 3"' with ' 2"'.
+    - Replaces "XYZ" with "XY"."""
     x = open(mesh, "r").read()
     nb = x[: x.find("Topology")]
     rest = x[x.find("Topology") :]
@@ -19,7 +28,22 @@ def conv3d_2d(mesh):
 
 
 def vtp2xdmf(vtp):
-    """convert a vtp file to xdmf format and translate to 2D"""
+    """
+    Convert a VTP file to XDMF format and translate it to 2D.
+
+    Parameters:
+    vtp (str): The file path of the input VTP file. The file must have a .vtp extension.
+
+    Returns:
+    str: The file path of the converted XDMF file.
+
+    Notes:
+    - The function checks if the XDMF file already exists. If it does, it skips the conversion.
+    - The function reads the VTP file, triangulates the mesh, sets the z-coordinates to 0 to make it 2D,
+      and saves the mesh in XDMF format.
+    - The function calls `conv3d_2d` to further process the XDMF file.
+    - Prints messages indicating the status of the conversion.
+    """
     assert vtp.endswith(".vtp")
     xd = vtp.replace(".vtp", ".xdmf")
     if os.path.exists(xd):
@@ -36,7 +60,18 @@ def vtp2xdmf(vtp):
 
 
 def anba4_prep(section_meshes):
-    """convert a list of section meshes to xdmf format"""
+    """
+    Convert a list of section meshes to XDMF format.
+
+    This function takes a list of section meshes and converts each mesh to
+    XDMF format using multiprocessing for parallel processing.
+
+    Args:
+        section_meshes (list): A list of section meshes to be converted.
+
+    Returns:
+        list: A list of converted section meshes in XDMF format.
+    """
     print("** converting section meshes to XDMF")
     p = multiprocessing.Pool()
     xds = p.map(vtp2xdmf, section_meshes)
@@ -45,8 +80,22 @@ def anba4_prep(section_meshes):
 
 
 def main():
+    """
+    Main function to translate section meshes from VTK to XDMF and 2D format.
+
+    This function sets up an argument parser to handle command-line arguments
+    for translating section meshes. It expects section meshes in the .vtp format
+    and processes them accordingly.
+
+    Command-line Arguments:
+    sections (list of str): Section meshes in .vtp format.
+
+    Returns:
+    The result of the anba4_prep function, which processes the provided section meshes.
+    """
     p = argparse.ArgumentParser(
-        description="translate section meshes from vtk to XDMF and 2D"
+        description=__doc__
+        # "translate section meshes from vtk to XDMF and 2D"
     )
     p.add_argument("sections", nargs="*", help="section meshes in .vtp format")
     args = p.parse_args()
