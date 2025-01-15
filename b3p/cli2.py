@@ -25,6 +25,19 @@ from b3p import (
 )
 
 
+def wslpath_convert(path: str, to_windows: bool = False) -> str:
+    """
+    Converts paths between WSL and Windows formats using wslpath.
+
+    :param path: The path to convert.
+    :param to_windows: Set to True to convert WSL to Windows; False for Windows to WSL.
+    :return: The converted path as a string.
+    """
+    command = ["wslpath", "-w" if to_windows else "-u", path]
+    result = subprocess.run(command, capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
+
 class AppState:
     """Singleton to manage application state."""
 
@@ -463,6 +476,10 @@ class TwoDApp:
         # Call the new CLI script using the conda environment
 
         if os.name == "nt":
+            section_meshes_wsl = [
+                wslpath_convert(i, to_windows=False) for i in section_meshes
+            ]
+            material_map_wsl = wslpath_convert(material_map, to_windows=False)
             subprocess.run(
                 [
                     "wsl",
@@ -473,8 +490,8 @@ class TwoDApp:
                     "python",
                     "-m",
                     "b3p.anba4_solve",
-                    *section_meshes,
-                    material_map,
+                    *section_meshes_wsl,
+                    material_map_wsl,
                 ],
                 env={
                     **os.environ,
