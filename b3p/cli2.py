@@ -491,7 +491,7 @@ class TwoDApp:
                     "-m",
                     "b3p.anba4_solve",
                     *section_meshes_wsl,
-                    material_map_wsl,
+                    material_map_ws,
                 ],
                 env={
                     **os.environ,
