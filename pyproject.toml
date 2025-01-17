@@ -23,11 +23,13 @@ h5py = "^3.11.0"
 frd2vtu = "^0.1.1rc8"
 cyclopts = "^2.9.9"
 
+
 ccblade = {git = "https://github.com/WISDEM/CCBlade.git", optional = true}
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
 pyyaml = "^6.0.2"
 jinja2 = "^3.1.4"
+sympy = "^1.13.3"
 
 
 [tool.poetry.group.dev.dependencies]
