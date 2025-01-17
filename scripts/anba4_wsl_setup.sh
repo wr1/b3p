@@ -92,7 +92,7 @@ install_b3p() {
 run_b3p_anba_example() {
     WORKDIR=$1
     # navigate to b3p dir /examples
-    cd $WORKDIR/examples
+    cd $WORKDIR/b3p/examples
     # run a quick check to see if the installation was successful
     b3p build blade_test.yml
     b3p 2d blade_test.yml
@@ -123,3 +123,4 @@ main() {
     run_b3p_anba_example $WORKDIR
 }
 
+main
