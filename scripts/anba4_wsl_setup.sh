@@ -33,21 +33,18 @@ if conda env list | grep -q 'anba4-env'; then
     echo "The anba4-env environment already exists."
 else
     echo "Creating the anba4-env environment."
-    conda create -n anba4-env -y fenics=2019.1.0=py39hf3d152e_26 mshr=2019.1.0 python=3.9
+    conda create -n anba4-env -y fenics=2019.1.0  python=3.9
 fi
 
 # Activate the anba4-env environment
 conda init
 conda activate anba4-env
-conda install pyvista pyyaml
 
-
-
-
-
-
-
-
+cd ~
+git clone https://github.com/ANBA4/anba4.git # (or git clone https://github.com/ANBA4/anba4.git)
+cd anba4
+pip install -e .
+conda install pyyaml pyvista
 
 
 

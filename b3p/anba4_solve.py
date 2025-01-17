@@ -1,8 +1,6 @@
 #! /usr/bin/env python3
 import pyvista as pv
 from dolfin import Mesh, XDMFFile, MeshFunction
-
-
 from anba4 import (
     material,
     anbax,
@@ -197,7 +195,10 @@ def solve_anba4(mesh_filename, material_db_filename):
     mesh = Mesh()
     infile.read(mesh)
 
-    pv_mesh = pv.read(mesh_filename)
+
+    print('reading mesh', mesh_filename )
+
+    pv_mesh = pv.read(mesh_filename.replace(".xdmf", ".vtp"))
 
     # Basic material parameters. 9 is needed for orthotropic materials.
     # TODO materials and orientations
