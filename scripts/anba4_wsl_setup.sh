@@ -102,11 +102,6 @@ run_b3p_anba_example() {
 main() {
     WORKDIR=~/b3p_wsl
 
-    if [ "$1" == "clean" ]; then
-        echo "Cleaning the workdir..."
-        rm -rf "$WORKDIR"
-    fi
-
     # Check if the workdir directory exists, if not, create it
     if [ ! -d "$WORKDIR" ]; then
         mkdir -p "$WORKDIR"
