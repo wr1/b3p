@@ -475,51 +475,25 @@ class TwoDApp:
 
         # Call the new CLI script using the conda environment
 
-        if os.name == "nt":
-            section_meshes_wsl = [
-                wslpath_convert(i, to_windows=False) for i in section_meshes
-            ]
-            material_map_wsl = wslpath_convert(material_map, to_windows=False)
-            subprocess.run(
-                [
-                    "wsl",
-                    "conda",
-                    "run",
-                    "-n",
-                    anba_env,
-                    "python",
-                    "-m",
-                    "b3p.anba4_solve",
-                    *section_meshes_wsl,
-                    material_map_ws,
-                ],
-                env={
-                    **os.environ,
-                    "OPENBLAS_NUM_THREADS": "1",
-                    "MKL_NUM_THREADS": "1",
-                    "OMP_NUM_THREADS": "1",
-                },
-            )
-        else:
-            subprocess.run(
-                [
-                    "conda",
-                    "run",
-                    "-n",
-                    anba_env,
-                    "python",
-                    "-m",
-                    "b3p.anba4_solve",
-                    *section_meshes,
-                    material_map,
-                ],
-                env={
-                    **os.environ,
-                    "OPENBLAS_NUM_THREADS": "1",
-                    "MKL_NUM_THREADS": "1",
-                    "OMP_NUM_THREADS": "1",
-                },
-            )
+        subprocess.run(
+            [
+                "conda",
+                "run",
+                "-n",
+                anba_env,
+                "python",
+                "-m",
+                "b3p.anba4_solve",
+                *section_meshes,
+                material_map,
+            ],
+            env={
+                **os.environ,
+                "OPENBLAS_NUM_THREADS": "1",
+                "MKL_NUM_THREADS": "1",
+                "OMP_NUM_THREADS": "1",
+            },
+        )
 
         # subprocess.run(
         #     [
