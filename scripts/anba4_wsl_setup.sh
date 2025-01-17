@@ -44,20 +44,18 @@ setup_anba4_env() {
     conda init
     conda activate anba4-env
 
-    if [ ! -d "$ANBADIR" ]; then
+    if [ ! -d "$ANBADIR/anba4" ]; then
         cd "$ANBADIR"
         git clone https://github.com/ANBA4/anba4.git
     else
         cd "$ANBADIR/anba4"
-        git pull origin main
+        git pull 
     fi
 
     cd "$ANBADIR/anba4"
     pip install -e .
     conda install pyyaml pyvista
 }
-
-# setup_anba4_env 
 
 
 
