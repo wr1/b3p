@@ -475,7 +475,9 @@ class TwoDApp:
 
         # Call the new CLI script using the conda environment
 
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "anba4_solve.py"))
+        script_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "anba4_solve.py")
+        )
         subprocess.run(
             [
                 "conda",
@@ -492,6 +494,7 @@ class TwoDApp:
                 "OPENBLAS_NUM_THREADS": "1",
                 "MKL_NUM_THREADS": "1",
                 "OMP_NUM_THREADS": "1",
+                "CUDA_VISIBLE_DEVICES": "-1",
             },
         )
 
