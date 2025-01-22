@@ -498,26 +498,6 @@ class TwoDApp:
             },
         )
 
-        # subprocess.run(
-        #     [
-        #         "conda",
-        #         "run",
-        #         "-n",
-        #         anba_env,
-        #         "python",
-        #         "-m",
-        #         "b3p.anba4_solve",
-        #         *section_meshes,
-        #         material_map,
-        #     ],
-        #     env={
-        #         **os.environ,
-        #         "OPENBLAS_NUM_THREADS": "1",
-        #         "MKL_NUM_THREADS": "1",
-        #         "OMP_NUM_THREADS": "1",
-        #     },
-        # )
-
 
 class CleanApp:
     def __init__(self, state):
