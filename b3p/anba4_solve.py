@@ -70,23 +70,28 @@ def get_material_db(material_map):
     for i in mm_inv:
         if i != mm["matdb"]:
             matdb_entry = mat_db[mm_inv[i]]
-            if "tEx" in matdb_entry:  # ortho material
+
+            density = (
+                matdb_entry["rho"]
+                if "rho" in matdb_entry
+                else (matdb_entry["density"] if "density" in matdb_entry else 1)
+            )
+
+            if "e11" in matdb_entry:  # ortho material
                 matMechanicProp = np.zeros((3, 3))
-                matMechanicProp[0, 0] = matdb_entry["tEz"] * 1e6  # e_xx
-                matMechanicProp[0, 1] = matdb_entry["tEy"] * 1e6  # e_yy
-                matMechanicProp[0, 2] = matdb_entry["tEx"] * 1e6  # e_zz
+                matMechanicProp[0, 0] = matdb_entry["e11"] * 1e6  # e_xx
+                matMechanicProp[0, 1] = matdb_entry["e22"] * 1e6  # e_yy
+                matMechanicProp[0, 2] = matdb_entry["e33"] * 1e6  # e_zz
 
-                matMechanicProp[1, 0] = matdb_entry["tGxz"] * 1e6  # g_yz
-                matMechanicProp[1, 1] = matdb_entry["tGxy"] * 1e6  # g_xz
-                matMechanicProp[1, 2] = matdb_entry["tGyz"] * 1e6  # g_xy
+                matMechanicProp[1, 0] = matdb_entry["g13"] * 1e6  # g_yz
+                matMechanicProp[1, 1] = matdb_entry["g12"] * 1e6  # g_xz
+                matMechanicProp[1, 2] = matdb_entry["g23"] * 1e6  # g_xy
 
-                matMechanicProp[2, 0] = matdb_entry["tnuxz"]  # nu_zy
-                matMechanicProp[2, 1] = matdb_entry["tnuxy"]  # nu_zx
-                matMechanicProp[2, 2] = matdb_entry["tnuyz"]  # nu_xy
+                matMechanicProp[2, 0] = matdb_entry["nu13"]  # nu_zy
+                matMechanicProp[2, 1] = matdb_entry["nu12"]  # nu_zx
+                matMechanicProp[2, 2] = matdb_entry["nu23"]  # nu_xy
 
-                materials[i] = material.OrthotropicMaterial(
-                    matMechanicProp, matdb_entry["rho"]
-                )
+                materials[i] = material.OrthotropicMaterial(matMechanicProp, density)
             else:
                 materials[i] = material.IsotropicMaterial(
                     [
@@ -97,7 +102,7 @@ def get_material_db(material_map):
                         ),
                         matdb_entry["nu"],
                     ],
-                    matdb_entry["rho"],
+                    density,
                 )
 
     return materials
@@ -195,8 +200,7 @@ def solve_anba4(mesh_filename, material_db_filename):
     mesh = Mesh()
     infile.read(mesh)
 
-
-    print('reading mesh', mesh_filename )
+    print("reading mesh", mesh_filename)
 
     pv_mesh = pv.read(mesh_filename.replace(".xdmf", ".vtp"))
 
