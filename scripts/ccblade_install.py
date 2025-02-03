@@ -9,5 +9,7 @@ def build_ccblade_dependency():
             ["git", "clone", "https://github.com/WISDEM/CCBlade.git", build_dir],
             check=True,
         )
-    subprocess.run(["pip", "install", "."],cwd=build_dir, check=True)
+    subprocess.run(["pip", "install", "."], cwd=build_dir, check=True)
 
+if __name__ == "__main__":
+    build_ccblade_dependency()

@@ -426,7 +426,9 @@ class TwoDApp:
             return
 
         sections = dct["mesh2d"]["sections"]
-        prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
+        yml_dir = yml.parent
+        prefix = os.path.join(yml_dir, dct["general"]["workdir"], dct["general"]["prefix"])
+        # prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
         section_meshes = mesh_2d.cut_blade_parallel(
             f"{prefix}_joined.vtu",
             sections,
