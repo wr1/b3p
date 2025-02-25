@@ -47,4 +47,5 @@ requires = [
 
 [tool.poetry.scripts]
 b3p = "b3p.cli2:main"
+b3p_cc = "b3p.ccblade_run:main"
 ccblade_install = "scripts.ccblade_install:build_ccblade_dependency"

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from b3p import yml_portable
-# import fire
+import fire
 import numpy as np
 import os
 import pandas as pd
