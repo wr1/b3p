@@ -48,6 +48,7 @@ requires = [
   "setuptools"
 ]
 
+<<<<<<< HEAD
 # [tool.poetry.build]
 # script = "setup.py"  # Tells Poetry to use this as a build script
 # generate-setup-file = true
@@ -60,3 +61,9 @@ requires = [
 # [tool.poetry.scripts]
 # b3p = "b3p.cli2:main"
 # ccblade_install = "scripts.ccblade_install:build_ccblade_dependency"
+=======
+[tool.poetry.scripts]
+b3p = "b3p.cli2:main"
+b3p_cc = "b3p.ccblade_run:main"
+ccblade_install = "scripts.ccblade_install:build_ccblade_dependency"
+>>>>>>> 5cbd4427999cde66f60b485e1a03973689e0dde2
