@@ -427,7 +427,9 @@ class TwoDApp:
 
         sections = dct["mesh2d"]["sections"]
         yml_dir = yml.parent
-        prefix = os.path.join(yml_dir, dct["general"]["workdir"], dct["general"]["prefix"])
+        prefix = os.path.join(
+            yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
+        )
         # prefix = os.path.join(dct["general"]["workdir"], dct["general"]["prefix"])
         section_meshes = mesh_2d.cut_blade_parallel(
             f"{prefix}_joined.vtu",
@@ -480,6 +482,8 @@ class TwoDApp:
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "anba4_solve.py")
         )
+
+        print(f"** Running ANBA4 using {script_path}")
         subprocess.run(
             [
                 "conda",

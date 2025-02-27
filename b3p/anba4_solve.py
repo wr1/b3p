@@ -77,21 +77,44 @@ def get_material_db(material_map):
                 else (matdb_entry["density"] if "density" in matdb_entry else 1)
             )
 
+            print("density", density)
+
             if "e11" in matdb_entry:  # ortho material
                 matMechanicProp = np.zeros((3, 3))
-                matMechanicProp[0, 0] = matdb_entry["e11"] * 1e6  # e_xx
+                # matMechanicProp[0, 0] = matdb_entry["e11"] * 1e6  # e_xx
+                # matMechanicProp[0, 1] = matdb_entry["e22"] * 1e6  # e_yy
+                # matMechanicProp[0, 2] = matdb_entry["e33"] * 1e6  # e_zz
+
+                # matMechanicProp[1, 0] = matdb_entry["g13"] * 1e6  # g_yz
+                # matMechanicProp[1, 1] = matdb_entry["g12"] * 1e6  # g_xz
+                # matMechanicProp[1, 2] = matdb_entry["g23"] * 1e6  # g_xy
+
+                # matMechanicProp[2, 0] = matdb_entry["nu13"]  # nu_zy
+                # matMechanicProp[2, 1] = matdb_entry["nu12"]  # nu_zx
+                # matMechanicProp[2, 2] = matdb_entry["nu23"]  # nu_xy
+
+                print(matdb_entry)
+                matMechanicProp[0, 2] = matdb_entry["e11"] * 1e6  # e_xx
                 matMechanicProp[0, 1] = matdb_entry["e22"] * 1e6  # e_yy
-                matMechanicProp[0, 2] = matdb_entry["e33"] * 1e6  # e_zz
+                matMechanicProp[0, 0] = matdb_entry["e33"] * 1e6  # e_zz
 
-                matMechanicProp[1, 0] = matdb_entry["g13"] * 1e6  # g_yz
+                matMechanicProp[1, 2] = matdb_entry["g13"] * 1e6  # g_yz
                 matMechanicProp[1, 1] = matdb_entry["g12"] * 1e6  # g_xz
-                matMechanicProp[1, 2] = matdb_entry["g23"] * 1e6  # g_xy
+                matMechanicProp[1, 0] = matdb_entry["g23"] * 1e6  # g_xy
 
-                matMechanicProp[2, 0] = matdb_entry["nu13"]  # nu_zy
+                matMechanicProp[2, 2] = matdb_entry["nu13"]  # nu_zy
                 matMechanicProp[2, 1] = matdb_entry["nu12"]  # nu_zx
-                matMechanicProp[2, 2] = matdb_entry["nu23"]  # nu_xy
+                matMechanicProp[2, 0] = matdb_entry["nu23"]  # nu_xy
 
                 materials[i] = material.OrthotropicMaterial(matMechanicProp, density)
+                # materials[i] = material.IsotropicMaterial(
+                #     [
+                #         (matdb_entry["e11"] * 1e6),
+                #         matdb_entry["nu12"],
+                #     ],
+                #     density,
+                # )
+
             else:
                 materials[i] = material.IsotropicMaterial(
                     [
@@ -226,6 +249,8 @@ def solve_anba4(mesh_filename, material_db_filename):
 
     # TODO, doesn't work for off axis laminates for now
     fiber_orientations.set_all(0.0)
+
+    # print(plane_angles)
 
     # transverse orientations
     plane_orientations.set_values(plane_angles)

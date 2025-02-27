@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from b3p import yml_portable
-# import fire
+import fire
 import numpy as np
 import os
 import pandas as pd
@@ -57,7 +57,7 @@ def plot_interpolated_polars(t, data, of="polars.png"):
 
 
 def plot_polars(polars, of="polars_in.png"):
-    fig, ax = plt.subplots(3, 1, figsize=(6, 8))
+    fig, ax = plt.subplots(3, 1, figsize=(12, 16))
     for i in polars:
         alpha, cl, cd, cm = i[1]  # polars[i]
         ax[0].plot(alpha, cl, label=i[0])
@@ -67,6 +67,10 @@ def plot_polars(polars, of="polars_in.png"):
         ax[1].set_ylabel("Cd")
         ax[2].set_ylabel("Cl - Cd")
         ax[0].legend()
+        ax[0].grid()
+        ax[1].grid()
+        ax[2].grid()
+    fig.tight_layout()
     fig.savefig(of)
 
 
@@ -130,14 +134,12 @@ class RotorOptimizer:
 
     def objective(self, x):
         ev, _ = self.evaluate(x)
-        return np.fabs(self.rated_power - ev)  # + np.sum(penalties)
+        return np.fabs(self.rated_power - ev)
 
     def optimize(self, initial_guess):
         result = fmin(self.objective, initial_guess, maxiter=self.maxiter)
 
         rr, rdet = self.evaluate(result)
-        # print(f"{self.uinf} {self.omega} {self.rated_power} result {result}")
-        # print(f"result {rr} {rdet}")
         return result
 
 
@@ -166,10 +168,9 @@ def plot_grid(num_plots, figsize=(15, 15)):
 
     # Remove unused subplots
     for idx in range(len(axs) - 1, rows * columns):
-        # print("deleting", idx)
         fig.delaxes(axs[idx])
 
-    return fig, axs  # , rows, columns
+    return fig, axs
 
 
 def find_closest_x(x_values, evaluations, target, order):
@@ -226,7 +227,7 @@ class controloptimize:
         init_val = optimizer.evaluate(initial_guess)[0]
         opt_val, optt = optimizer.evaluate(optimal_values, coefficients=True)
 
-        print(f" {init_val} {opt_val}, improvement {opt_val/init_val}")
+        print(f" {init_val} {opt_val}, improvement {opt_val / init_val}")
         self.optimal_tsr = omega2tsr(optimal_values[0], starting_uinf, self.rtip)
         self.fine_pitch = optimal_values[1]
 
@@ -293,7 +294,6 @@ class controloptimize:
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
             of=os.path.join(self.workdir, "out.png"),
         )
-        # print(out_pc.keys())
         print(f"pitch {self.pitch}")
         return out_pc
 
@@ -346,7 +346,7 @@ class ccblade_run:
             exit("no polars in blade file")
 
         if not os.path.isfile(f"{self.prefix}.pck"):
-            exit("blade not run yet")
+            exit("blade not built yet, run b3p build <blade.yml> first")
 
         plf = pd.read_csv(f"{self.prefix}_sca_50.csv", sep=";")
 
@@ -386,9 +386,7 @@ class ccblade_run:
             uinf=np.array(bem["uinf"]),
             workdir=workdir,
         )
-
         copt.control_opt_below_rated()
-
         copt.control_opt_above_rated()
 
     def __str__(self):
