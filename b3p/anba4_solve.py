@@ -78,7 +78,7 @@ def get_material_db(material_map):
             )
 
             print("density", density)
-
+            print("matdb_entry", matdb_entry)
             if "e11" in matdb_entry:  # ortho material
                 matMechanicProp = np.zeros((3, 3))
                 # matMechanicProp[0, 0] = matdb_entry["e11"] * 1e6  # e_xx
@@ -93,36 +93,36 @@ def get_material_db(material_map):
                 # matMechanicProp[2, 1] = matdb_entry["nu12"]  # nu_zx
                 # matMechanicProp[2, 2] = matdb_entry["nu23"]  # nu_xy
 
-                print(matdb_entry)
-                matMechanicProp[0, 2] = matdb_entry["e11"] * 1e6  # e_xx
-                matMechanicProp[0, 1] = matdb_entry["e22"] * 1e6  # e_yy
-                matMechanicProp[0, 0] = matdb_entry["e33"] * 1e6  # e_zz
+                # print(matdb_entry)
+                # matMechanicProp[0, 2] = matdb_entry["e11"] * 1e6  # e_xx
+                # matMechanicProp[0, 1] = matdb_entry["e22"] * 1e6  # e_yy
+                # matMechanicProp[0, 0] = matdb_entry["e33"] * 1e6  # e_zz
 
-                matMechanicProp[1, 2] = matdb_entry["g13"] * 1e6  # g_yz
-                matMechanicProp[1, 1] = matdb_entry["g12"] * 1e6  # g_xz
-                matMechanicProp[1, 0] = matdb_entry["g23"] * 1e6  # g_xy
+                # matMechanicProp[1, 2] = matdb_entry["g13"] * 1e6  # g_yz
+                # matMechanicProp[1, 1] = matdb_entry["g12"] * 1e6  # g_xz
+                # matMechanicProp[1, 0] = matdb_entry["g23"] * 1e6  # g_xy
 
-                matMechanicProp[2, 2] = matdb_entry["nu13"]  # nu_zy
-                matMechanicProp[2, 1] = matdb_entry["nu12"]  # nu_zx
-                matMechanicProp[2, 0] = matdb_entry["nu23"]  # nu_xy
+                # matMechanicProp[2, 2] = matdb_entry["nu13"]  # nu_zy
+                # matMechanicProp[2, 1] = matdb_entry["nu12"]  # nu_zx
+                # matMechanicProp[2, 0] = matdb_entry["nu23"]  # nu_xy
 
-                materials[i] = material.OrthotropicMaterial(matMechanicProp, density)
-                # materials[i] = material.IsotropicMaterial(
-                #     [
-                #         (matdb_entry["e11"] * 1e6),
-                #         matdb_entry["nu12"],
-                #     ],
-                #     density,
-                # )
+                # materials[i] = material.OrthotropicMaterial(matMechanicProp, density)
+                print("isotropic", i)
 
+                print("e11", matdb_entry["e11"])
+                materials[i] = material.IsotropicMaterial(
+                    [
+                        # 150000.0,
+                        (matdb_entry["e11"]),
+                        min(matdb_entry["nu12"], 0.49),
+                    ],
+                    density,
+                )
+                print("material", i, matdb_entry["e11"])
             else:
                 materials[i] = material.IsotropicMaterial(
                     [
-                        (
-                            matdb_entry["E"] * 1e6
-                            if "E" in matdb_entry
-                            else matdb_entry["Ex"] * 1e6
-                        ),
+                        (matdb_entry["E"] if "E" in matdb_entry else matdb_entry["Ex"]),
                         matdb_entry["nu"],
                     ],
                     density,
@@ -233,13 +233,20 @@ def solve_anba4(mesh_filename, material_db_filename):
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
 
+    # print(fiber_orientations.array())
+
     # material indices (from material_map)
     material_unique_indices = np.unique(pv_mesh.cell_data["mat"])
+
+    # Sort material indices if order matters
+    material_unique_indices.sort()
 
     # map for materials in anba (index in material_unique_indices)
     material_map_0 = dict(
         zip(material_unique_indices, range(len(material_unique_indices)))
     )
+
+    print("material_map_0", material_map_0)
 
     material_ids = [material_map_0[i] for i in pv_mesh.cell_data["mat"].tolist()]
 
@@ -250,28 +257,36 @@ def solve_anba4(mesh_filename, material_db_filename):
     # TODO, doesn't work for off axis laminates for now
     fiber_orientations.set_all(0.0)
 
-    # print(plane_angles)
-
     # transverse orientations
     plane_orientations.set_values(plane_angles)
+    # plane_orientations.set_all(0.0)
 
     # Build material property library.
+    # Use remapped IDs to access material properties
+    material_library = []
+    for original_id in material_unique_indices:
+        remapped_id = material_map_0[original_id]
+        try:
+            material_library.append(
+                material_db[original_id]
+            )  # Use original ID to lookup in material_db
+        except KeyError:
+            print(f"Error: Material ID {original_id} not found in material database.")
+            raise  # Re-raise the exception to stop execution
 
-    material_library = [material_db[i] for i in material_unique_indices]
+    print("material_ids", material_ids[392], dir(material_library[material_ids[392]]))
+
+    # print(m)
 
     anba = anbax(
-        mesh, 2, material_library, materials, plane_orientations, fiber_orientations
+        mesh, 1, material_library, materials, plane_orientations, fiber_orientations
     )
     stiffness = anba.compute()
-
-    result_filename = mesh_filename.replace(".xdmf", "_results.xdmf")
-
-    export_unit_strains(anba, result_filename)
-
+    # stiffness.view()
     stiffness_matrix = stiffness.getDenseArray()
 
     mass = anba.inertia()
-
+    # mass.view()
     mass_matrix = mass.getDenseArray()
 
     decoupled_stiffness = DecoupleStiffness(stiffness)
@@ -295,6 +310,10 @@ def solve_anba4(mesh_filename, material_db_filename):
 
     with open(json_output_filename, "w") as write_file:
         json.dump(output, write_file, indent=4)
+
+    result_filename = mesh_filename.replace(".xdmf", "_results.xdmf")
+
+    export_unit_strains(anba, result_filename)
 
 
 def main(args):
