@@ -10,7 +10,6 @@ version = "v0.0.4rc6"
 
 [tool.poetry.dependencies]
 # ccblade = {git = "https://github.com/wr1/CCBlade.git"}
-
 # ccblade = {path = "/home/wr1/projects/CCBlade"}
 cyclopts = "^2.9.9"
 frd2vtu = "^0.1.1rc8"
@@ -43,7 +42,6 @@ vtk = ">=9.3,<9.4"
 build-backend = "poetry.core.masonry.api"
 requires = [
   "poetry-core",
-  # "meson",
   "ninja",
   "setuptools"
 ]

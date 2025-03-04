@@ -52,6 +52,7 @@ def vtp2xdmf(vtp):
 
     mesh = pv.read(vtp)
     tri = mesh.triangulate()  # fenics doesn't do mixed element types
+    tri.save(vtp.replace(".vtp", "_tri.vtp"))
     tri.points[:, 2] = 0
     pv.save_meshio(xd, tri, data_format="XML")
     conv3d_2d(xd)

@@ -321,7 +321,7 @@ class CcxApp:
         nproc=2,
         ccxexe="ccx",
         inpfiles=None,
-        merged_plies=True,
+        merged_plies=False,
     ):
         """
         Solves the problem defined by the input files using the specified solver.
@@ -343,7 +343,8 @@ class CcxApp:
         if inpfiles is None:
             inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
 
-        inps = [inp for inp in inpfiles if glob.fnmatch.fnmatch(inp, f"*{wildcard}*")]
+        inps = [inp for inp in inpfiles]
+        # if glob.fnmatch.fnmatch(inp, f"*{wildcard}*")]
 
         if merged_plies:
             inps = [inp for inp in inps if "_mp_" in inp]
@@ -461,12 +462,18 @@ class TwoDApp:
         6. Runs the ANBA4 solver using the specified Conda environment and the extracted meshes and material map.
         """
         # check if system has conda
-        if shutil.which("conda") is None:
-            print("** Conda not found - please install conda")
+        conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
+        if conda_path is None:
+            print(
+                "** Conda not found - please install conda.  Ensure CONDA_EXE is set if Conda is not in your PATH."
+            )
             return
 
         # check if the conda environment exists
-        if subprocess.run(["conda", "env", "list"]).returncode != 0:
+        result = subprocess.run(
+            [conda_path, "env", "list"], capture_output=True, text=True
+        )
+        if result.returncode != 0 or anba_env not in result.stdout:
             print(f"** Conda environment {anba_env} not found - please create it")
             return
         else:
@@ -482,11 +489,11 @@ class TwoDApp:
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "anba4_solve.py")
         )
-
+        print(f"** conda path: {conda_path}")
         print(f"** Running ANBA4 using {script_path}")
         subprocess.run(
             [
-                "conda",
+                conda_path,
                 "run",
                 "-n",
                 anba_env,
@@ -496,7 +503,7 @@ class TwoDApp:
                 material_map,
             ],
             env={
-                **os.environ,
+                **os.environ.copy(),
                 "OPENBLAS_NUM_THREADS": "1",
                 "MKL_NUM_THREADS": "1",
                 "OMP_NUM_THREADS": "1",
