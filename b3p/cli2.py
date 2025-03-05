@@ -442,12 +442,13 @@ class TwoDApp:
         )
         return anba4_prep.anba4_prep(section_meshes)
 
-    def run_anba4(self, yml: Path, anba_env="anba4-env"):
+    def run_anba4(self, yml: Path, meshes: list = None, anba_env="anba4-env"):
         """
-        Run ANBA4 on the 2D meshes.
+        Run ANBA4 on the meshes (2D or single).
 
         Parameters:
         yml (Path): Path to the YAML configuration file.
+        meshes (list, optional): List of mesh file paths. If None, meshes are extracted from the YAML.
         anba_env (str): Name of the conda environment to use for running ANBA4. Default is "anba4-env".
 
         Returns:
@@ -457,7 +458,7 @@ class TwoDApp:
         1. Checks if Conda is installed on the system.
         2. Verifies if the specified Conda environment exists.
         3. Loads the YAML configuration file.
-        4. Extracts the 2D meshes from the YAML file.
+        4. Extracts the meshes from the YAML configuration file if not provided.
         5. Constructs the path to the material map JSON file.
         6. Runs the ANBA4 solver using the specified Conda environment and the extracted meshes and material map.
         """
@@ -480,18 +481,23 @@ class TwoDApp:
             print(f"** Using Conda environment for running anba4 {anba_env}")
 
         dct = self.state.load_yaml(yml)
-        section_meshes = self.mesh2d(yml)
 
-        material_map = os.path.join(dct["general"]["workdir"], "material_map.json")
+        if meshes is None:
+            meshes = self.mesh2d(yml)
+
+        yml_dir = yml.parent
+        material_map = os.path.join(
+            yml_dir, dct["general"]["workdir"], "material_map.json"
+        )
 
         # Call the new CLI script using the conda environment
-
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "anba4_solve.py")
         )
         print(f"** conda path: {conda_path}")
         print(f"** Running ANBA4 using {script_path}")
-        subprocess.run(
+
+        return subprocess.run(
             [
                 conda_path,
                 "run",
@@ -499,7 +505,7 @@ class TwoDApp:
                 anba_env,
                 "python",
                 script_path,
-                *section_meshes,
+                *meshes,
                 material_map,
             ],
             env={
@@ -509,7 +515,26 @@ class TwoDApp:
                 "OMP_NUM_THREADS": "1",
                 "CUDA_VISIBLE_DEVICES": "-1",
             },
-        )
+        ).returncode
+
+    def anbaclean(self, yml: Path):
+        """
+        Remove all msec* files in the working directory.
+
+        Args:
+            yml (Path): Path to the YAML configuration file.
+
+        This method loads the YAML file to retrieve the working directory path.
+        It then removes all files in the directory that start with 'msec'.
+        """
+        dct = self.state.load_yaml(yml)
+        workdir = Path(dct["general"]["workdir"])
+        for msec_file in workdir.glob("msec*"):
+            try:
+                msec_file.unlink()
+                print(f"Removed {msec_file}")
+            except Exception as e:
+                print(f"Failed to remove {msec_file}: {e}")
 
 
 class CleanApp:
@@ -570,6 +595,7 @@ ccx_app.default(ccx.ccx)
 d2d = TwoDApp(state)
 twod_app.command(d2d.mesh2d)
 twod_app.default(d2d.run_anba4)
+twod_app.command(d2d.anbaclean)
 
 # Register Clean Command
 clean = CleanApp(state)
