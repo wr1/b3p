@@ -73,7 +73,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
         if i > 1e-6:
             material_properties = mat_db[mm_inv[int(i)]]
             matblock += (
-                f'** material: {mm_inv[int(i)]} {i} {material_properties["name"]}\n'
+                f"** material: {mm_inv[int(i)]} {i} {material_properties['name']}\n"
             )
 
             if "C" in material_properties and not force_iso:
@@ -93,10 +93,10 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 D[3, 3] = C[5, 5]
                 D[5, 5] = C[3, 3]
                 matblock += (
-                    f"{D[0,0]:.4g},{D[0,1]:.4g},{D[1,1]:.4g},"
-                    + f"{D[0,2]:.4g},{D[1,2]:.4g},{D[2,2]:.4g},"
-                    + f"{D[3,3]:.4g},{D[4,4]:.4g},\n"
-                    + f"{D[5,5]:.4g},293\n"
+                    f"{D[0, 0]:.4g},{D[0, 1]:.4g},{D[1, 1]:.4g},"
+                    + f"{D[0, 2]:.4g},{D[1, 2]:.4g},{D[2, 2]:.4g},"
+                    + f"{D[3, 3]:.4g},{D[4, 4]:.4g},\n"
+                    + f"{D[5, 5]:.4g},293\n"
                 )
             elif "e11" in material_properties and not force_iso:
                 print(material_properties["name"], "has engineering constants")
@@ -206,8 +206,8 @@ def element_buffer(grid):
         ccxtype = vtk_ccx[tp]
         for n, i in enumerate(conn[tp]):
             conn[tp][n] = np.array(i) + 1
-            buf += f"*element,type={ccxtype},elset=e{n+1}\n"
-            buf += f"{n+1},{','.join(map(str, conn[tp][n]) )}\n"
+            buf += f"*element,type={ccxtype},elset=e{n + 1}\n"
+            buf += f"{n + 1},{','.join(map(str, conn[tp][n]))}\n"
 
     return buf
 
@@ -378,13 +378,13 @@ def mesh2ccx(
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
     print(f"max number of plies: {nplmax}")
-    print(f"associated stack \n{ blx[npxid[0]][1]}")
+    print(f"associated stack \n{blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
     print("** time spent creating shell sections %f" % (toc - tic))
     comps = "".join(
-        f"*shell section,composite,elset=e{n+1},offset=-.5"
-        + (f",orientation=or{n+1}\n" if zeroangle else "\n")
+        f"*shell section,composite,elset=e{n + 1},offset=-.5"
+        + (f",orientation=or{n + 1}\n" if zeroangle else "\n")
         + i[1]
         for n, i in enumerate(blx)
     )
@@ -394,6 +394,8 @@ def mesh2ccx(
     buf += root_clamp(mesh)
 
     loadcases = get_loadcases(mesh, buckling=buckling)
+
+    print(loadcases)
 
     output_files = []
     # write a full ccx file for each loadcase, assuming parallel execution

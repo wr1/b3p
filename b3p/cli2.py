@@ -254,6 +254,27 @@ class BuildApp:
         self.mesh(yml)
         self.drape(yml, bondline=bondline)
         self.mass(yml)
+        self.apply_loads(yml)
+        # add_load_to_mesh.add_load_to_mesh(
+        #     dct,
+        #     f"{self.state.get_prefix()}_joined.vtu",
+        #     f"{self.state.get_prefix()}_loads.png",
+        # )
+
+    def apply_loads(self, yml: Path):
+        """
+        Reapply loads to the mesh.
+
+        Args:
+            yml (Path): Path to the YAML configuration file.
+
+        This method loads the YAML configuration file, retrieves the prefix path, and re-applies the loads
+        to the mesh using the 'add_load_to_mesh' function.
+
+        Returns:
+            None
+        """
+        dct = self.state.load_yaml(yml)
         add_load_to_mesh.add_load_to_mesh(
             dct,
             f"{self.state.get_prefix()}_joined.vtu",
@@ -305,6 +326,8 @@ class CcxApp:
             bondline_meshes = glob.glob(f"{prefix}*_bondline.vtu")
             if bondline_meshes:
                 available_meshes = bondline_meshes
+
+        print(f"Available meshes: {available_meshes}")
 
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],
@@ -517,7 +540,7 @@ class TwoDApp:
             },
         ).returncode
 
-    def anbaclean(self, yml: Path):
+    def clean(self, yml: Path):
         """
         Remove all msec* files in the working directory.
 
@@ -581,6 +604,7 @@ build_app.command(build.geometry)
 build_app.command(build.mesh)
 build_app.command(build.drape)
 build_app.command(build.mass)
+build_app.command(build.apply_loads)
 build_app.default(build.build)
 
 
@@ -595,7 +619,7 @@ ccx_app.default(ccx.ccx)
 d2d = TwoDApp(state)
 twod_app.command(d2d.mesh2d)
 twod_app.default(d2d.run_anba4)
-twod_app.command(d2d.anbaclean)
+twod_app.command(d2d.clean)
 
 # Register Clean Command
 clean = CleanApp(state)

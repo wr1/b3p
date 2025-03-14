@@ -7,7 +7,8 @@ import os
 import yaml
 import glob
 import json
-from b3p.two_d import TwoD
+
+# from b3p.two_d import TwoD
 from b3p.utils import copy_example_files
 
 
@@ -33,7 +34,7 @@ def run_anba4_once(tmp_path_factory):
 
 @pytest.fixture
 def two_d_app():
-    return TwoD()
+    return TwoDApp()
 
 
 @pytest.fixture
@@ -79,3 +80,11 @@ def test_run_anba4_valid_config(tmp_path):
     output_file = os.path.join(tmp_path, workdir, "msec_100000_results.xdmf")
     # Run anba4 and check if it creates the output file
     assert os.path.exists(output_file), "ANBA4 simulation should create an output file"
+
+
+def test_mesh2d_blade_test_yaml(two_d_app, tmp_path):
+    print(tmp_path)
+    yml_path = tmp_path / "test.yml"
+    result = two_d_app.mesh2d(yml_path)
+    print(result)
+    assert result is not None, "mesh2d should return a non-None result"

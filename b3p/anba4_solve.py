@@ -20,7 +20,7 @@ from anba4 import (
 import yaml
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -163,7 +163,7 @@ def solve_anba4(mesh_filename, material_db_filename):
     # Read .xdmf directly with PyVista, handling potential lack of time steps
     pv_mesh = pv.read(mesh_filename.replace(".xdmf", "_tri.vtp"))
 
-    logger.debug(f"Full mesh material IDs: {pv_mesh.cell_data['mat'].tolist()}")
+    # logger.debug(f"Full mesh material IDs: {pv_mesh.cell_data['mat'].tolist()}")
     if len(pv_mesh.cell_data["mat"]) > 336:
         logger.debug(f"Mesh material ID at index 336: {pv_mesh.cell_data['mat'][336]}")
 

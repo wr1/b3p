@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 
 from b3p import yml_portable
-import fire
+
+# import fire
+import argparse
 import numpy as np
 import os
 import pandas as pd
@@ -387,15 +389,27 @@ class ccblade_run:
             workdir=workdir,
         )
         copt.control_opt_below_rated()
-        copt.control_opt_above_rated()
+        output = copt.control_opt_above_rated()
+
+        del output["W"]
+
+        for i in output:
+            print(i, output[i].shape)
+        df = pd.DataFrame(output).dropna()
+        df.to_csv(os.path.join(workdir, "ccblade_output.csv"), sep=";")
+        # pd.DataFrame(output).to_csv(
+        #     os.path.join(workdir, "ccblade_output.csv"), sep=";"
+        # )
 
     def __str__(self):
         return ""
 
 
 def main():
-    fire.core.Display = lambda lines, out: print(*lines, file=out)
-    fire.Fire(ccblade_run)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("blade", help="blade file")
+    args = parser.parse_args()
+    ccblade_run(args.blade)
 
 
 if __name__ == "__main__":
