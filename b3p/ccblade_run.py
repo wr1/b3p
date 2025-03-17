@@ -15,7 +15,15 @@ import math
 
 
 def load_polar(pname):
-    "load a polar with a given name, interpolate to set alpha range"
+    """
+    Load a polar with a given name, interpolate to set alpha range.
+
+    Args:
+        pname (str): Path to the polar file.
+
+    Returns:
+        list: A list containing alpha, cl, cd, and cm values.
+    """
     print("loading polar", pname)
     if not os.path.isfile(pname):
         raise IOError(f"Polar {pname} not found")
@@ -45,6 +53,14 @@ def load_polar(pname):
 
 
 def plot_interpolated_polars(t, data, of="polars.png"):
+    """
+    Plot interpolated polars.
+
+    Args:
+        t (array-like): Thickness values.
+        data (array-like): Polar data.
+        of (str, optional): Output filename. Defaults to "polars.png".
+    """
     fig, ax = plt.subplots(3, 1, figsize=(12, 19))
     for n, i in enumerate(t):
         alpha, cl, cd, cm = data[:, :, n]
@@ -59,6 +75,13 @@ def plot_interpolated_polars(t, data, of="polars.png"):
 
 
 def plot_polars(polars, of="polars_in.png"):
+    """
+    Plot polars.
+
+    Args:
+        polars (list): List of polar data.
+        of (str, optional): Output filename. Defaults to "polars_in.png".
+    """
     fig, ax = plt.subplots(3, 1, figsize=(12, 16))
     for i in polars:
         alpha, cl, cd, cm = i[1]  # polars[i]
@@ -77,6 +100,17 @@ def plot_polars(polars, of="polars_in.png"):
 
 
 def interpolate_polars(polars, tnew, of=None):
+    """
+    Interpolate polars.
+
+    Args:
+        polars (list): List of polar data.
+        tnew (pandas.Series): New thickness values.
+        of (str, optional): Output filename. Defaults to None.
+
+    Returns:
+        list: List of interpolated CCAirfoil objects.
+    """
     indices = range(len(polars[0][1][0]))
     t = [polar[0] for polar in polars]
     data = np.array(
@@ -110,7 +144,21 @@ def interpolate_polars(polars, tnew, of=None):
 
 
 class RotorOptimizer:
+    """
+    Optimize rotor performance.
+    """
+
     def __init__(self, rotor, uinf, rated_power=20e7, omega=None, maxiter=5):
+        """
+        Initialize RotorOptimizer.
+
+        Args:
+            rotor (CCBlade): CCBlade rotor object.
+            uinf (array-like): Inflow wind speeds.
+            rated_power (float, optional): Rated power. Defaults to 20e7.
+            omega (float, optional): Rotor speed. Defaults to None.
+            maxiter (int, optional): Maximum iterations for optimization. Defaults to 5.
+        """
         self.rotor = rotor
         self.uinf = uinf
         self.omega = omega
@@ -120,6 +168,16 @@ class RotorOptimizer:
         self.maxiter = maxiter
 
     def evaluate(self, x, coefficients=False):
+        """
+        Evaluate rotor performance.
+
+        Args:
+            x (array-like): Optimization variables (omega, pitch).
+            coefficients (bool, optional): Whether to return coefficients. Defaults to False.
+
+        Returns:
+            tuple: Power and evaluation outputs.
+        """
         if self.omega == None:
             omega, pitch = x
         else:
@@ -135,10 +193,28 @@ class RotorOptimizer:
         return P, self.cache[(omega, pitch)]
 
     def objective(self, x):
+        """
+        Objective function for optimization.
+
+        Args:
+            x (array-like): Optimization variables (omega, pitch).
+
+        Returns:
+            float: Absolute difference between rated power and evaluated power.
+        """
         ev, _ = self.evaluate(x)
         return np.fabs(self.rated_power - ev)
 
     def optimize(self, initial_guess):
+        """
+        Optimize rotor performance.
+
+        Args:
+            initial_guess (array-like): Initial guess for optimization variables.
+
+        Returns:
+            array-like: Optimized values.
+        """
         result = fmin(self.objective, initial_guess, maxiter=self.maxiter)
 
         rr, rdet = self.evaluate(result)
@@ -146,15 +222,48 @@ class RotorOptimizer:
 
 
 def tsr2omega(tsr, uinf, radius, max_tip_speed=95.0):
+    """
+    Convert tip speed ratio to rotor speed.
+
+    Args:
+        tsr (float): Tip speed ratio.
+        uinf (float): Inflow wind speed.
+        radius (float): Rotor radius.
+        max_tip_speed (float, optional): Maximum tip speed. Defaults to 95.0.
+
+    Returns:
+        float: Rotor speed in RPM.
+    """
     ts = np.minimum(uinf * tsr, max_tip_speed)
     return (ts * 60.0) / (2.0 * np.pi * radius)
 
 
 def omega2tsr(omega, uinf, radius):
+    """
+    Convert rotor speed to tip speed ratio.
+
+    Args:
+        omega (float): Rotor speed in RPM.
+        uinf (float): Inflow wind speed.
+        radius (float): Rotor radius.
+
+    Returns:
+        float: Tip speed ratio.
+    """
     return omega * 2.0 * np.pi * radius / (uinf * 60.0)
 
 
 def plot_grid(num_plots, figsize=(15, 15)):
+    """
+    Create a grid of subplots.
+
+    Args:
+        num_plots (int): Number of subplots.
+        figsize (tuple, optional): Figure size. Defaults to (15, 15).
+
+    Returns:
+        tuple: Figure and array of axes.
+    """
     # Determine grid dimensions (try to get as square as possible)
     grid_size = math.isqrt(num_plots)
 
@@ -176,6 +285,18 @@ def plot_grid(num_plots, figsize=(15, 15)):
 
 
 def find_closest_x(x_values, evaluations, target, order):
+    """
+    Find the closest x value to a target value using polynomial interpolation.
+
+    Args:
+        x_values (array-like): X values.
+        evaluations (array-like): Y values.
+        target (float): Target value.
+        order (int): Order of the polynomial.
+
+    Returns:
+        float: Closest x value.
+    """
     assert len(x_values) == len(evaluations)
     # fit a polynomial of given order
     poly_coeffs = np.polyfit(x_values, evaluations, order)
@@ -189,6 +310,14 @@ def find_closest_x(x_values, evaluations, target, order):
 
 
 def plot_bladeloads(r, data_dict, of="bladeloads.png"):
+    """
+    Plot blade loads.
+
+    Args:
+        r (array-like): Radial positions.
+        data_dict (dict): Dictionary of blade loads.
+        of (str, optional): Output filename. Defaults to "bladeloads.png".
+    """
     fig, axs = plot_grid(len(data_dict), figsize=(15, 15))
     # Iterate over the dictionary and plot each array
     for idx, (name, array) in enumerate(data_dict.items()):
@@ -201,7 +330,22 @@ def plot_bladeloads(r, data_dict, of="bladeloads.png"):
 
 
 class controloptimize:
+    """
+    Optimize rotor control.
+    """
+
     def __init__(self, rotor, max_tipspeed, rtip, rating, uinf, workdir):
+        """
+        Initialize controloptimize.
+
+        Args:
+            rotor (CCBlade): CCBlade rotor object.
+            max_tipspeed (float): Maximum tip speed.
+            rtip (float): Rotor tip radius.
+            rating (float): Rated power.
+            uinf (array-like): Inflow wind speeds.
+            workdir (str): Working directory.
+        """
         self.rotor = rotor
         self.max_tipspeed = max_tipspeed
         self.rating = rating
@@ -215,9 +359,10 @@ class controloptimize:
         """
         Optimize the control below rated power, optimize for both tsr and pitch, do this only for one wind speed (default 6m/s)
 
-        starting_uinf: wind speed to optimize for
-        starting_tsr: initial guess for tsr
-        starting_pitch: initial guess for pitch
+        Args:
+            starting_uinf (int, optional): Wind speed to optimize for. Defaults to 6.
+            starting_tsr (int, optional): Initial guess for tsr. Defaults to 10.
+            starting_pitch (int, optional): Initial guess for pitch. Defaults to 0.
         """
         omega = tsr2omega(
             starting_tsr, uinf=6, radius=self.rtip, max_tip_speed=self.max_tipspeed
@@ -237,11 +382,14 @@ class controloptimize:
             self.uinf, optimal_values[0], optimal_values[1], 0
         )
         plot_bladeloads(
-            self.rotor.r, loads, of=os.path.join(self.workdir, "bladeloads.png")
+            self.rotor.r, loads, of=os.path.join(self.workdir, "ccblade_bladeloads.png")
         )
         print(f"optimal tsr {self.optimal_tsr} {self.fine_pitch}")
 
     def control_opt_above_rated(self):
+        """
+        Optimize the control above rated power, keep tsr fixed and find the pitch that gives the rated power.
+        """
         # first run through the powercurve with fine_pitch all the way
         self.omega = tsr2omega(
             self.optimal_tsr,
@@ -258,7 +406,7 @@ class controloptimize:
             self.pitch,
             coefficients=False,
         )
-        rotorplot(init_pc, self.uinf, of=os.path.join(self.workdir, "init.png"))
+        rotorplot(init_pc, self.uinf, of=os.path.join(self.workdir, "ccblade_init.png"))
 
         # find the wind speeds that are over rated power
         overrated = np.where(init_pc["P"] > self.rating)
@@ -288,19 +436,29 @@ class controloptimize:
         out_pc["omega"] = self.omega
         out_pc["tsr"] = self.tsr
         out_pc["pitch"] = self.pitch
+        out_pc["uinf"] = self.uinf
 
         # plot the result
         rotorplot(
             out_pc,
             self.uinf,
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
-            of=os.path.join(self.workdir, "out.png"),
+            of=os.path.join(self.workdir, "ccblade_out.png"),
         )
         print(f"pitch {self.pitch}")
         return out_pc
 
 
 def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
+    """
+    Plot rotor performance.
+
+    Args:
+        op (dict): Rotor performance data.
+        uinf (array-like): Inflow wind speeds.
+        labels (list, optional): List of labels to plot. Defaults to ["P", "CP", "T", "Mb"].
+        of (str, optional): Output filename. Defaults to "__temp.png".
+    """
     lab = [i for i in labels if i in op]
 
     fig, ax = plot_grid(len(lab), figsize=(10, 10))
@@ -308,7 +466,8 @@ def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
         ax[n].plot(uinf, op[i], label=f"{i} max={op[i].max():.2f}")
         ax[n].legend()
         ax[n].grid()
-        ax[n].set_ylabel(i)
+        ax[n].set_ylabel(i + "(W)" if i == "P" else "")
+        ax[n].set_xlabel("uinf [m/s]")
 
     fig.tight_layout()
     fig.savefig(of)
@@ -316,7 +475,17 @@ def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
 
 
 class ccblade_run:
+    """
+    Run CCBlade analysis.
+    """
+
     def __init__(self, blade):
+        """
+        Initialize ccblade_run.
+
+        Args:
+            blade (str): Path to the blade YAML file.
+        """
         self.dct = yml_portable.yaml_make_portable(blade)
         workdir = self.dct["general"]["workdir"]
         bem = {
@@ -331,7 +500,7 @@ class ccblade_run:
             "mu": 1.81206e-5,
             "yaw": 0,
             "max_tipspeed": 95.0,
-            "uinf": [3, 5, 7, 9, 10, 11, 12, 13, 16, 20],
+            "uinf": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 20],
         }
         missing_keys = [key for key in bem if key not in self.dct["aero"]["bem"]]
 
@@ -397,15 +566,15 @@ class ccblade_run:
             print(i, output[i].shape)
         df = pd.DataFrame(output).dropna()
         df.to_csv(os.path.join(workdir, "ccblade_output.csv"), sep=";")
-        # pd.DataFrame(output).to_csv(
-        #     os.path.join(workdir, "ccblade_output.csv"), sep=";"
-        # )
 
     def __str__(self):
         return ""
 
 
 def main():
+    """
+    Main function.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("blade", help="blade file")
     args = parser.parse_args()
