@@ -562,8 +562,8 @@ class ccblade_run:
 
         del output["W"]
 
-        for i in output:
-            print(i, output[i].shape)
+        # for i in output:
+        #     print(i, output[i].shape)
         df = pd.DataFrame(output).dropna()
         df.to_csv(os.path.join(workdir, "ccblade_output.csv"), sep=";")
 
