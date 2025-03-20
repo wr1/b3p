@@ -2,7 +2,6 @@
 
 from b3p import yml_portable
 
-# import fire
 import argparse
 import numpy as np
 import os
@@ -549,7 +548,7 @@ class ccblade_run:
 
         print(f"Rotor from {rhub} to {rtip}")
 
-        copt = controloptimize(
+        self.copt = controloptimize(
             self.rotor,
             bem["max_tipspeed"],
             rtip,
@@ -557,18 +556,20 @@ class ccblade_run:
             uinf=np.array(bem["uinf"]),
             workdir=workdir,
         )
-        copt.control_opt_below_rated()
-        output = copt.control_opt_above_rated()
+
+    def run(self):
+        """
+        Run the CCBlade analysis.
+        """
+        self.copt.control_opt_below_rated()
+        output = self.copt.control_opt_above_rated()
 
         del output["W"]
 
-        # for i in output:
-        #     print(i, output[i].shape)
+        # Save the output to a CSV file
+        workdir = self.dct["general"]["workdir"]
         df = pd.DataFrame(output).dropna()
         df.to_csv(os.path.join(workdir, "ccblade_output.csv"), sep=";")
-
-    def __str__(self):
-        return ""
 
 
 def main():
@@ -578,7 +579,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("blade", help="blade file")
     args = parser.parse_args()
-    ccblade_run(args.blade)
+    ccblade_run(args.blade).run()
 
 
 if __name__ == "__main__":

@@ -24,6 +24,8 @@ from b3p import (
     yml_portable,
 )
 
+from b3p import ccblade_run
+
 
 def wslpath_convert(path: str, to_windows: bool = False) -> str:
     """
@@ -560,6 +562,27 @@ class TwoDApp:
                 print(f"Failed to remove {msec_file}: {e}")
 
 
+class CCBladeApp:
+    def __init__(self, state):
+        self.state = state
+
+    def ccblade(self, yml: Path):
+        """
+        Run CCBlade on this model.
+
+        Args:
+            yml (Path): Path to the input file.
+        """
+        # dct = self.state.load_yaml(yml)
+        # prefix = self.state.get_prefix()
+
+        # Initialize ccblade_run with the blade file
+        ccblade = ccblade_run.ccblade_run(yml)
+
+        # Run the CCBlade analysis
+        ccblade.run()
+
+
 class CleanApp:
     def __init__(self, state):
         """
@@ -595,6 +618,7 @@ app = App(help="""Blade Design CLI""")
 build_app = App(name="build")
 ccx_app = App(name="ccx")
 twod_app = App(name="2d")
+ccblade_app = App(name="ccblade")
 
 state = AppState.get_instance()
 
@@ -621,12 +645,17 @@ twod_app.command(d2d.mesh2d)
 twod_app.default(d2d.run_anba4)
 twod_app.command(d2d.clean)
 
+ccb = CCBladeApp(state)
+ccblade_app.default(ccb.ccblade)
+
+
 # Register Clean Command
 clean = CleanApp(state)
 app.command(clean.clean)
 app.command(build_app)
 app.command(ccx_app)
 app.command(twod_app)
+app.command(ccblade_app)
 
 
 def main():
