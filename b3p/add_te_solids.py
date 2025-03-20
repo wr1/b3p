@@ -5,6 +5,7 @@ import numpy as np
 import os
 import glob
 import json
+import warnings
 
 
 def add_zero_arrays(msh, mesh):
@@ -165,6 +166,15 @@ def add_bondline_to_vtu(
 
 
 def get_bondline_material(d):
+    """
+    Retrieve bondline material ID and width from the configuration.
+
+    Args:
+        d (dict): Blade dictionary containing configuration data.
+
+    Returns:
+        tuple: Bondline material ID and bondline width, or (None, None) if not found.
+    """
     wd = d["general"]["workdir"]
     mmap = os.path.join(wd, "material_map.json")
 
@@ -178,13 +188,23 @@ def get_bondline_material(d):
 
             bondline_material = d["mesh"]["bondline"]["material"]
 
-            bondline_material_id = mm[bondline_material]
+            bondline_material_id = mm.get(bondline_material, None)
+
+            if bondline_material_id is None:
+                warnings.warn(
+                    f"Bondline material '{bondline_material}' not found in material map."
+                )
+                return None, None
 
             return bondline_material_id, bondline_width
         else:
-            exit("no bondline found")
+            warnings.warn(
+                "No bondline configuration found in the mesh section. Proceeding without bondline."
+            )
+            return None, None
     else:
-        exit("no material map found")
+        warnings.warn("Material map file not found. Proceeding without bondline.")
+        return None, None
 
 
 def add_bondline(bladedict):
