@@ -213,6 +213,9 @@ def add_bondline(bladedict):
     )
     vtu = glob.glob(prefix + "*joined.vtu")
     bondline_material_id, bondline_width = get_bondline_material(bladedict)
-    add_bondline_to_vtu(
-        vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id
-    )
+    if bondline_material_id is not None:
+        add_bondline_to_vtu(
+            vtu[0],
+            bondline_width=bondline_width,
+            bondline_material_id=bondline_material_id,
+        )

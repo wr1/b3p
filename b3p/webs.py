@@ -2,6 +2,7 @@
 
 import vtk
 import numpy as np
+import json
 
 
 def write_web(
@@ -14,17 +15,22 @@ def write_web(
     tip=0.0,
     zone="d_rel_dist_from_te",
 ):
-    """
-    Slices a plane through a mesh, and reports back a relative
+    """Slices a plane through a mesh, and reports back a relative
     coordinate of top and bottom lines. This is used to represent geometrically straight entities
-    in 3D as coordinates in local systems defined per section
+    in 3D as coordinates in local systems defined per section.
 
-    :param loc: location of the plane
-    :param normal: normal of the plane
-    :param mesh: mesh to slice
-    :param rootcut: cut the root of the web
-    :param tipcut: cut the tip of the web
-    :param tip: tip of the blade
+    Args:
+        loc (np.ndarray): location of the plane
+        normal (tuple): normal of the plane
+        mesh (str): mesh to slice
+        name (str): name of the web
+        rootcut (float, optional): cut the root of the web. Defaults to 0.0.
+        tipcut (float, optional): cut the tip of the web. Defaults to 100.0.
+        tip (float, optional): tip of the blade. Defaults to 0.0.
+        zone (str, optional): zone of the blade. Defaults to "d_rel_dist_from_te".
+
+    Returns:
+        list: A list of tuples, each containing (rr, wwl, lwl, rt1[i])
     """
 
     rd = vtk.vtkXMLPolyDataReader()
@@ -89,13 +95,45 @@ def write_web(
     if tip > out[-1][0]:
         out.append((tip, out[-1][1], out[-1][2], out[-1][3]))
 
-    open("%s.txt" % name, "wb").write(str(out).encode("utf-8"))
-    open("%s_points.txt" % name, "wb").write(str([lwp, wwp]).encode("utf-8"))
+        # Prepare data for JSON serialization
+        data = {
+            "name": name,
+            "data": out,
+            "points": {"lwp": [list(p) for p in lwp], "wwp": [list(p) for p in wwp]},
+        }
+
+        # Write data to a JSON file
+        with open(f"{name}.json", "w") as f:
+            json.dump(data, f, indent=4)
+
+    # open("%s.txt" % name, "wb").write(str(out).encode("utf-8"))
+    # open("%s_points.txt" % name, "wb").write(str([lwp, wwp]).encode("utf-8"))
 
     return out
 
 
 def build_webs(mesh, webs, prefix="__dum"):
+    """Builds web meshes based on provided web definitions.
+    Args:
+        mesh (object): The base mesh object to which the webs will be attached.
+        webs (dict): A dictionary defining the webs to be created.
+            Each key in the dictionary represents the name of a web, and the
+            corresponding value is a dictionary containing the web's properties,
+            including:
+                "origin" (list/array-like): The origin point of the web.
+                "z_start" (float): The z-coordinate where the web starts.
+                "z_follow_blade" (float): The z-coordinate where the web follows the blade.
+                "z_end" (float): The z-coordinate where the web ends.
+                "orientation" (list/array-like, optional): The normal vector
+                    defining the orientation of the web. Defaults to (0, 1, 0).
+        prefix (str, optional): A prefix to be added to the name of each web mesh.
+            Defaults to "__dum".
+    Returns:
+        dict: A dictionary containing the generated web meshes. The keys of the
+            dictionary are the names of the webs, and the values are the
+            corresponding mesh objects.
+    """
+
     web_meshes = {}
     for i in webs:
         normal = (0, 1, 0)

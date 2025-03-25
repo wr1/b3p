@@ -24,7 +24,13 @@ from b3p import (
     yml_portable,
 )
 
-from b3p import ccblade_run
+try:
+    from b3p import ccblade_run
+
+    has_ccblade = True
+except ImportError:
+    print("** Could not import ccblade_run. Functionality will be disabled.")
+    has_ccblade = False
 
 
 def wslpath_convert(path: str, to_windows: bool = False) -> str:
@@ -573,14 +579,14 @@ class CCBladeApp:
         Args:
             yml (Path): Path to the input file.
         """
-        # dct = self.state.load_yaml(yml)
-        # prefix = self.state.get_prefix()
+        if has_ccblade:
+            # Initialize ccblade_run with the blade file
+            ccblade = ccblade_run.ccblade_run(yml)
 
-        # Initialize ccblade_run with the blade file
-        ccblade = ccblade_run.ccblade_run(yml)
-
-        # Run the CCBlade analysis
-        ccblade.run()
+            # Run the CCBlade analysis
+            ccblade.run()
+        else:
+            print("** ccblade_run is not available.")
 
 
 class CleanApp:
