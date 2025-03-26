@@ -163,10 +163,6 @@ def solve_anba4(mesh_filename, material_db_filename):
     # Read .xdmf directly with PyVista, handling potential lack of time steps
     pv_mesh = pv.read(mesh_filename.replace(".xdmf", "_tri.vtp"))
 
-    # logger.debug(f"Full mesh material IDs: {pv_mesh.cell_data['mat'].tolist()}")
-    if len(pv_mesh.cell_data["mat"]) > 336:
-        logger.debug(f"Mesh material ID at index 336: {pv_mesh.cell_data['mat'][336]}")
-
     materials = MeshFunction("size_t", mesh, mesh.topology().dim())
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
