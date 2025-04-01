@@ -2,18 +2,19 @@ from pathlib import Path
 import os
 import pickle
 from b3p import (
-    build_plybook,
-    add_te_solids,
     yml_portable,
 )
-from b3p.core import (
-    add_load_to_mesh,
+from b3p.geometry import (
     build_blade_geometry,
+)
+from b3p.mesh import (
+    add_load_to_mesh,
+    add_te_solids,
     build_blade_structure,
     combine_meshes,
-    drape_mesh,
-    drape_summary,
 )
+
+from b3p.laminates import build_plybook, drape_mesh, drape_summary
 
 
 class BuildApp:

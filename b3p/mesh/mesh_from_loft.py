@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-from b3p.core import geometry_section
-from b3p.core import geometry_blade_shape
-from b3p.core import geometry_web
+from b3p.geometry import geometry_section
+from b3p.geometry import geometry_blade_shape
+from b3p.geometry import geometry_web
 import pickle
 
 

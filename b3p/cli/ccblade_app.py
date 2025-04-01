@@ -1,11 +1,13 @@
 from pathlib import Path
 
 try:
-    from b3p import ccblade_run
+    from b3p.bem import ccblade_run
+
     has_ccblade = True
 except ImportError:
     print("** Could not import ccblade_run. Functionality will be disabled.")
     has_ccblade = False
+
 
 class CCBladeApp:
     def __init__(self, state):

@@ -6,7 +6,7 @@ license = "MIT"
 name = "b3p"
 packages = [{include = "b3p"}]
 readme = "README.md"
-version = "v0.0.4rc11"
+version = "v0.0.4rc9"
 
 [tool.poetry.dependencies]
 # ccblade = {git = "https://github.com/wr1/CCBlade.git"}

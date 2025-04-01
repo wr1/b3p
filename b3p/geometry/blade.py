@@ -1,6 +1,6 @@
 from b3p import splining
-from b3p import loft_utils
-from b3p.core import blade_section
+from b3p.geometry import loft_utils
+from b3p.geometry import blade_section
 
 import pandas as pd
 import numpy as np

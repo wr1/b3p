@@ -2,8 +2,8 @@
 
 import os
 from copy import deepcopy as dc
-import b3p.core.blade
-import b3p.loft_utils
+import b3p.geometry.blade
+import b3p.geometry.loft_utils
 import numpy as np
 
 
@@ -14,7 +14,7 @@ def build_blade_geometry(config, xfoil=True):
     :param config: b3p dictionary
     """
     pln = config["planform"]
-    blade = b3p.core.blade.blade(
+    blade = b3p.geometry.blade.blade(
         pln["chord"],
         pln["thickness"],
         pln["twist"],
@@ -22,7 +22,9 @@ def build_blade_geometry(config, xfoil=True):
         pln["dy"],
         pln["z"],
         config["aero"]["airfoils"],
-        chordwise_sampling=b3p.loft_utils.optspace(config["planform"]["npchord"]),
+        chordwise_sampling=b3p.geometry.loft_utils.optspace(
+            config["planform"]["npchord"]
+        ),
         np_spanwise=config["planform"]["npspan"],
     )
     wd = config["general"]["workdir"]

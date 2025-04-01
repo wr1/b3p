@@ -1,7 +1,7 @@
 import vtk
-from b3p.core import geometry_section
+from b3p.geometry import geometry_section
 import numpy
-from b3p.core import geom_utils
+from b3p.geometry import geom_utils
 
 
 class blade_shape:

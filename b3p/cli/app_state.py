@@ -1,9 +1,12 @@
 from pathlib import Path
 import os
-from b3p import yml_portable, build_plybook
+from b3p import yml_portable
+from b3p.laminates import build_plybook
+
 
 class AppState:
     """Singleton to manage application state."""
+
     _state = None
 
     def __init__(self):
@@ -29,7 +32,9 @@ class AppState:
     def make_workdir(self, yml: Path):
         if self.dct is None:
             self.load_yaml(yml)
-        prefix = os.path.join(self.dct["general"]["workdir"], self.dct["general"]["prefix"])
+        prefix = os.path.join(
+            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
+        )
         if not os.path.isdir(prefix):
             os.makedirs(prefix)
 
