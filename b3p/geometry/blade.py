@@ -23,17 +23,6 @@ class blade:
         chordwise_sampling,
         np_spanwise=100,
     ):
-        """Build a blade geometry from a yaml file
-
-        :param chord: list of chord lengths
-        :param thickness: list of relative thicknesses
-        :param twist: list of twist angles
-        :param dx: list of x offsets
-        :param dy: list of y offsets
-        :param z: list of z offsets
-        :param airfoils: dict of airfoils
-        :param chordwise_sampling: list of chordwise sampling points
-        :param np_spanwise: number of spanwise points"""
         self.np_spanwise = np_spanwise
         self.np_chordwise = len(chordwise_sampling)
         self._load_airfoils(airfoils, chordwise_sampling)
@@ -41,13 +30,6 @@ class blade:
         self._place_airfoils()
 
     def to_table(self, x, prefix="prebend_out"):
-        """
-        write out a table of the blade
-
-        parameters:
-            x (list) : list of sections where airfoils are to be interpolated
-            prefix (str) : prefix for output file
-        """
         cols = [
             "relative_r",
             "z",
@@ -77,14 +59,6 @@ class blade:
         df.to_csv(f"{prefix}.csv", index=False, sep=";")
 
     def _load_airfoils(self, airfoils, x):
-        """
-        fill self.airfoil by interpolating from input airfoil set
-
-        args:
-            airfoils (dict) : airfoils dict
-
-            x (list) : list of sections where airfoils are to be interpolated
-        """
         print("** loading airfoils")
         self.airfoils = {}
         for i in sorted(airfoils):
@@ -104,18 +78,6 @@ class blade:
             self.airfoils[i] = loft_utils.interp(x, t)[:2]
 
     def _interpolate_planform(self, chord, thickness, twist, dx, dy, z):
-        """
-        spline the planform based on parameters
-
-        parameters:
-            chord (list) : chord distribution [(r,chord),..]
-            thickness (list) : thickness distribution [(r,t),..] --> relative
-            twist (list) : twist distribution [(r,twist),..]
-            dx (list) : x distribution [(r,x),..]
-            dy (list) : y distribution [(r,y),..]
-            z (list) : z distribution [(r,z),..]
-            flatten_lw (bool): flag indicating whether to run LW side flattening
-        """
         self.x = np.linspace(0, 1.0, self.np_spanwise)
         (
             self.input_chord,
@@ -143,16 +105,6 @@ class blade:
         ]
 
     def plot(self, name="_dum", fname="_out.png"):
-        """
-        plot parameter distributions
-
-        args:
-            name (str) : blade candidate name
-
-            fname (str): plot output file name
-
-        """
-
         fig, ax = plt.subplots(3, 3, figsize=(15, 15))
 
         ax[0, 0].plot(self.x, self.chord[1], label=name)
@@ -213,12 +165,6 @@ class blade:
 
         fig.tight_layout()
         fig.savefig(fname, dpi=100)
-
-    # # TODO Rename this here and in `plot`
-    # def title_plot(self, arg0, arg1):
-    #     plt.title(arg0)
-    #     plt.grid(True)
-    #     plt.subplot(3, 3, arg1)
 
     def _interpolate_airfoils(self):
         v = [
