@@ -2,11 +2,9 @@
 
 import os
 from copy import deepcopy as dc
-import b3p.blade
+import b3p.core.blade
 import b3p.loft_utils
 import numpy as np
-
-import pickle
 
 
 def build_blade_geometry(config, xfoil=True):
@@ -16,7 +14,7 @@ def build_blade_geometry(config, xfoil=True):
     :param config: b3p dictionary
     """
     pln = config["planform"]
-    blade = b3p.blade.blade(
+    blade = b3p.core.blade.blade(
         pln["chord"],
         pln["thickness"],
         pln["twist"],
@@ -42,7 +40,7 @@ def build_blade_geometry(config, xfoil=True):
             prefix=os.path.join(
                 wd,
                 "airfoil_out",
-                f'xs_{config["general"]["prefix"]}',
+                f"xs_{config['general']['prefix']}",
             )
         )
     blade.plot(f"{wdp}", fname=f"{wdp}.png")

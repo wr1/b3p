@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-import fire
 import pyvista as pv
 import numpy as np
 from matplotlib import pyplot as plt
@@ -32,7 +31,6 @@ class plot_ccx:
         return self
 
     def __plot3d(self, mesh, output_path):
-
         # Deform the mesh using the ChannelDisplacement filter
         deformed_mesh = mesh.warp_by_vector("disp", factor=1)
 
@@ -99,10 +97,3 @@ class plot_ccx:
         ax.grid(True)
         fig.savefig(output_path)
         print(f"Saved {output_path}")
-
-
-# def main():
-#     deform_and_color_mesh
-
-if __name__ == "__main__":
-    fire.Fire(fea_results)

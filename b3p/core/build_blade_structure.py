@@ -3,7 +3,7 @@
 import os
 
 from b3p.core import mesh_from_loft
-from b3p import webs
+from b3p.core import webs
 
 
 def build_blade_structure(config):

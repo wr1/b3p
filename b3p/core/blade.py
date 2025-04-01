@@ -1,6 +1,6 @@
 from b3p import splining
 from b3p import loft_utils
-from b3p import blade_section
+from b3p.core import blade_section
 
 import pandas as pd
 import numpy as np
@@ -8,6 +8,7 @@ from copy import deepcopy as dc
 from matplotlib import pyplot as plt
 import pickle
 import pyvista as pv
+
 
 class blade:
     def __init__(
@@ -152,43 +153,63 @@ class blade:
 
         """
 
-        fig, ax = plt.subplots(3,3,figsize=(15, 15))
+        fig, ax = plt.subplots(3, 3, figsize=(15, 15))
 
-        ax[0,0].plot(self.x, self.chord[1], label=name)
-        ax[0,0].plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
-        ax[0,0].set_xlabel("rel span (-)")
-        ax[0,0].legend(loc="best").get_frame().set_alpha(0.5)
+        ax[0, 0].plot(self.x, self.chord[1], label=name)
+        ax[0, 0].plot(
+            self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input"
+        )
+        ax[0, 0].set_xlabel("rel span (-)")
+        ax[0, 0].legend(loc="best").get_frame().set_alpha(0.5)
 
-        ax[2,1].plot(self.x, self.chord[1], label=name)
-        ax[2,1].plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
-        ax[2,1].grid(True)
-        ax[2,1].set_xlim(0.9, 1)
+        ax[2, 1].plot(self.x, self.chord[1], label=name)
+        ax[2, 1].plot(
+            self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input"
+        )
+        ax[2, 1].grid(True)
+        ax[2, 1].set_xlim(0.9, 1)
 
-        ax[0,1].plot(self.x, self.twist[1], label=name)
-        ax[0,1].plot(self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input")
-        ax[0,2].plot(self.x, self.thickness[1], label=name)
-        ax[0,2].plot(
+        ax[0, 1].plot(self.x, self.twist[1], label=name)
+        ax[0, 1].plot(
+            self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input"
+        )
+        ax[0, 2].plot(self.x, self.thickness[1], label=name)
+        ax[0, 2].plot(
             self.input_thickness[0],
             self.input_thickness[1],
             "o",
             label=f"{name}_input",
         )
-        ax[1,0].plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        ax[2,0].plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        ax[2,0].set_xlim(0, 0.2)
+        ax[1, 0].plot(
+            self.absolute_thickness[0], self.absolute_thickness[1], label=name
+        )
+        ax[2, 0].plot(
+            self.absolute_thickness[0], self.absolute_thickness[1], label=name
+        )
+        ax[2, 0].set_xlim(0, 0.2)
 
-        ax[1,1].plot(self.dx[0], self.dx[1], label=f"{name}_x")
-        ax[1,1].plot(self.input_dx[0], self.input_dx[1], "o", label=f"{name}_input")
-        ax[1,2].plot(self.dy[0], self.dy[1], label=f"{name}_y")
-        ax[1,2].plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
-        
-        titles = ["chord rotor_diam=%.3f" % (2.0 * max(self.z[1])),'twist','relative thickness','absolute thickness','dx','dy', 'abs thickness root','tip chord','']
+        ax[1, 1].plot(self.dx[0], self.dx[1], label=f"{name}_x")
+        ax[1, 1].plot(self.input_dx[0], self.input_dx[1], "o", label=f"{name}_input")
+        ax[1, 2].plot(self.dy[0], self.dy[1], label=f"{name}_y")
+        ax[1, 2].plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
+
+        titles = [
+            "chord rotor_diam=%.3f" % (2.0 * max(self.z[1])),
+            "twist",
+            "relative thickness",
+            "absolute thickness",
+            "dx",
+            "dy",
+            "abs thickness root",
+            "tip chord",
+            "",
+        ]
 
         for i in zip(ax.flatten(), titles):
             i[0].grid(True)
             i[0].set_title(i[1])
 
-        ax[2,2].remove()
+        ax[2, 2].remove()
 
         fig.tight_layout()
         fig.savefig(fname, dpi=100)

@@ -3,14 +3,17 @@ import os
 import pickle
 from b3p import (
     build_plybook,
-    drape_mesh,
-    combine_meshes,
-    add_load_to_mesh,
-    drape_summary,
     add_te_solids,
     yml_portable,
 )
-from b3p.core import build_blade_geometry, build_blade_structure
+from b3p.core import (
+    add_load_to_mesh,
+    build_blade_geometry,
+    build_blade_structure,
+    combine_meshes,
+    drape_mesh,
+    drape_summary,
+)
 
 
 class BuildApp:

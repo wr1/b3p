@@ -77,14 +77,12 @@ def drape_summary(vtu, matmap=None):
             }
 
     dt = pd.DataFrame(out).T
-    # print("Drape Summary:")
-    # print(dt)
     print("Total Volume and Mass:")
     print(dt.sum()[["volume", "mass"]].T)
     print(f"Total volume backcheck: {total_volume.sum():.4f} m^3")
     print(f"Total mass backcheck: {total_mass1:.4f} kg")
     sum_mass_mom = mass_moment.sum()
-    print(f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom/dt.sum()['mass']}")
+    print(f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom / dt.sum()['mass']}")
     return dt
 
 
