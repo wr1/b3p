@@ -3,11 +3,11 @@ name: Run Tests
 on:
   push:
     branches:
-      - main  # Run tests on pushes to the main branch
-      - cli 
+      - master  # Run tests on pushes to the main branch
+      - dev
   pull_request:
     branches:
-      - main  # Run tests on pull requests targeting the main branch
+      - master  # Run tests on pull requests targeting the main branch
 
 jobs:
   test:
