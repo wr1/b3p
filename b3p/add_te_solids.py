@@ -5,6 +5,7 @@ import numpy as np
 import os
 import glob
 import json
+import warnings
 
 
 def add_zero_arrays(msh, mesh):
@@ -119,7 +120,7 @@ def add_bondline_to_vtu(
     df["bw"] = np.interp(df.rr, bw[:, 0], bw[:, 1])
 
     shell_pts = df[df.is_web == 0]
-    shell_pts.sort_values("d_abs_dist_from_te", inplace=True)
+    shell_pts = shell_pts.sort_values("d_abs_dist_from_te")
     grz = [g for g in shell_pts.groupby("z")]
 
     cells = []
@@ -165,12 +166,16 @@ def add_bondline_to_vtu(
 
 
 def get_bondline_material(d):
+    """
+    Retrieve bondline material ID and width from the configuration.
 
-    wd = os.path.join(
-        d["general"]["workdir"] + "_portable"
-        if "_portable" not in d["general"]["workdir"]
-        else d["general"]["workdir"]
-    )
+    Args:
+        d (dict): Blade dictionary containing configuration data.
+
+    Returns:
+        tuple: Bondline material ID and bondline width, or (None, None) if not found.
+    """
+    wd = d["general"]["workdir"]
     mmap = os.path.join(wd, "material_map.json")
 
     if os.path.exists(mmap):
@@ -179,28 +184,38 @@ def get_bondline_material(d):
         mm = json.load(open(material_map[0], "r"))
 
         if "bondline" in d["mesh"]:
-
             bondline_width = d["mesh"]["bondline"]["width"]
 
             bondline_material = d["mesh"]["bondline"]["material"]
 
-            bondline_material_id = mm[bondline_material]
+            bondline_material_id = mm.get(bondline_material, None)
+
+            if bondline_material_id is None:
+                warnings.warn(
+                    f"Bondline material '{bondline_material}' not found in material map."
+                )
+                return None, None
 
             return bondline_material_id, bondline_width
         else:
-            exit("no bondline found")
+            warnings.warn(
+                "No bondline configuration found in the mesh section. Proceeding without bondline."
+            )
+            return None, None
     else:
-        exit("no material map found")
+        warnings.warn("Material map file not found. Proceeding without bondline.")
+        return None, None
 
 
 def add_bondline(bladedict):
-    # wd = prefix
     prefix = os.path.join(
         bladedict["general"]["workdir"], bladedict["general"]["prefix"]
     )
     vtu = glob.glob(prefix + "*joined.vtu")
     bondline_material_id, bondline_width = get_bondline_material(bladedict)
-    add_bondline_to_vtu(
-        vtu[0], bondline_width=bondline_width, bondline_material_id=bondline_material_id
-    )
-
+    if bondline_material_id is not None:
+        add_bondline_to_vtu(
+            vtu[0],
+            bondline_width=bondline_width,
+            bondline_material_id=bondline_material_id,
+        )

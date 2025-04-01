@@ -3,8 +3,6 @@ import vtk
 import numpy as np
 import math
 import pyvista as pv
-
-# from matplotlib import pyplot as plt
 import copy
 
 
@@ -23,7 +21,7 @@ class section:
 
     """
 
-    def __init__(self, r, r_relative, points, min_te_thickness=0.002, open_te=True):
+    def __init__(self, r, r_relative, points, min_te_thickness=0.002, open_te=False):
         self.r = r
         self.r_relative = r_relative
         if open_te:
@@ -35,6 +33,8 @@ class section:
         for i in self.base_points:
             self.points.InsertNextPoint((i[0], i[1], r))
         self.poly = vtk.vtkPolyData()
+
+        # print(self.points)
         self.poly.SetPoints(self.points)
 
     def _open_te(self, points, te_thickness):
@@ -83,7 +83,7 @@ class section:
     ):
         if panel_mesh_scale is None:
             panel_mesh_scale = []
-        tol = 1e-9
+        # tol = 1e-9
         if webs == []:
             return np.linspace(0.0, 1.0, n_points)
         # compute where the web splits are on average (assuming they don't
@@ -215,6 +215,7 @@ class section:
 
         lechord = [-i + 1.0 for i in chord]
         lechord_absolute = [i * (cline[0] ** 2 + cline[1] ** 2) ** 0.5 for i in lechord]
+        techord_abs = [i * (cline[0] ** 2 + cline[1] ** 2) ** 0.5 for i in chord]
 
         le_datum = [math.fabs(dist[le_point] - i) for i in dist]
 
@@ -271,7 +272,9 @@ class section:
             "zone_ps": pressure_side,
             "d_te_r": [i / max(te_datum) for i in te_datum],
             "d_le_r": [i / max(le_datum) for i in le_datum],
-            "d_chord": [1.0 - i for i in chord],
+            "d_chord": chord,
+            "d_techord": chord,
+            "d_techord_abs": techord_abs,
             "d_lechord": lechord,
             "d_lechord_abs": lechord_absolute,
             "d_x": x_abs,

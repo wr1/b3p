@@ -77,8 +77,8 @@ def drape_summary(vtu, matmap=None):
             }
 
     dt = pd.DataFrame(out).T
-    print("Drape Summary:")
-    print(dt)
+    # print("Drape Summary:")
+    # print(dt)
     print("Total Volume and Mass:")
     print(dt.sum()[["volume", "mass"]].T)
     print(f"Total volume backcheck: {total_volume.sum():.4f} m^3")

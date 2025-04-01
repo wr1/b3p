@@ -1,165 +1,255 @@
-#! /usr/bin/env python3
-from dolfin import *
-from anba4 import *
+#!/usr/bin/env python3
 import argparse
-import multiprocessing
 import json
-import numpy as np
-import yaml
+import logging
+import multiprocessing
 import os
+import traceback
+import numpy as np
 import pyvista as pv
-from functools import partial
+from dolfin import Mesh, XDMFFile, MeshFunction
+from anba4 import (
+    material,
+    anbax,
+    DecoupleStiffness,
+    PrincipalAxesRotationAngle,
+    ComputeMassCenter,
+    ComputeTensionCenter,
+    ComputeShearCenter,
+)
+import yaml
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 
-def get_material_db(material_map):
-    assert os.path.isfile(material_map)
-    mm = json.load(open(material_map, "r"))
+def get_material_db(material_map, unit_factor=1):
+    """Load and process a material database from a JSON material map file."""
+    if not os.path.isfile(material_map):
+        raise FileNotFoundError(f"Material map file not found: {material_map}")
+
+    with open(material_map, "r") as f:
+        mm = json.load(f)
+
     gdir = os.path.dirname(material_map)
-
-    mat_db = None
-    if "matdb" in mm:  # check if the material map file points to a material db
-        mat_db = yaml.safe_load(open(os.path.join(gdir, mm["matdb"])))
-        # , Loader=yaml.CLoader)
-
-        # check if there is a -1 material in the matdb, and assign it
-        # this material ID is used by the section mesher for the bondlines
-        # that connect the webs to the shell
-        if "-1" in mat_db:
-            mm["-1"] = -1
-    else:
-        exit(
-            "material map available, but no link to material db, need matdb definition to do FEA"
+    if "matdb" not in mm:
+        raise ValueError(
+            "Material map must contain 'matdb' key pointing to material database"
         )
 
-    mm_inv = {v: k for k, v in mm.items()}
+    mat_db_path = os.path.join(gdir, mm["matdb"])
+    if not os.path.isfile(mat_db_path):
+        raise FileNotFoundError(f"Material database file not found: {mat_db_path}")
+
+    with open(mat_db_path, "r") as f:
+        mat_db = yaml.safe_load(f)
+
+    if "-1" in mat_db:
+        mm["-1"] = -1
 
     materials = {}
-    for i in mm_inv:
-        if i != mm["matdb"]:
-            matdb_entry = mat_db[mm_inv[i]]
-            if "tEx" in matdb_entry:  # ortho material
-                matMechanicProp = np.zeros((3, 3))
-                matMechanicProp[0, 0] = matdb_entry["tEz"] * 1e6  # e_xx
-                matMechanicProp[0, 1] = matdb_entry["tEy"] * 1e6  # e_yy
-                matMechanicProp[0, 2] = matdb_entry["tEx"] * 1e6  # e_zz
+    for mat_name, mesh_id in mm.items():
+        if mat_name == "matdb":
+            continue
+        matdb_id = mat_name
+        if matdb_id not in mat_db:
+            logger.error(
+                f"Material ID {matdb_id} from material_map not found in materials.yaml"
+            )
+            raise KeyError(f"Material ID {matdb_id} not found in materials.yaml")
+        matdb_entry = mat_db[matdb_id]
+        logger.debug(
+            f"Processing material {matdb_id} (mesh ID {mesh_id}): {matdb_entry}"
+        )
+        density = matdb_entry.get("rho", matdb_entry.get("density", 1.0))
 
-                matMechanicProp[1, 0] = matdb_entry["tGxz"] * 1e6  # g_yz
-                matMechanicProp[1, 1] = matdb_entry["tGxy"] * 1e6  # g_xz
-                matMechanicProp[1, 2] = matdb_entry["tGyz"] * 1e6  # g_xy
+        # if "e11" in matdb_entry:
+        #     if "nu12" not in matdb_entry:
+        #         raise ValueError(
+        #             f"Missing 'nu12' for material {matdb_id} treated as isotropic. Entry: {matdb_entry}"
+        #         )
+        #     E = matdb_entry["e11"] * unit_factor
+        #     nu = min(matdb_entry["nu12"], 0.49)
+        #     materials[matdb_id] = material.IsotropicMaterial([E, nu], density)
 
-                matMechanicProp[2, 0] = matdb_entry["tnuxz"]  # nu_zy
-                matMechanicProp[2, 1] = matdb_entry["tnuxy"]  # nu_zx
-                matMechanicProp[2, 2] = matdb_entry["tnuyz"]  # nu_xy
-
-                materials[i] = material.OrthotropicMaterial(
-                    matMechanicProp, matdb_entry["rho"]
+        if "e11" in matdb_entry:
+            required_keys = [
+                "e11",
+                "e22",
+                "e33",
+                "g12",
+                "g13",
+                "g23",
+                "nu12",
+                "nu13",
+                "nu23",
+            ]
+            if not all(k in matdb_entry for k in required_keys):
+                raise ValueError(
+                    f"Missing orthotropic properties for material {matdb_id}: {required_keys}"
                 )
-            else:
-                materials[i] = material.IsotropicMaterial(
-                    [
-                        (
-                            matdb_entry["E"] * 1e6
-                            if "E" in matdb_entry
-                            else matdb_entry["Ex"] * 1e6
-                        ),
-                        matdb_entry["nu"],
-                    ],
-                    matdb_entry["rho"],
+            matMechanicProp = np.zeros((3, 3))
+            matMechanicProp[0, 2] = matdb_entry["e11"] * unit_factor
+            matMechanicProp[0, 1] = matdb_entry["e22"] * unit_factor
+            matMechanicProp[0, 0] = matdb_entry["e33"] * unit_factor
+            matMechanicProp[1, 2] = matdb_entry["g23"] * unit_factor
+            matMechanicProp[1, 1] = matdb_entry["g13"] * unit_factor
+            matMechanicProp[1, 0] = matdb_entry["g12"] * unit_factor
+            matMechanicProp[2, 2] = matdb_entry["nu23"]
+            matMechanicProp[2, 1] = matdb_entry["nu13"]
+            matMechanicProp[2, 0] = matdb_entry["nu12"]
+            materials[matdb_id] = material.OrthotropicMaterial(matMechanicProp, density)
+
+        else:
+            if "E" not in matdb_entry and "Ex" not in matdb_entry:
+                raise ValueError(
+                    f"Missing 'E' or 'Ex' for isotropic material {matdb_id}. Entry: {matdb_entry}"
                 )
+            if "nu" not in matdb_entry:
+                raise ValueError(
+                    f"Missing 'nu' for isotropic material {matdb_id}. Entry: {matdb_entry}"
+                )
+            E = matdb_entry.get("E", matdb_entry.get("Ex")) * unit_factor
+            nu = min(matdb_entry["nu"], 0.49)
+            materials[matdb_id] = material.IsotropicMaterial([E, nu], density)
 
-    return materials
+    mm_inv = {str(v): k for k, v in mm.items() if k != "matdb"}
+    logger.debug(f"Material map inverse: {mm_inv}")
+
+    return materials, mm_inv
 
 
-def run_mesh(meshname, matdb):
-    print(f"run {meshname}")
+def export_unit_strains(anba, result_file_name):
+    """Export strain fields for unit displacements to an XDMF file."""
+    result_file = XDMFFile(result_file_name)
+    result_file.parameters["functions_share_mesh"] = True
+    result_file.parameters["rewrite_function_mesh"] = False
+    result_file.parameters["flush_output"] = True
 
-    infile = XDMFFile(meshname)
-    mesh = Mesh()
-    infile.read(mesh)
+    anba.strain_field([0, 0, 0], [1, 0, 0], "local", "paraview")
+    result_file.write(anba.STRAIN, t=0.0)
+    anba.strain_field([0, 0, 0], [0, 1, 0], "local", "paraview")
+    result_file.write(anba.STRAIN, t=1.0)
+    anba.strain_field([0, 0, 0], [0, 0, 1], "local", "paraview")
+    result_file.write(anba.STRAIN, t=2.0)
 
-    pvmesh = pv.read(meshname)
+    logger.info(f"Wrote strain results to {result_file_name}")
 
-    # matid = MeshFunction("size_t", mesh, mesh.topology().dim())
 
-    # Basic material parameters. 9 is needed for orthotropic materials.
-    # TODO materials and orientations
-    # Meshing domain.
+def solve_anba4(mesh_filename, material_db_filename):
+    """Solve the ANBA4 problem for a mesh and material database."""
+    if not mesh_filename.endswith(".xdmf"):
+        logger.error(f"Expected .xdmf mesh file, got {mesh_filename}")
+        return
+    if not os.path.isfile(mesh_filename):
+        logger.error(f"Mesh file not found: {mesh_filename}")
+        return
+    if not os.path.isfile(material_db_filename):
+        logger.error(f"Material database file not found: {material_db_filename}")
+        return
+
+    json_output_filename = f"{mesh_filename}.json"
+    if os.path.isfile(json_output_filename):
+        logger.info(f"Output file {json_output_filename} exists, skipping")
+        return
+
+    logger.info(f"Processing {mesh_filename}")
+    material_db, mm_inv = get_material_db(material_db_filename)
+
+    with XDMFFile(mesh_filename) as infile:
+        mesh = Mesh()
+        infile.read(mesh)
+    # Read .xdmf directly with PyVista, handling potential lack of time steps
+    pv_mesh = pv.read(mesh_filename.replace(".xdmf", "_tri.vtp"))
+
     materials = MeshFunction("size_t", mesh, mesh.topology().dim())
     fiber_orientations = MeshFunction("double", mesh, mesh.topology().dim())
     plane_orientations = MeshFunction("double", mesh, mesh.topology().dim())
 
-    matuniq = np.unique(pvmesh.cell_data["mat"])  # material indices (from material_map)
+    material_unique_indices = np.unique(pv_mesh.cell_data["mat"])
+    material_unique_indices.sort()
+    logger.debug(f"Mesh material IDs: {material_unique_indices.tolist()}")
 
-    # map for materials in anba (index in matuniq)
-    mat_map_0 = dict(zip(matuniq, range(len(matuniq))))
+    material_map = {}
+    for mesh_id in material_unique_indices:
+        mesh_id_str = str(mesh_id)
+        if mesh_id_str not in mm_inv:
+            logger.error(
+                f"Mesh material ID {mesh_id_str} not found in material map inverse: {mm_inv}"
+            )
+            raise KeyError(f"Mesh material ID {mesh_id_str} not found in material map")
+        material_map[mesh_id] = mm_inv[mesh_id_str]
+    logger.debug(f"Material mapping: {material_map}")
 
-    matids = [mat_map_0[i] for i in pvmesh.cell_data["mat"].tolist()]
+    anba_map = {mesh_id: idx for idx, mesh_id in enumerate(material_unique_indices)}
+    logger.debug(f"ANBA4 mapping (mesh ID to index): {anba_map}")
 
-    plane_angles = list(pvmesh.cell_data["angle2"])
+    material_ids = [anba_map[i] for i in pv_mesh.cell_data["mat"].tolist()]
+    logger.debug(f"ANBA4 material IDs: {np.unique(material_ids).tolist()}")
 
-    materials.set_values(matids)
+    material_library = [
+        material_db[material_map[mesh_id]] for mesh_id in material_unique_indices
+    ]
+    logger.debug(
+        f"Material library order: {[material_map[mesh_id] for mesh_id in material_unique_indices]}"
+    )
 
-    # TODO, doesn't work for off axis laminates for now
-    fiber_orientations.set_all(0.0)
+    materials.set_values(material_ids)
+    fiber_orientations.set_all(0.0)  # TODO: Support off-axis laminates
+    plane_orientations.set_values(pv_mesh.cell_data["angle2"].tolist())
 
-    # transverse orientations
-    plane_orientations.set_values(plane_angles)
-
-    # Build material property library.
-
-    matLibrary = [matdb[i] for i in matuniq]
-
-    anba = anbax(mesh, 2, matLibrary, materials, plane_orientations, fiber_orientations)
-    stiff = anba.compute()
-
-    stiffness_matrix = stiff.getDenseArray()
+    anba = anbax(
+        mesh, 1, material_library, materials, plane_orientations, fiber_orientations
+    )
+    stiffness = anba.compute()
+    stiffness_matrix = stiffness.getDenseArray()
 
     mass = anba.inertia()
-
     mass_matrix = mass.getDenseArray()
 
-    decoupled_stiff = DecoupleStiffness(stiff)
-
-    angle = PrincipalAxesRotationAngle(decoupled_stiff)
-
+    decoupled_stiffness = DecoupleStiffness(stiffness)
+    principal_axes_rotation_angle = PrincipalAxesRotationAngle(decoupled_stiffness)
     mass_center = ComputeMassCenter(mass)
     tension_center = ComputeTensionCenter(stiffness_matrix)
     shear_center = ComputeShearCenter(stiffness_matrix)
+
     output = {
-        "name": meshname,
+        "name": mesh_filename,
         "stiffness": stiffness_matrix.tolist(),
         "mass_matrix": mass_matrix.tolist(),
-        "decoupled_stiffness": decoupled_stiff.tolist(),
-        "principal_axes_rotation": angle,
+        "decoupled_stiffness": decoupled_stiffness.tolist(),
+        "principal_axes_rotation": principal_axes_rotation_angle,
         "mass_center": mass_center,
         "tension_center": tension_center,
         "shear_center": shear_center,
     }
+    with open(json_output_filename, "w") as f:
+        json.dump(output, f, indent=4)
 
-    with open(f"{meshname}.json", "w") as write_file:
-        json.dump(output, write_file, indent=4)
+    result_filename = mesh_filename.replace(".xdmf", "_results.xdmf")
+    export_unit_strains(anba, result_filename)
 
 
-def main():
-    p = argparse.ArgumentParser(description="run a series of sections through anba4")
-    p.add_argument("meshes", nargs="*")
-    p.add_argument("matdb", help="material map json file")
-    p.add_argument("--debug", action="store_true")
-    args = p.parse_args()
+def run_solver(mesh, material_db):
+    """Wrapper to run solve_anba4 with error handling for multiprocessing."""
+    try:
+        solve_anba4(mesh, material_db)
+    except Exception as e:
+        logger.error(f"Failed to process {mesh}: {str(e)}\n{traceback.format_exc()}")
 
-    mdb = get_material_db(args.matdb)
 
-    part = partial(run_mesh, matdb=mdb)
-    if args.debug:
-        for i in args.meshes:
-            part(i)
-    else:
-        p = multiprocessing.Pool()
-        # run async seems to avoid a sporadic blocking error
-        # p.map(part, args.meshes)
-        r = p.map_async(part, args.meshes)
-        r.wait()
+def main(args):
+    """Process multiple meshes using ANBA4 solver in parallel."""
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        pool.starmap(run_solver, [(mesh, args.material_db) for mesh in args.meshes])
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Run ANBA4 solver on a series of mesh files."
+    )
+    parser.add_argument("meshes", nargs="*", help="List of XDMF mesh files")
+    parser.add_argument("material_db", help="Material map JSON file")
+    args = parser.parse_args()
+    main(args)

@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 import contextlib
-import os
 import numpy as np
 import vtk
 
@@ -56,9 +55,7 @@ def interp(x, points):
     Interpolate airfoil points using 3D vtkParametricSpline
 
     args:
-
         x : List of points in range [0,1]
-
         points: List of 3d points [(x,y,z),...] to interpolate through
     """
     pnts = vtk.vtkPoints()

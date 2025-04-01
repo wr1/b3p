@@ -19,7 +19,11 @@ __pycache__/
 *.txt
 *.png
 *.pck
+*.zip
+*.pyc
 
+# Ignore directories containing 'portable' in their name
+*portable*/
 
 # Distribution / packaging
 .Python

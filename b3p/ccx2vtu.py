@@ -80,7 +80,7 @@ class ccx2vtu:
             # Read the input data from the current file
             input_data = self.grids[grid]
             # pd.read_csv(file_name)
-            # print(grid)
+            print(grid)
             # print(input_data.point_data.keys())
 
             strain0 = next(

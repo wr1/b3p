@@ -7,9 +7,7 @@ import numpy as np
 from copy import deepcopy as dc
 from matplotlib import pyplot as plt
 import pickle
-import math
 import pyvista as pv
-
 
 class blade:
     def __init__(
@@ -25,6 +23,7 @@ class blade:
         np_spanwise=100,
     ):
         """Build a blade geometry from a yaml file
+
         :param chord: list of chord lengths
         :param thickness: list of relative thicknesses
         :param twist: list of twist angles
@@ -152,55 +151,53 @@ class blade:
             fname (str): plot output file name
 
         """
-        plt.figure(figsize=(15, 15))
-        plt.subplot(3, 3, 1)
-        plt.title("chord rotor_diam=%.3f" % (2.0 * max(self.z[1])))
-        plt.plot(self.x, self.chord[1], label=name)
-        plt.plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
-        plt.xlabel("rel span (-)")
-        plt.ylabel("chord (m)")
-        plt.grid(True)
-        plt.legend(loc="best").get_frame().set_alpha(0.5)
 
-        plt.subplot(3, 3, 8)
-        plt.plot(self.x, self.chord[1], label=name)
-        plt.plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
-        plt.grid(True)
-        plt.xlim(0.9, 1)
+        fig, ax = plt.subplots(3,3,figsize=(15, 15))
 
-        plt.title("tip chord")
-        plt.subplot(3, 3, 2)
-        plt.plot(self.x, self.twist[1], label=name)
-        plt.plot(self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input")
-        self.title_plot("twist", 3)
-        plt.plot(self.x, self.thickness[1], label=name)
-        plt.plot(
+        ax[0,0].plot(self.x, self.chord[1], label=name)
+        ax[0,0].plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
+        ax[0,0].set_xlabel("rel span (-)")
+        ax[0,0].legend(loc="best").get_frame().set_alpha(0.5)
+
+        ax[2,1].plot(self.x, self.chord[1], label=name)
+        ax[2,1].plot(self.input_chord[0], self.input_chord[1], "o", label=f"{name}_input")
+        ax[2,1].grid(True)
+        ax[2,1].set_xlim(0.9, 1)
+
+        ax[0,1].plot(self.x, self.twist[1], label=name)
+        ax[0,1].plot(self.input_twist[0], self.input_twist[1], "o", label=f"{name}_input")
+        ax[0,2].plot(self.x, self.thickness[1], label=name)
+        ax[0,2].plot(
             self.input_thickness[0],
             self.input_thickness[1],
             "o",
             label=f"{name}_input",
         )
-        self.title_plot("rel thickness", 4)
-        plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        self.title_plot("abs thickness", 7)
-        plt.plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
-        plt.title("abs thickness")
-        plt.grid(True)
-        plt.xlim(0, 0.2)
+        ax[1,0].plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
+        ax[2,0].plot(self.absolute_thickness[0], self.absolute_thickness[1], label=name)
+        ax[2,0].set_xlim(0, 0.2)
 
-        plt.subplot(3, 3, 5)
-        plt.plot(self.dx[0], self.dx[1], label=f"{name}_x")
-        plt.plot(self.input_dx[0], self.input_dx[1], "o", label=f"{name}_input")
-        plt.plot(self.dy[0], self.dy[1], label=f"{name}_y")
-        plt.plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
-        plt.legend(loc="best").get_frame().set_alpha(0.5)
-        plt.savefig(fname, dpi=100)
+        ax[1,1].plot(self.dx[0], self.dx[1], label=f"{name}_x")
+        ax[1,1].plot(self.input_dx[0], self.input_dx[1], "o", label=f"{name}_input")
+        ax[1,2].plot(self.dy[0], self.dy[1], label=f"{name}_y")
+        ax[1,2].plot(self.input_dy[0], self.input_dy[1], "o", label=f"{name}_input")
+        
+        titles = ["chord rotor_diam=%.3f" % (2.0 * max(self.z[1])),'twist','relative thickness','absolute thickness','dx','dy', 'abs thickness root','tip chord','']
 
-    # TODO Rename this here and in `plot`
-    def title_plot(self, arg0, arg1):
-        plt.title(arg0)
-        plt.grid(True)
-        plt.subplot(3, 3, arg1)
+        for i in zip(ax.flatten(), titles):
+            i[0].grid(True)
+            i[0].set_title(i[1])
+
+        ax[2,2].remove()
+
+        fig.tight_layout()
+        fig.savefig(fname, dpi=100)
+
+    # # TODO Rename this here and in `plot`
+    # def title_plot(self, arg0, arg1):
+    #     plt.title(arg0)
+    #     plt.grid(True)
+    #     plt.subplot(3, 3, arg1)
 
     def _interpolate_airfoils(self):
         v = [

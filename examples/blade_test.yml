@@ -62,6 +62,8 @@ mesh:
       z_follow_blade: 100
       z_end: 105
 
+  panel_mesh_scale: [[0,1]]
+
   n_web_points: 10
   n_chordwise_points: 100
   coordinates:
@@ -80,7 +82,7 @@ mesh:
 mesh2d:
   sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
 
-materials: materials_si.yml
+materials: materials_iso.yml
 
 laminates: laminates_v0.yml
 

@@ -73,12 +73,10 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
         if i > 1e-6:
             material_properties = mat_db[mm_inv[int(i)]]
             matblock += (
-                f'** material: {mm_inv[int(i)]} {i} {material_properties["name"]}\n'
+                f"** material: {mm_inv[int(i)]} {i} {material_properties['name']}\n"
             )
 
-            if (
-                "C" in material_properties and not force_iso
-            ):
+            if "C" in material_properties and not force_iso:
                 print(material_properties["name"], "is assumed to be orthotropic")
                 C = np.array(material_properties["C"])
                 # https://github.com/rsmith-nl/lamprop/blob/410ebfef2e14d7cc2988489ca2c31103056da38f/lp/text.py#L96
@@ -95,10 +93,10 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 D[3, 3] = C[5, 5]
                 D[5, 5] = C[3, 3]
                 matblock += (
-                    f"{D[0,0]:.4g},{D[0,1]:.4g},{D[1,1]:.4g},"
-                    + f"{D[0,2]:.4g},{D[1,2]:.4g},{D[2,2]:.4g},"
-                    + f"{D[3,3]:.4g},{D[4,4]:.4g},\n"
-                    + f"{D[5,5]:.4g},293\n"
+                    f"{D[0, 0]:.4g},{D[0, 1]:.4g},{D[1, 1]:.4g},"
+                    + f"{D[0, 2]:.4g},{D[1, 2]:.4g},{D[2, 2]:.4g},"
+                    + f"{D[3, 3]:.4g},{D[4, 4]:.4g},\n"
+                    + f"{D[5, 5]:.4g},293\n"
                 )
             elif "e11" in material_properties and not force_iso:
                 print(material_properties["name"], "has engineering constants")
@@ -121,9 +119,9 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     max(
                         0.1,
                         (
-                            float(material_properties["pr"])
-                            if "pr" in material_properties
-                            else material_properties["pr12"]
+                            float(material_properties["nu"])
+                            if "nu" in material_properties
+                            else material_properties["nu12"]
                         ),
                     ),
                 )
@@ -198,7 +196,7 @@ def nodebuffer(grid):
 
 def element_buffer(grid):
     conn = grid.cells_dict
-
+    print(conn)
     extypes = [23]
 
     vtk_ccx = {23: "s8r"}
@@ -208,8 +206,8 @@ def element_buffer(grid):
         ccxtype = vtk_ccx[tp]
         for n, i in enumerate(conn[tp]):
             conn[tp][n] = np.array(i) + 1
-            buf += f"*element,type={ccxtype},elset=e{n+1}\n"
-            buf += f"{n+1},{','.join(map(str, conn[tp][n]) )}\n"
+            buf += f"*element,type={ccxtype},elset=e{n + 1}\n"
+            buf += f"{n + 1},{','.join(map(str, conn[tp][n]))}\n"
 
     return buf
 
@@ -283,10 +281,10 @@ def mesh2ccx(
     vtu,
     out="test.inp",
     matmap="temp/material_map.json",
-    merge_adjacent_layers=False,
+    merge_adjacent_layers=True,
     zeroangle=False,
     single_step=False,
-    quadratic=False,
+    quadratic=True,
     add_centers=False,
     force_isotropic=False,
     export_hyperworks=False,
@@ -317,7 +315,7 @@ def mesh2ccx(
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
-    print(np.unique(gr.celltypes))
+    # print(np.unique(gr.celltypes))
 
     print(f"** Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
@@ -380,13 +378,13 @@ def mesh2ccx(
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
     print(f"max number of plies: {nplmax}")
-    print(f"associated stack \n{ blx[npxid[0]][1]}")
+    print(f"associated stack \n{blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
     print("** time spent creating shell sections %f" % (toc - tic))
     comps = "".join(
-        f"*shell section,composite,elset=e{n+1},offset=-.5"
-        + (f",orientation=or{n+1}\n" if zeroangle else "\n")
+        f"*shell section,composite,elset=e{n + 1},offset=-.5"
+        + (f",orientation=or{n + 1}\n" if zeroangle else "\n")
         + i[1]
         for n, i in enumerate(blx)
     )
@@ -396,6 +394,8 @@ def mesh2ccx(
     buf += root_clamp(mesh)
 
     loadcases = get_loadcases(mesh, buckling=buckling)
+
+    print(loadcases)
 
     output_files = []
     # write a full ccx file for each loadcase, assuming parallel execution
@@ -418,8 +418,10 @@ def mesh2ccx(
 
     return output_files
 
+
 def main():
     fire.Fire(mesh2ccx)
+
 
 if __name__ == "__main__":
     main()

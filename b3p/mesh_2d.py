@@ -38,7 +38,10 @@ def join_up(nodes, epid, stacks, sec, poly):
     angle = poly.GetCellData().GetArray("angle")
     for inn in nodes:  # loop over all nodes that need joining up
         i, el = inn
-        s0, s1 = np.array(stacks[el[0]]), np.array(stacks[el[1]])
+        s0, s1 = (
+            np.array(stacks[el[0]]).astype(float),
+            np.array(stacks[el[1]]).astype(float),
+        )
 
         s0 /= np.linalg.norm(s0)
         s1 /= np.linalg.norm(s1)
