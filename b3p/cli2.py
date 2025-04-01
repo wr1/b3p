@@ -19,10 +19,10 @@ from b3p import (
     ccx2vtu,
     ccxpost,
     drape_summary,
-    anba4_prep,
     add_te_solids,
     yml_portable,
 )
+from b3p.anba import anba4_prep
 
 try:
     from b3p import ccblade_run
@@ -523,7 +523,7 @@ class TwoDApp:
 
         # Call the new CLI script using the conda environment
         script_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "anba4_solve.py")
+            os.path.join(os.path.dirname(__file__), "anba", "anba4_solve.py")
         )
         print(f"** conda path: {conda_path}")
         print(f"** Running ANBA4 using {script_path}")

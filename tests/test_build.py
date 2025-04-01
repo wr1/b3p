@@ -3,27 +3,46 @@ import glob
 import os
 from b3p.cli2 import AppState, BuildApp
 from pathlib import Path
+import tempfile
+import shutil
 
 example_dir = Path("examples")
-workdir = example_dir / "temp_blade_portable"
-
-
-def build_output_exists():
-    """Check if the output of the build exists."""
-    print(workdir)
-    return os.path.exists(workdir)
+# workdir = example_dir / "temp_blade_portable"
+# def build_output_exists():
+#     """Check if the output of the build exists."""
+#     print(workdir)
+#     return os.path.exists(workdir)
 
 
 def run_tbuild():
     """Run step s1."""
-    if not build_output_exists():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # copy example dir to temp dir
+        example_dir = Path("examples")
+        dest_dir = Path(tmpdir)
+        shutil.copytree(example_dir, dest_dir / example_dir.name)
+        workdir = dest_dir / example_dir.name / "temp_blade_portable"
+
+        # def build_output_exists():
+        #     """Check if the output of the build exists."""
+        #     print(workdir)
+        #     return os.path.exists(workdir)
+
+        # if not build_output_exists():
         cd = os.getcwd()
-        os.chdir(example_dir)
+        os.chdir(dest_dir / example_dir.name)
         BuildApp(AppState()).build("blade_test.yml")
         # b3p_cli.build("blade_test.yml")
         os.chdir(cd)
-    else:
-        print("Output already exists.")
+
+    # if not build_output_exists():
+    #     cd = os.getcwd()
+    #     os.chdir(example_dir)
+    #     BuildApp(AppState()).build("blade_test.yml")
+    #     # b3p_cli.build("blade_test.yml")
+    #     os.chdir(cd)
+    # else:
+    #     print("Output already exists.")
 
 
 @pytest.fixture(scope="session")
