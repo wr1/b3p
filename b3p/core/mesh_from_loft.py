@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-from b3p import geometry_section
-from b3p import geometry_blade_shape
-from b3p import geometry_web
+from b3p.core import geometry_section
+from b3p.core import geometry_blade_shape
+from b3p.core import geometry_web
 import pickle
 
 
@@ -18,7 +18,6 @@ def build_mesh(
     added_datums=None,
     panel_mesh_scale=None,
 ):
-
     if added_datums is None:
         added_datums = {}
     if panel_mesh_scale is None:

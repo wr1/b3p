@@ -1,8 +1,7 @@
-from b3p import geom_utils
+from b3p.core import geom_utils
 import vtk
 import numpy as np
 import math
-import pyvista as pv
 import copy
 
 

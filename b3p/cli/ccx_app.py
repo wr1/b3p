@@ -2,7 +2,8 @@ from pathlib import Path
 import os
 import glob
 import multiprocessing
-from b3p import mesh2ccx, ccx2vtu, ccxpost
+from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
+
 
 class CcxApp:
     def __init__(self, state):
@@ -31,7 +32,15 @@ class CcxApp:
         )
         print(f"Written: {', '.join(output_files)}")
 
-    def solve(self, yml: Path, wildcard="", nproc=2, ccxexe="ccx", inpfiles=None, merged_plies=False):
+    def solve(
+        self,
+        yml: Path,
+        wildcard="",
+        nproc=2,
+        ccxexe="ccx",
+        inpfiles=None,
+        merged_plies=False,
+    ):
         dct = self.state.load_yaml(yml)
         prefix = self.state.get_prefix()
         if inpfiles is None:

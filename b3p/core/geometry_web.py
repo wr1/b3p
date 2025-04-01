@@ -1,8 +1,6 @@
 import vtk
 import numpy as np
-from b3p import geom_utils
 import pyvista as pv
-import math
 
 
 def equals(v1, v2):
@@ -11,10 +9,6 @@ def equals(v1, v2):
 
 
 def mesh_line(pnt1, pnt2, n_cells, id):
-    """
-    utility to mesh a line, adds a couple of parametric coordinates to aid
-    draping
-    """
     xyz = []
     web_height = vtk.vtkGeoMath().DistanceSquared(pnt1, pnt2) ** 0.5
 

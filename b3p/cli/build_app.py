@@ -2,8 +2,6 @@ from pathlib import Path
 import os
 import pickle
 from b3p import (
-    build_blade_geometry,
-    build_blade_structure,
     build_plybook,
     drape_mesh,
     combine_meshes,
@@ -12,6 +10,8 @@ from b3p import (
     add_te_solids,
     yml_portable,
 )
+from b3p.core import build_blade_geometry, build_blade_structure
+
 
 class BuildApp:
     def __init__(self, state):

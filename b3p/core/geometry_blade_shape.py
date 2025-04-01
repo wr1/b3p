@@ -1,7 +1,7 @@
 import vtk
-from b3p import geometry_section
+from b3p.core import geometry_section
 import numpy
-from b3p import geom_utils
+from b3p.core import geom_utils
 
 
 class blade_shape:
@@ -145,4 +145,4 @@ class blade_shape:
             print("no valid mesh available")
 
         for i in self.webs:
-            i.write_mesh(f'{i.name.replace(".txt", ".vtp")}')
+            i.write_mesh(f"{i.name.replace('.txt', '.vtp')}")
