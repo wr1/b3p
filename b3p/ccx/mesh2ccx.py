@@ -3,7 +3,6 @@
 import pyvista as pv
 import numpy as np
 import vtk
-import fire
 import time
 import json
 import os
@@ -404,11 +403,3 @@ def mesh2ccx(
         output_files.append(otb)
 
     return output_files
-
-
-def main():
-    fire.Fire(mesh2ccx)
-
-
-if __name__ == "__main__":
-    main()

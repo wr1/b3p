@@ -3,7 +3,6 @@
 import pandas as pd
 import pyvista
 import numpy as np
-import fire
 import glob
 import os
 import re
@@ -128,7 +127,3 @@ class ccx2vtu:
         # result_df = pd.concat(results)
 
         # return result_df
-
-
-if __name__ == "__main__":
-    fire.Fire(ccx2vtu)

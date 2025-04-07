@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 import glob
-import fire
-import os
 import pyvista as pv
 import pandas as pd
 import numpy as np
@@ -46,7 +44,8 @@ class plot_ccx:
             # Deform the mesh using the ChannelDisplacement filter
             deform = mesh.point_data[f"disp_{ts[0]}"]
             deformed_mesh = mesh.warp_by_vector(
-                f"disp_{ts[0]}", factor=1  # if isdisp else None
+                f"disp_{ts[0]}",
+                factor=1,  # if isdisp else None
             )
 
             if isdisp:  # f"strain_{i}" in mesh.point_data.keys():
@@ -132,7 +131,3 @@ class plot_ccx:
             fig.savefig(output_path, dpi=300)  # , transparent=True)
             print(f"Saved {output_path}")
             plt.close(fig)
-
-
-if __name__ == "__main__":
-    fire.Fire(plot_ccx)  # main()

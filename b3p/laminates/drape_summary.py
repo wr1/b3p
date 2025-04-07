@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import pyvista as pv
-import fire
 import numpy as np
 import json
 import os
@@ -84,12 +83,3 @@ def drape_summary(vtu, matmap=None):
     sum_mass_mom = mass_moment.sum()
     print(f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom / dt.sum()['mass']}")
     return dt
-
-
-def main():
-    fire.Fire(drape_summary)
-
-
-if __name__ == "__main__":
-    # fire.Fire(drape_summary)
-    main()
