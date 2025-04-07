@@ -13,14 +13,14 @@ def temp_example_dir(tmp_path_factory):
     """Fixture to create a temporary copy of the examples directory."""
     # Try project root first
     example_dir = Path("examples")
-    if not example_dir.exists():
-        # Fallback to parent b3p project directory if in snb
-        example_dir = Path("../b3p/examples")
-        if not example_dir.exists():
-            raise FileNotFoundError(
-                "Examples directory not found in project root or ../b3p/examples/. "
-                "Ensure 'examples/' exists in /home/wr1/projects/snb/ or /home/wr1/projects/b3p/."
-            )
+    # if not example_dir.exists():
+    #     # Fallback to parent b3p project directory if in snb
+    #     example_dir = Path("../b3p/examples")
+    #     if not example_dir.exists():
+    #         raise FileNotFoundError(
+    #             "Examples directory not found in project root or ../b3p/examples/. "
+    #             "Ensure 'examples/' exists in /home/wr1/projects/snb/ or /home/wr1/projects/b3p/."
+    #         )
 
     tmp_dir = tmp_path_factory.mktemp("build_examples")
     shutil.copytree(example_dir, tmp_dir / "examples")
@@ -38,7 +38,7 @@ def run_build(temp_example_dir):
         build_app.build(Path("blade_test.yml"))
 
         result = subprocess.run(
-            ["python", "-m", "b3p.cli2", "build", "blade_test.yml"],
+            ["python", "-m", "b3p.__main__", "build", "blade_test.yml"],
             capture_output=True,
             text=True,
         )
