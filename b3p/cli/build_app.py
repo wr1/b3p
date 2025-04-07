@@ -67,6 +67,7 @@ class BuildApp:
         print("Mass table per material")
         print(mass_table)
 
+    # TODO move this to the CCX app
     def apply_loads(self, yml: Path):
         dct = self.state.load_yaml(yml)
         add_load_to_mesh.add_load_to_mesh(

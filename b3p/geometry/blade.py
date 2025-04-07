@@ -1,4 +1,4 @@
-from b3p import splining
+from b3p.geometry import splining
 from b3p.geometry import loft_utils
 from b3p.geometry import blade_section
 
