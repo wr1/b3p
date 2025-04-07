@@ -10,14 +10,20 @@ from b3p.cli.build_app import BuildApp
 @pytest.fixture(scope="session")
 def temp_example_dir(tmp_path_factory):
     """Fixture to create a temporary copy of the examples directory."""
-    example_dir = Path("examples")
+    # Use path relative to this conftest file
+    base_dir = Path(__file__).parent.parent  # /home/wr1/projects/b3p/
+    example_dir = base_dir / "examples"  # /home/wr1/projects/b3p/examples/
     if not example_dir.exists():
-        pytest.skip("Examples directory not found; skipping build tests.")
+        raise FileNotFoundError(
+            f"Examples directory not found at {example_dir}. "
+            "Ensure 'examples/' exists in /home/wr1/projects/b3p/."
+        )
+    
     tmp_dir = tmp_path_factory.mktemp("build_examples")
     shutil.copytree(example_dir, tmp_dir / "examples")
 
     # Copy tests/data/ directory if it exists
-    data_dir = Path("tests/data")
+    data_dir = base_dir / "tests" / "data"
     if data_dir.exists():
         shutil.copytree(data_dir, tmp_dir / "data")
 
