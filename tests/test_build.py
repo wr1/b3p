@@ -3,23 +3,21 @@ import os
 import shutil
 import glob
 from pathlib import Path
-import tempfile
 import subprocess
 from b3p.cli.app_state import AppState
 from b3p.cli.build_app import BuildApp
 
 
 @pytest.fixture(scope="session")
-def temp_example_dir():
+def temp_example_dir(tmp_path_factory):
     """Fixture to create a temporary copy of the examples directory."""
     example_dir = Path("examples")
     if not example_dir.exists():
         pytest.skip("Examples directory not found; skipping build tests.")
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_example_dir = Path(tmpdir) / "examples"
-        shutil.copytree(example_dir, tmp_example_dir)
-        yield tmp_example_dir
+    tmp_dir = tmp_path_factory.mktemp("build_examples")
+    shutil.copytree(example_dir, tmp_dir / "examples")
+    return tmp_dir / "examples"
 
 
 @pytest.fixture(scope="session")
@@ -28,12 +26,10 @@ def run_build(temp_example_dir):
     original_dir = os.getcwd()
     os.chdir(temp_example_dir)
     try:
-        # Run the build using BuildApp directly
         state = AppState()
         build_app = BuildApp(state)
         build_app.build(Path("blade_test.yml"))
 
-        # Capture stdout by running the CLI command
         result = subprocess.run(
             ["python", "-m", "b3p.cli2", "build", "blade_test.yml"],
             capture_output=True,
@@ -94,8 +90,6 @@ def test_build_output_files(run_build):
 def test_build_stdout(run_build):
     """Test if key stdout messages are present."""
     stdout = run_build["stdout"]
-
-    print(stdout)
     expected_messages = [
         "** Loading yaml file blade_test.yml and loading linked files",
         "saving to temp_blade_portable/test_blade.vtp",
@@ -111,7 +105,6 @@ def test_build_stdout(run_build):
         "Mass table per material",
         "** written load plot to temp_blade_portable/test_blade_loads.png",
     ]
-
     for message in expected_messages:
         assert message in stdout, f"Expected message not found in stdout: {message}"
 
@@ -119,7 +112,6 @@ def test_build_stdout(run_build):
 def test_build_mass_table(run_build):
     """Test if the mass table in stdout matches expected values."""
     stdout = run_build["stdout"]
-
     mass_table_lines = [
         "11457.585028",
         "937.880619",
@@ -131,7 +123,6 @@ def test_build_mass_table(run_build):
         "1570.496484",
         "60831.405951",
     ]
-
     for line in mass_table_lines:
         assert line in stdout, f"Expected mass table entry not found: {line}"
 
