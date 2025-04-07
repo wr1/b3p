@@ -14,7 +14,7 @@ unfold:
 PYTHON = python
 
 # Test directories and files
-TEST_FILES = tests/test_2d.py  tests/test_bondline_model.py  tests/test_build.py  tests/test_drape.py  tests/test_geometry.py
+TEST_FILES = tests/test_2d.py  tests/test_bondline_model.py  tests/test_build.py  tests/test_drape.py  tests/test_geometry.py tests/test_ccx.py
 
 # Default target
 all: test
