@@ -31,6 +31,11 @@ class TwoDApp:
             var=f"{prefix}.var",
             parallel=parallel,
         )
+        if not section_meshes or not all(
+            Path(mesh).exists() for mesh in section_meshes
+        ):
+            print("** Error: Section meshes were not generated correctly.")
+            return []
         return anba4_prep.anba4_prep(section_meshes)
 
     def run_anba4(self, yml: Path, meshes: list = None, anba_env="anba4-env"):
@@ -57,7 +62,7 @@ class TwoDApp:
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
         print(f"** Running ANBA4 using {script_path}")
-        return subprocess.run(
+        result = subprocess.run(
             [
                 conda_path,
                 "run",
@@ -68,6 +73,8 @@ class TwoDApp:
                 *meshes,
                 material_map,
             ],
+            capture_output=True,
+            text=True,
             env={
                 **os.environ.copy(),
                 "OPENBLAS_NUM_THREADS": "1",
@@ -75,7 +82,15 @@ class TwoDApp:
                 "OMP_NUM_THREADS": "1",
                 "CUDA_VISIBLE_DEVICES": "-1",
             },
-        ).returncode
+        )
+        if result.returncode != 0:
+            print(f"** Error: ANBA4 script failed with return code {result.returncode}")
+            print(f"** Stdout: {result.stdout}")
+            print(f"** Stderr: {result.stderr}")
+        else:
+            print(f"** ANBA4 script completed successfully.")
+            print(f"** Stdout: {result.stdout}")
+        return result.returncode
 
     def clean(self, yml: Path):
         dct = self.state.load_yaml(yml)
