@@ -1,11 +1,11 @@
-from .test_build import run_test_build, workdir
+from .test_build import run_build
 
 import pyvista as pv
 
 
-def test_bondline_model(run_test_build):
+def test_bondline_model(run_build):
     """Test if the bondline model is created."""
-    bondline_vtu = workdir.glob("*bondline.vtu")
+    bondline_vtu = run_build["workdir"].glob("*bondline.vtu")
     print(bondline_vtu)
 
     # assert True

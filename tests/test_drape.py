@@ -1,13 +1,13 @@
-from .test_build import run_test_build, workdir
+from .test_build import run_build
 import glob
 import pyvista as pv
 import numpy as np
 
 
-def test_laminate_number_of_plies(run_test_build):
+def test_laminate_number_of_plies(run_build):
     """Test if the number of plies is correct."""
 
-    joined = glob.glob(f"{workdir}/*_joined.vtu")[-1]
+    joined = glob.glob(f"{run_build['workdir']}/*_joined.vtu")[-1]
 
     vtu = pv.read(joined)
 
@@ -374,7 +374,7 @@ def test_laminate_number_of_plies(run_test_build):
         atol=1e-4,
     )
 
-    # assert run_test_build["n_plies"] == 100
+    # assert run_build["n_plies"] == 100
 
 
 # import pytest
@@ -397,7 +397,7 @@ def test_laminate_number_of_plies(run_test_build):
 # def drape(get_yaml, build_blade, build_structure, plybook):
 #     """Build a plybook"""
 #     prefix = get_yaml["general"]["prefix"]
-#     wdir = get_yaml["general"]["workdir"]
+#     wdir = get_yaml["general"]["run_build['workdir']"]
 #     pref = os.path.join(wdir, prefix)
 #     return [
 #         drape_mesh.drape_mesh(

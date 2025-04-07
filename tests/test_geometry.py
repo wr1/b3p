@@ -1,4 +1,4 @@
-from .test_build import run_test_build, workdir
+from .test_build import run_build
 import os
 import pytest
 import pyvista as pv
@@ -8,12 +8,12 @@ import glob
 
 
 @pytest.fixture(scope="session")
-def load_geometry(run_test_build):
+def load_geometry(run_build):
     """Fixture to run step s2. Checks if output exists to avoid re-running."""
     return pv.read(os.path.join(workdir, "test_blade_joined.vtu"))
 
 
-def test_planform(run_test_build):
+def test_planform(run_build):
     df = pd.read_csv(
         StringIO("""relative_r;z;prebend;chord;relative_thickness;absolute_thickness;twist
 0.0;3.0;0.0;5.0;1.0;5.0;10.0
