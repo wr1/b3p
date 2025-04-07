@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import sys
 import vtk
 import os
 
@@ -10,7 +9,6 @@ import argparse
 import numpy as np
 import pandas as pd
 from numpy import array
-from scipy.spatial import distance
 import math
 import copy
 import pyvista as pv
