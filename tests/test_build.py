@@ -31,7 +31,7 @@ def run_build(temp_example_dir):
         build_app.build(Path("blade_test.yml"))
 
         result = subprocess.run(
-            ["python", "-m", "b3p.cli2", "build", "blade_test.yml"],
+            ["python", "-m", "b3p.cli", "build", "blade_test.yml"],
             capture_output=True,
             text=True,
         )
