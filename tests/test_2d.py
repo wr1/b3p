@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-from b3p.cli2 import AppState, TwoDApp
+from b3p.cli.app_state import AppState
+from b3p.cli.two_d_app import TwoDApp
 import shutil
 
 

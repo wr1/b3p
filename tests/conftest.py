@@ -15,12 +15,12 @@ def temp_example_dir(tmp_path_factory):
         pytest.skip("Examples directory not found; skipping build tests.")
     tmp_dir = tmp_path_factory.mktemp("build_examples")
     shutil.copytree(example_dir, tmp_dir / "examples")
-    
+
     # Copy tests/data/ directory if it exists
     data_dir = Path("tests/data")
     if data_dir.exists():
         shutil.copytree(data_dir, tmp_dir / "data")
-    
+
     return tmp_dir / "examples"
 
 
@@ -34,7 +34,7 @@ def run_build(temp_example_dir):
         build_app = BuildApp(state)
         build_app.build(Path("blade_test.yml"))
         result = subprocess.run(
-            ["python", "-m", "b3p.cli2", "build", "blade_test.yml"],
+            ["python", "-m", "b3p.__main__", "build", "blade_test.yml"],
             capture_output=True,
             text=True,
         )
@@ -43,7 +43,7 @@ def run_build(temp_example_dir):
             "stdout": result.stdout,
             "stderr": result.stderr,
             "returncode": result.returncode,
-            "temp_dir": temp_example_dir.parent  # Expose parent temp dir for data access
+            "temp_dir": temp_example_dir.parent,  # Expose parent temp dir for data access
         }
     finally:
         os.chdir(original_dir)
