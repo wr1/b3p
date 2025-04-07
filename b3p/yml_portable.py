@@ -2,7 +2,6 @@
 
 import numpy as np
 import re
-import fire
 import os
 
 from ruamel.yaml import YAML
@@ -62,7 +61,6 @@ def yaml_make_portable(yaml_file):
 
     for s in subsections:
         if type(d[s]) == str and d[s].find(".yml") != -1:
-
             print(f"\t** loading {s} from: {d[s]}")
             d[s] = yaml.load(open(os.path.join(prefix, d[s]), "r"))
 
@@ -89,11 +87,3 @@ def save_yaml_portable(yaml_file):
     d = yaml_make_portable(yaml_file)
     of = yaml_file.replace(".yml", "_portable.yml").replace(".yaml", "_portable.yml")
     save_yaml(of, d)
-
-
-def main():
-    fire.Fire(save_yaml_portable)
-
-
-if __name__ == "__main__":
-    main()

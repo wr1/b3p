@@ -1,4 +1,4 @@
-from . import blade
+from .geometry import blade
 import importlib.metadata
 
 NAME = "b3p"

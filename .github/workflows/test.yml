@@ -3,11 +3,11 @@ name: Run Tests
 on:
   push:
     branches:
-      - main  # Run tests on pushes to the main branch
-      - cli 
+      - master  # Run tests on pushes to the main branch
+      - dev
   pull_request:
     branches:
-      - main  # Run tests on pull requests targeting the main branch
+      - master  # Run tests on pull requests targeting the main branch
 
 jobs:
   test:
@@ -22,13 +22,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9  # Specify your Python version
+          python-version: 3.12  # Specify your Python version
 
       # Install dependencies
       - name: Install dependencies
         run: |
           pip install poetry
           poetry install
+          poetry run python scripts/ccblade_install.py 
 
       # Run tests
       - name: Run tests with pytest
