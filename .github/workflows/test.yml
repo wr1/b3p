@@ -29,6 +29,7 @@ jobs:
         run: |
           pip install poetry
           poetry install
+          ccblade_install 
 
       # Run tests
       - name: Run tests with pytest
