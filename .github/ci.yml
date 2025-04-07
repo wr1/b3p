@@ -55,4 +55,4 @@ jobs:
           path: ~/miniforge/envs
           key: ${{ runner.os }}-conda-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
           restore-keys: |
-            ${{ runner.os }}-conda-⏎                                                     
+            ${{ runner.os }}-conda-
