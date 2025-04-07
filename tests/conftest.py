@@ -1,4 +1,3 @@
-# tests/conftest.py
 import pytest
 import os
 import shutil
@@ -10,16 +9,24 @@ from b3p.cli.build_app import BuildApp
 
 @pytest.fixture(scope="session")
 def temp_example_dir(tmp_path_factory):
+    """Fixture to create a temporary copy of the examples directory."""
     example_dir = Path("examples")
     if not example_dir.exists():
         pytest.skip("Examples directory not found; skipping build tests.")
     tmp_dir = tmp_path_factory.mktemp("build_examples")
     shutil.copytree(example_dir, tmp_dir / "examples")
+    
+    # Copy tests/data/ directory if it exists
+    data_dir = Path("tests/data")
+    if data_dir.exists():
+        shutil.copytree(data_dir, tmp_dir / "data")
+    
     return tmp_dir / "examples"
 
 
 @pytest.fixture(scope="session")
 def run_build(temp_example_dir):
+    """Fixture to run the build process and capture output."""
     original_dir = os.getcwd()
     os.chdir(temp_example_dir)
     try:
@@ -36,6 +43,7 @@ def run_build(temp_example_dir):
             "stdout": result.stdout,
             "stderr": result.stderr,
             "returncode": result.returncode,
+            "temp_dir": temp_example_dir.parent  # Expose parent temp dir for data access
         }
     finally:
         os.chdir(original_dir)
