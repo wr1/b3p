@@ -56,22 +56,32 @@ def main():
 
     # CCX subcommands
     ccx_parser = subparsers.add_parser("ccx", help="Run Calculix operations")
-    ccx_subparsers = ccx_parser.add_subparsers(dest="subcommand", required=True)
+    ccx_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+    ccx_parser.add_argument(
+        "--bondline", action="store_true", help="Use bondline meshes"
+    )
+    ccx_subparsers = ccx_parser.add_subparsers(dest="subcommand", required=False)
 
     ccx_ccx_parser = ccx_subparsers.add_parser("ccx", help="Run full Calculix process")
-    ccx_ccx_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     ccx_ccx_parser.add_argument(
-        "--bondline", action="store_true", help="Use bondline meshes"
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
+    ccx_ccx_parser.add_argument(
+        "--bondline_sub", action="store_true", dest="bondline", help="Use bondline meshes"
     )
 
     ccx_prep_parser = ccx_subparsers.add_parser("prep", help="Prepare CCX input files")
-    ccx_prep_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     ccx_prep_parser.add_argument(
-        "--bondline", action="store_true", help="Use bondline meshes"
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
+    ccx_prep_parser.add_argument(
+        "--bondline_sub", action="store_true", dest="bondline", help="Use bondline meshes"
     )
 
     ccx_solve_parser = ccx_subparsers.add_parser("solve", help="Solve CCX problem")
-    ccx_solve_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+    ccx_solve_parser.add_argument(
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
     ccx_solve_parser.add_argument(
         "--wildcard", default="", help="Wildcard pattern for input files"
     )
@@ -84,7 +94,9 @@ def main():
     )
 
     ccx_post_parser = ccx_subparsers.add_parser("post", help="Postprocess CCX results")
-    ccx_post_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+    ccx_post_parser.add_argument(
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
     ccx_post_parser.add_argument(
         "--wildcard", default="", help="Wildcard pattern for results"
     )
@@ -93,7 +105,9 @@ def main():
     )
 
     ccx_plot_parser = ccx_subparsers.add_parser("plot", help="Plot CCX results")
-    ccx_plot_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+    ccx_plot_parser.add_argument(
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
     ccx_plot_parser.add_argument(
         "--wildcard", default="", help="Wildcard pattern for results"
     )
@@ -106,15 +120,30 @@ def main():
 
     # 2D subcommands
     twod_parser = subparsers.add_parser("2d", help="2D mesh and ANBA4 operations")
-    twod_subparsers = twod_parser.add_subparsers(dest="subcommand", required=True)
-
-    twod_mesh2d_parser = twod_subparsers.add_parser("mesh2d", help="Create 2D meshes")
-    twod_mesh2d_parser.add_argument("yml", type=Path, help="Path to YAML config file")
-    twod_mesh2d_parser.add_argument(
+    twod_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+    twod_parser.add_argument(
         "--rotz", type=float, default=0.0, help="Rotation around Z-axis (degrees)"
     )
-    twod_mesh2d_parser.add_argument(
+    twod_parser.add_argument(
         "--no-parallel",
+        action="store_false",
+        dest="parallel",
+        help="Disable parallel processing for mesh2d",
+    )
+    twod_parser.add_argument(
+        "--anba-env", default="anba4-env", help="Conda environment for ANBA4"
+    )
+    twod_subparsers = twod_parser.add_subparsers(dest="subcommand", required=False)
+
+    twod_mesh2d_parser = twod_subparsers.add_parser("mesh2d", help="Create 2D meshes")
+    twod_mesh2d_parser.add_argument(
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
+    twod_mesh2d_parser.add_argument(
+        "--rotz_sub", type=float, default=0.0, dest="rotz", help="Rotation around Z-axis (degrees)"
+    )
+    twod_mesh2d_parser.add_argument(
+        "--no-parallel-sub",
         action="store_false",
         dest="parallel",
         help="Disable parallel processing",
@@ -124,14 +153,16 @@ def main():
         "run-anba4", help="Run ANBA4 on 2D meshes"
     )
     twod_run_anba4_parser.add_argument(
-        "yml", type=Path, help="Path to YAML config file"
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     twod_run_anba4_parser.add_argument(
-        "--anba-env", default="anba4-env", help="Conda environment for ANBA4"
+        "--anba-env-sub", default="anba4-env", dest="anba_env", help="Conda environment for ANBA4"
     )
 
     twod_clean_parser = twod_subparsers.add_parser("clean", help="Remove msec* files")
-    twod_clean_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+    twod_clean_parser.add_argument(
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
 
     # CCBlade subcommand
     ccblade_parser = subparsers.add_parser("ccblade", help="Run CCBlade analysis")
@@ -164,31 +195,39 @@ def main():
         elif args.subcommand == "apply-loads":
             build.apply_loads(args.yml_sub or args.yml)
     elif args.command == "ccx":
-        if args.subcommand == "ccx":
+        if not hasattr(args, "subcommand") or args.subcommand is None:
             ccx.ccx(args.yml, bondline=args.bondline)
+        elif args.subcommand == "ccx":
+            ccx.ccx(args.yml_sub or args.yml, bondline=args.bondline)
         elif args.subcommand == "prep":
-            ccx.prep(args.yml, bondline=args.bondline)
+            ccx.prep(args.yml_sub or args.yml, bondline=args.bondline)
         elif args.subcommand == "solve":
             ccx.solve(
-                args.yml,
+                args.yml_sub or args.yml,
                 wildcard=args.wildcard,
                 nproc=args.nproc,
                 ccxexe=args.ccxexe,
                 merged_plies=args.merged_plies,
             )
         elif args.subcommand == "post":
-            ccx.post(args.yml, wildcard=args.wildcard, nbins=args.nbins)
+            ccx.post(args.yml_sub or args.yml, wildcard=args.wildcard, nbins=args.nbins)
         elif args.subcommand == "plot":
             ccx.plot(
-                args.yml, wildcard=args.wildcard, plot3d=args.plot3d, plot2d=args.plot2d
+                args.yml_sub or args.yml,
+                wildcard=args.wildcard,
+                plot3d=args.plot3d,
+                plot2d=args.plot2d,
             )
     elif args.command == "2d":
-        if args.subcommand == "mesh2d":
+        if not hasattr(args, "subcommand") or args.subcommand is None:
             d2d.mesh2d(args.yml, rotz=args.rotz, parallel=args.parallel)
-        elif args.subcommand == "run-anba4":
             d2d.run_anba4(args.yml, anba_env=args.anba_env)
+        elif args.subcommand == "mesh2d":
+            d2d.mesh2d(args.yml_sub or args.yml, rotz=args.rotz, parallel=args.parallel)
+        elif args.subcommand == "run-anba4":
+            d2d.run_anba4(args.yml_sub or args.yml, anba_env=args.anba_env)
         elif args.subcommand == "clean":
-            d2d.clean(args.yml)
+            d2d.clean(args.yml_sub or args.yml)
     elif args.command == "ccblade":
         ccb.ccblade(args.yml)
     elif args.command == "clean":

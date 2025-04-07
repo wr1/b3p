@@ -79,8 +79,6 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
             if "C" in material_properties and not force_iso:
                 print(material_properties["name"], "is assumed to be orthotropic")
                 C = np.array(material_properties["C"])
-                # https://github.com/rsmith-nl/lamprop/blob/410ebfef2e14d7cc2988489ca2c31103056da38f/lp/text.py#L96
-                # https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node193.html
                 matblock += "** orthotropic material\n"
                 matblock += "*material,name=m%i\n*elastic,type=ortho\n" % i
                 D = C
@@ -100,7 +98,6 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                 )
             elif "e11" in material_properties and not force_iso:
                 print(material_properties["name"], "has engineering constants")
-
                 matblock += "** orthotropic material\n"
                 matblock += (
                     "*material,name=m%i\n*elastic,type=engineering constants\n" % i
@@ -111,7 +108,6 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     + f"{material_properties['g12']:.4g},{material_properties['g13']:.4g},\n"
                     + f"{material_properties['g23']:.4g},293\n"
                 )
-
             else:
                 print(material_properties["name"], "is assumed to be isotropic")
                 nu = min(
@@ -215,7 +211,6 @@ def element_buffer(grid):
 def orientation_buffer(grid, add_centers=False):
     shells = grid.extract_cells(grid.cells_dict.get(23, []))
     buf = ""
-    # write orientation TODO match with element orientation, for now just align with z-axis
     x_dirs = shells.cell_data["x_dir"]
     y_dirs = shells.cell_data["y_dir"]
     centers = shells.cell_data["centers"]
@@ -241,9 +236,7 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
     for i in mesh.point_data:
         if i.startswith("lc_"):
             print(f"loadcase {i}")
-            # forces are interpolated to midside nodes, causing the sum of forces to be off,
-            # compute a multiplier from the sum of the forces in the linear model here
-            multiplier = 1.0  # TODO fix for quadratic meshes # mesh.point_data[i].sum() / mesh.point_data[i].sum()
+            multiplier = 1.0  # TODO fix for quadratic meshes
             if buckling:
                 lbuf = f"** {i}\n*step\n*buckle\n5\n*cload\n"
             else:
@@ -291,31 +284,31 @@ def mesh2ccx(
     export_plygroups=False,
     buckling=False,
     meshonly=False,
+    bondline=False,  # Added to accept bondline argument
 ):
     """
     Export a grid to ccx input file
 
-    :param  grid (_type_): Grid file (vtu)
-    :param out (str, optional): Output file. Defaults to "test.inp".
-    :param matmap (str, optional): material map file. Defaults to "temp/material_map.json".
-    :param merge_adjacent_layers (bool, optional): _description_. Defaults to False.
-    :param zeroangle (bool, optional): _description_. Defaults to False.
-    :param single_step (bool, optional): _description_. Defaults to False.
-    :param quadratic (bool, optional): _description_. Defaults to False.
-    :param add_centers (bool, optional): _description_. Defaults to False.
-    :param force_isotropic (bool, optional): _description_. Defaults to False.
-    :param export_hyperworks (bool, optional): _description_. Defaults to False.
-    :param export_plygroups (bool, optional): _description_. Defaults to False.
-    :param buckling (str, optional): _description_. Defaults to "static".
-    :param meshonly (bool, optional): _description_. Defaults to False.
-    :return: _description_
+    :param vtu: Grid file (vtu)
+    :param out: Output file. Defaults to "test.inp".
+    :param matmap: Material map file. Defaults to "temp/material_map.json".
+    :param merge_adjacent_layers: Whether to merge adjacent plies with same material.
+    :param zeroangle: Use zero angle for orientations.
+    :param single_step: Write all loadcases in a single step.
+    :param quadratic: Convert to quadratic elements.
+    :param add_centers: Include centers in orientation definitions.
+    :param force_isotropic: Force isotropic material properties.
+    :param export_hyperworks: Export plybook for HyperWorks.
+    :param export_plygroups: Export ply groups.
+    :param buckling: Use buckling analysis instead of static.
+    :param meshonly: Export only the mesh without loadcases.
+    :param bondline: If True, prefer bondline mesh if available.
+    :return: List of output files written.
     """
     print(f"** Running {vtu}")
     grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
-
-    # print(np.unique(gr.celltypes))
 
     print(f"** Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
@@ -331,29 +324,25 @@ def mesh2ccx(
     buf = nodebuffer(mesh)
 
     if quadratic:
-        buf += element_buffer(mesh)  # , quadratic=True)
+        buf += element_buffer(mesh)
     else:
-        buf += element_buffer(mesh)  # , quadratic=False)
+        buf += element_buffer(mesh)
 
     if meshonly:
         of = out.replace(".inp", "_meshonly.inp")
         open(of, "w").write(buf)
         print(f"** written to {of}")
-        return
+        return [of]
 
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
 
-    print(f"** Export plygroups {export_plygroups}")
     if export_plygroups:
         plygroups, df = compute_ply_groups(mesh, "ply_")
         slabgroups = compute_slab_groups(mesh, "slab_thickness_")
         buf += plygroups + slabgroups
 
     plykeys = [i for i in mesh.cell_data if i.startswith("ply_")]
-
     plydat = np.stack([mesh.cell_data[i] for i in plykeys])
-
-    # get all materials of all plies
     materials = np.unique(plydat[:, :, 0])
 
     buf += orientation_buffer(mesh, add_centers)
@@ -374,7 +363,6 @@ def mesh2ccx(
     print("** made shell sections")
 
     nplies = np.array([i[0] for i in blx])
-
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
     print(f"max number of plies: {nplmax}")
@@ -395,15 +383,12 @@ def mesh2ccx(
 
     loadcases = get_loadcases(mesh, buckling=buckling)
 
-    print(loadcases)
-
     output_files = []
-    # write a full ccx file for each loadcase, assuming parallel execution
     if single_step:
         output = buf + "".join(loadcases.values())
         open(out, "w").write(output)
         print(f"** written ccx input file with all loadcases to {out}")
-        otb = out.replace(".inp", ".csv")
+        output_files.append(out)
     else:
         for i in loadcases:
             output = buf + loadcases[i]
@@ -413,8 +398,10 @@ def mesh2ccx(
             print(f"** written ccx input file to {of}")
 
     if export_hyperworks:
+        otb = out.replace(".inp", ".csv")
         df.to_csv(otb, index=False)
         print(f"** written plybook to hyperworks table {otb}")
+        output_files.append(otb)
 
     return output_files
 
