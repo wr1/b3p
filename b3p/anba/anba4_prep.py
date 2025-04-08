@@ -60,7 +60,7 @@ def vtp2xdmf(vtp):
     return xd
 
 
-def anba4_prep(section_meshes):
+def anba4_prep(section_meshes, parallel=True):
     """
     Convert a list of section meshes to XDMF format.
 
@@ -74,9 +74,16 @@ def anba4_prep(section_meshes):
         list: A list of converted section meshes in XDMF format.
     """
     print("** converting section meshes to XDMF")
-    p = multiprocessing.Pool()
-    xds = p.map(vtp2xdmf, section_meshes)
-    p.close()
+    if parallel:
+        p = multiprocessing.Pool()
+        xds = p.map(vtp2xdmf, section_meshes)
+        p.close()
+        p.join()
+    else:
+        xds = []
+        for i in section_meshes:
+            xds.append(vtp2xdmf(i))
+    print("** done converting section meshes to XDMF")
     return xds
 
 

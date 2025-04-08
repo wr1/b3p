@@ -10,8 +10,6 @@ unfold:
 
 .PHONY: test test-verbose test-coverage clean
 
-# Default Python interpreter
-PYTHON = python
 
 # Test directories and files
 TEST_FILES = tests/test_2d.py  tests/test_bondline_model.py  tests/test_build.py  tests/test_drape.py  tests/test_geometry.py tests/test_ccx.py
@@ -21,15 +19,15 @@ all: test
 
 # Run tests
 test:
-	$(PYTHON) -m pytest $(TEST_FILES)
+	poetry run pytest $(TEST_FILES)
 
 # Run tests with verbose output
 test-verbose:
-	$(PYTHON) -m pytest $(TEST_FILES) -v
+	poetry run pytest $(TEST_FILES) -v
 
 # Run tests with coverage report
 test-coverage:
-	$(PYTHON) -m pytest $(TEST_FILES) --cov=b3p --cov-report=term --cov-report=html
+	poetry run pytest --cov=b3p --cov-report=term --cov-report=html
 
 
 # Clean up generated files

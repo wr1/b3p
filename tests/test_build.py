@@ -49,6 +49,26 @@ def test_build_output_files(run_build):
     assert not missing_files, f"Missing expected files: {missing_files}"
 
 
+def test_build_blademass_match(run_build):
+    # use pandas to match the mass table
+    import pandas as pd
+
+    workdir = run_build["workdir"]
+    mass_csv = workdir / "test_blade_mass.csv"
+    assert mass_csv.exists(), "Mass CSV file not found."
+    # Read the CSV file
+    mass_df = pd.read_csv(mass_csv, sep=",")
+
+    # check if the mass table matches the table with same name in tests/data/
+
+    # read the reference mass table
+    ref_mass_csv = workdir.parent.parent / "data" / "test_blade_mass.csv"
+    assert ref_mass_csv.exists(), "Reference mass CSV file not found."
+    ref_mass_df = pd.read_csv(ref_mass_csv, sep=",")
+    # Compare the two DataFrames
+    assert mass_df.round().equals(ref_mass_df.round()), "Mass tables do not match."
+
+
 def test_build_stdout(run_build):
     """Test if key stdout messages are present."""
     stdout = run_build["stdout"]

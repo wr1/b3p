@@ -3,6 +3,7 @@ import pyvista as pv
 import numpy as np
 from .conftest import run_build  # Explicitly import run_build
 import json
+import pytest
 
 
 def test_laminate_number_of_plies(run_build):

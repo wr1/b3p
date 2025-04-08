@@ -36,7 +36,7 @@ class TwoDApp:
         ):
             print("** Error: Section meshes were not generated correctly.")
             return []
-        return anba4_prep.anba4_prep(section_meshes)
+        return anba4_prep.anba4_prep(section_meshes, parallel=parallel)
 
     def run_anba4(self, yml: Path, meshes: list = None, anba_env="anba4-env"):
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
