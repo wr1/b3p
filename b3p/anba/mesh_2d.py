@@ -239,7 +239,7 @@ def get_node_avg_normal(connected_cell_normals):
         return get_avg_normal(connected_cell_normals[1:, :]), 0
 
 
-def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=False):
+def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, verbose=False):
     if var is None:
         var = {}
     print("# creating cross section mesh from %s at r=%.3f" % (vtu, r))
@@ -259,20 +259,6 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     local_thickness = get_local_thickness(r, var)
 
     sec = rd.slice(normal=[0, 0, 1], origin=[0, 0, r])
-
-    # if not is2d:
-    #     # slice the mesh at some point
-    #     cutter = vtk.vtkCutter()
-    #     plane = vtk.vtkPlane()
-    #     plane.SetOrigin(0, 0, r)
-    #     plane.SetNormal(0, 0, 1)
-
-    #     cutter.SetCutFunction(plane)
-    #     cutter.SetInputData(msh)
-    #     cutter.Update()
-    #     sec = cutter.GetOutput()
-    # else:
-    #     sec = msh
 
     # first we rotate around the Z axis as if rotating the whole blade (compensate for pck angle)
     transform = vtk.vtkTransform()
@@ -612,9 +598,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, is2d=False, verbose=Fa
     return output_file
 
 
-def cut_blade_parallel(
-    vtu, rr, if_bondline, rotz, var, verbose=False, is2d=False, parallel=False
-):
+def cut_blade_parallel(vtu, rr, if_bondline, rotz, var, verbose=False, parallel=False):
     var = eval(open(var, "r").read())
     part = partial(
         cut_blade,
@@ -622,7 +606,6 @@ def cut_blade_parallel(
         if_bondline=if_bondline,
         rotz=rotz,
         var=var,
-        is2d=is2d,
         verbose=verbose,
     )
     if parallel:
@@ -646,7 +629,6 @@ def main():
     p.add_argument("--var", type=str)
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--debug", action="store_true")
-    p.add_argument("--is2d", action="store_true")
     args = p.parse_args()
 
     rr = eval(args.r)
@@ -657,7 +639,6 @@ def main():
         args.rotz,
         args.var,
         args.verbose,
-        args.is2d,
         args.debug,
     )
 
