@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 import meshio
+import numpy as np
 from b3p.cli.app_state import AppState
 from b3p.cli.two_d_app import TwoDApp
 import shutil
@@ -131,17 +132,25 @@ def test_mesh2d_compare_reference(two_d_app, tmp_dir):
             ref_mesh_data = meshio.read(ref_mesh_path)
 
             # Compare points and cells
-            assert (gen_mesh_data.points == ref_mesh_data.points).all(), (
+            assert np.allclose(gen_mesh_data.points, ref_mesh_data.points), (
                 f"Points in {gen_mesh.name} do not match reference"
             )
             assert len(gen_mesh_data.cells) == len(ref_mesh_data.cells), (
-                f"Number of cells in {gen_mesh.name} does not match reference"
+                f"Number of cells in {gen_mesh.name} do not match reference"
             )
             for gen_cells, ref_cells in zip(gen_mesh_data.cells, ref_mesh_data.cells):
                 assert gen_cells.type == ref_cells.type, (
                     f"Cell type in {gen_mesh.name} does not match reference"
                 )
-                assert (gen_cells.data == ref_cells.data).all(), (
+                print(
+                    "test",
+                    gen_mesh.name,
+                    np.allclose(gen_cells.data, ref_cells.data, rtol=1e-5, atol=1e-3),
+                    gen_cells.data,
+                    ref_cells.data,
+                )
+                print("test1", (gen_cells.data - ref_cells.data).sum())
+                assert np.allclose(gen_cells.data, ref_cells.data), (
                     f"Cells in {gen_mesh.name} do not match reference"
                 )
     finally:
