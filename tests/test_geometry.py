@@ -1,4 +1,4 @@
-from .conftest import run_build
+from .conftest import built_blade
 import os
 import pytest
 import pyvista as pv
@@ -8,17 +8,17 @@ import glob
 
 
 @pytest.fixture(scope="session")
-def load_geometry(run_build):
+def load_geometry(built_blade):
     """Fixture to load the joined geometry from the build."""
-    workdir = run_build["workdir"]
+    workdir = built_blade["workdir"]
     joined_vtu = glob.glob(f"{workdir}/test_blade_joined.vtu")[0]
     return pv.read(joined_vtu)
 
 
-def test_planform(run_build):
+def test_planform(built_blade):
     """Test if the planform CSV matches expected values."""
-    workdir = run_build["workdir"]
-    temp_dir = run_build["temp_dir"]  # Access the parent temp dir
+    workdir = built_blade["workdir"]
+    temp_dir = built_blade["temp_dir"]  # Access the parent temp dir
     pref = glob.glob(f"{workdir}/*50.csv")[0]
     planform = pd.read_csv(pref, sep=";")
 

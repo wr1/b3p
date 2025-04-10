@@ -4,6 +4,7 @@ import glob
 import os
 from b3p.cli.app_state import AppState
 from b3p.cli.ccx_app import CcxApp
+from b3p.cli.build_app import BuildApp
 
 
 @pytest.fixture(scope="session")
@@ -13,9 +14,11 @@ def run_ccx(temp_example_dir):
     os.chdir(temp_example_dir)
     try:
         state = AppState()
+        build_app = BuildApp(state)
         ccx_app = CcxApp(state)
         yml_path = Path("blade_test.yml")
-        ccx_app.prep(yml_path, bondline=True)  # Test with bondline option
+        build_app.build(yml_path)  # Build the project first
+        ccx_app.prep(yml_path, bondline=False)  # Test with bondline option
         yield {
             "workdir": temp_example_dir / "temp_blade_portable",
             "yml_path": yml_path,

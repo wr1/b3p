@@ -3,7 +3,7 @@ import os
 import subprocess
 import shutil
 from b3p.anba import anba4_prep
-from b3p.anba import mesh_2d
+from b3p.anba import mesh_2d_new
 
 
 class TwoDApp:
@@ -23,7 +23,7 @@ class TwoDApp:
         prefix = os.path.join(
             yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
         )
-        section_meshes = mesh_2d.cut_blade_parallel(
+        section_meshes = mesh_2d_new.cut_blade_parallel(
             f"{prefix}_joined.vtu",
             sections,
             if_bondline=False,
@@ -61,7 +61,7 @@ class TwoDApp:
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
-        print(f"** Running ANBA4 using {script_path}")
+        print(f"** Running ANBA4 using {script_path} in env {anba_env}")
         result = subprocess.run(
             [
                 conda_path,
