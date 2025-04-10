@@ -228,15 +228,11 @@ class blade:
         for i in var:
             vv[i] = np.array(var[i]).tolist()
 
-        print(vv)
-        # open(fname, "w").write(str(var))
         json.dump(
             vv,
             open(fname, "w"),
-            # indent=4,
-            # sort_keys=True,
-            # separators=(",", ": "),
         )
+        print("** saved variables to", fname)
         return var
 
     def dump(self, fname="__sections.txt", z_rotation=0.0):
