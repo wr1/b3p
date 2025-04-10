@@ -36,7 +36,7 @@ def build_blade_geometry(config, xfoil=True):
 
     blade.mesh(f"{wdp}.vtp")
     blade.dump(f"{wdp}.pck", z_rotation=0)
-    blade.export_variables(f"{wdp}.var")
+    blade.export_variables(f"{wdp}_variables.json")
     if xfoil:
         blade.export_xfoil(
             prefix=os.path.join(

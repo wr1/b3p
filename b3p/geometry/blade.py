@@ -8,6 +8,7 @@ from copy import deepcopy as dc
 from matplotlib import pyplot as plt
 import pickle
 import pyvista as pv
+import json
 
 
 class blade:
@@ -223,7 +224,19 @@ class blade:
             "thickness": self.thickness,
             "absolute_thickness": self.absolute_thickness,
         }
-        open(fname, "w").write(str(var))
+        vv = {}
+        for i in var:
+            vv[i] = np.array(var[i]).tolist()
+
+        print(vv)
+        # open(fname, "w").write(str(var))
+        json.dump(
+            vv,
+            open(fname, "w"),
+            # indent=4,
+            # sort_keys=True,
+            # separators=(",", ": "),
+        )
         return var
 
     def dump(self, fname="__sections.txt", z_rotation=0.0):

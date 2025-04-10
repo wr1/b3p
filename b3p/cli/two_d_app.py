@@ -3,7 +3,7 @@ import os
 import subprocess
 import shutil
 from b3p.anba import anba4_prep
-from b3p.anba import mesh_2d_new
+from b3p.anba import mesh_2d
 
 
 class TwoDApp:
@@ -23,12 +23,12 @@ class TwoDApp:
         prefix = os.path.join(
             yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
         )
-        section_meshes = mesh_2d_new.cut_blade_parallel(
+        section_meshes = mesh_2d.cut_blade_parallel(
             f"{prefix}_joined.vtu",
             sections,
             if_bondline=False,
             rotz=rotz,
-            var=f"{prefix}.var",
+            var=f"{prefix}_variables.json",
             parallel=parallel,
         )
         if not section_meshes or not all(
