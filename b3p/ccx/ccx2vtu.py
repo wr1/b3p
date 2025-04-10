@@ -6,7 +6,7 @@ import numpy as np
 import glob
 import os
 import re
-from frd2vtu import frd2vtu
+import frd2vtu
 
 
 def has_later_vtu(frd):

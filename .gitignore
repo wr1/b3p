@@ -24,7 +24,7 @@ __pycache__/
 *.out
 # Ignore directories containing 'portable' in their name
 *portable*/
-
+__dump
 # Distribution / packaging
 .Python
 build/

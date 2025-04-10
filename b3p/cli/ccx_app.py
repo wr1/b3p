@@ -15,20 +15,26 @@ class CcxApp:
         self.post(yml, **kwargs)
         self.plot(yml, **kwargs)
 
-    def prep(self, yml: Path, **kwargs):
+    def prep(self, yml: Path, bondline=False, **kwargs):
         dct = self.state.load_yaml(yml)
         prefix = self.state.get_prefix()
         available_meshes = glob.glob(f"{prefix}_joined.vtu")
-        if kwargs.get("bondline"):
+        print(f"Available meshes: {prefix}")
+        if bondline:
             bondline_meshes = glob.glob(f"{prefix}*_bondline.vtu")
             if bondline_meshes:
                 available_meshes = bondline_meshes
+
         print(f"Available meshes: {available_meshes}")
+        if available_meshes == []:
+            print("** No meshes found, did you build the blade geometry?")
+            return
+
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],
             matmap=os.path.join(dct["general"]["workdir"], "material_map.json"),
             out=f"{prefix}_ccx.inp",
-            bondline=kwargs.get("bondline"),  # Explicitly pass bondline
+            bondline=bondline,
             **{k: v for k, v in kwargs.items() if k != "bondline"},  # Pass other kwargs
         )
         print(f"Written: {', '.join(output_files)}")
@@ -41,6 +47,8 @@ class CcxApp:
         ccxexe="ccx",
         inpfiles=None,
         merged_plies=False,
+        bondline=False,  # Added to accept bondline, even if unused here
+        **kwargs,  # Accept additional kwargs to avoid errors
     ):
         dct = self.state.load_yaml(yml)
         prefix = self.state.get_prefix()
@@ -70,13 +78,15 @@ class CcxApp:
         p.map(os.system, [f"{ccxexe} {inp.replace('.inp', '')}" for inp in inps_to_run])
         p.close()
 
-    def post(self, yml: Path, wildcard="", nbins=60):
+    def post(self, yml: Path, wildcard="", nbins=60, bondline=False, **kwargs):
         dct = self.state.load_yaml(yml)
         ccxpost = ccx2vtu.ccx2vtu(dct["general"]["workdir"], wildcard=wildcard)
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 
-    def plot(self, yml: Path, wildcard="", plot3d=True, plot2d=True):
+    def plot(
+        self, yml: Path, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs
+    ):
         dct = self.state.load_yaml(yml)
         plotter = ccxpost.plot_ccx(dct["general"]["workdir"], wildcard=wildcard)
         if plot3d:
