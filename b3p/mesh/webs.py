@@ -137,7 +137,7 @@ def build_webs(mesh, webs, prefix="__dum"):
     web_meshes = {}
     for i in webs:
         normal = (0, 1, 0)
-        name = prefix + "_" + i
+        name = str(prefix) + "_" + i
 
         if "orientation" in webs[i]:
             normal = webs[i]["orientation"]

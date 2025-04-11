@@ -23,6 +23,7 @@ class TwoDApp:
         prefix = os.path.join(
             yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
         )
+
         section_meshes = mesh_2d.cut_blade_parallel(
             f"{prefix}_joined.vtu",
             sections,
@@ -55,9 +56,12 @@ class TwoDApp:
         if meshes is None:
             meshes = self.mesh2d(yml)
         yml_dir = yml.parent
-        material_map = os.path.join(
-            yml_dir, dct["general"]["workdir"], "material_map.json"
-        )
+
+        prefix = self.state.get_prefix("drape")
+        material_map = f"{prefix}/material_map.json"
+        # os.path.join(
+        #     yml_dir, dct["general"]["workdir"], "material_map.json"
+        # )
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
@@ -95,9 +99,14 @@ class TwoDApp:
     def clean(self, yml: Path):
         dct = self.state.load_yaml(yml)
         workdir = Path(dct["general"]["workdir"])
-        for msec_file in workdir.glob("msec*"):
-            try:
-                msec_file.unlink()
-                print(f"Removed {msec_file}")
-            except Exception as e:
-                print(f"Failed to remove {msec_file}: {e}")
+        # remove the 2d subdir in workdir
+        workdir = workdir / "2d"
+        if not workdir.exists():
+            print(f"** Workdir {workdir} does not exist - nothing to clean")
+            return
+
+        try:
+            shutil.rmtree(workdir)
+            print(f"Removed workdir {workdir}")
+        except Exception as e:
+            print(f"Failed to remove workdir {workdir}: {e}")

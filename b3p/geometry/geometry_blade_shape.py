@@ -11,6 +11,7 @@ class blade_shape:
         section_resolution=200,
         web_resolution=20,
         added_datums=None,
+        prefix="",
     ):
         """
         Initialize the geometry blade shape.
@@ -29,6 +30,7 @@ class blade_shape:
         self.webs = []
         self.web_resolution = web_resolution
         self.added_datums = added_datums
+        self.prefix = prefix
 
     def set_web(self, web):
         self.webs.append(web)
@@ -145,4 +147,5 @@ class blade_shape:
             print("no valid mesh available")
 
         for i in self.webs:
-            i.write_mesh(f"{i.name.replace('.txt', '.vtp')}")
+            print(i.name)
+            i.write_mesh(f"{i.name}{'.vtp'}")

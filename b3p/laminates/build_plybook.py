@@ -85,12 +85,12 @@ def expand_chamfered_core(core):
             bc = nc["cover"][f"{idx[0]}"]
             if idx[1] == 0:
                 nc["cover"][f"{idx[0]}_c{j}"] = bc
-                nc["cover"][f"{idx[0]}_c{j+1}"] = [-1, bc[0], 0]
+                nc["cover"][f"{idx[0]}_c{j + 1}"] = [-1, bc[0], 0]
 
             # chamfers from 2nd coordinate
             elif idx[1] == 1:
                 nc["cover"][f"{idx[0]}_c{j}"] = bc
-                nc["cover"][f"{idx[0]}_c{j+1}"] = [bc[1], -bc[0], 0]
+                nc["cover"][f"{idx[0]}_c{j + 1}"] = [bc[1], -bc[0], 0]
 
             del nc["cover"][f"{idx[0]}"]
 
@@ -292,7 +292,7 @@ def export_matdb(blade, material_map):
     else:
         print("no material db defined in blade file")
 
-    matmap = os.path.join(blade["general"]["workdir"], "material_map.json")
+    matmap = os.path.join(blade["general"]["workdir"], "drape", "material_map.json")
     if type(blade["materials"]) == str:
         blade["materials"] = yaml.round_trip_load(open(blade["materials"]))
 
@@ -307,7 +307,7 @@ def export_matdb(blade, material_map):
 
     yaml.YAML().dump(
         blade["materials"],
-        open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
+        open(os.path.join(blade["general"]["workdir"], "drape", mdbname), "w"),
     )
 
     print(f"written material map to {matmap}")
@@ -397,9 +397,7 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
             }
         )
     export_matdb(blade, material_map)
-    export_plybook(
-        allstacks, outputfile=os.path.join(blade["general"]["workdir"], outputfile)
-    )
+    export_plybook(allstacks, outputfile=outputfile)
     return allstacks
 
 

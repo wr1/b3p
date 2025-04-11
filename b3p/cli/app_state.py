@@ -32,18 +32,26 @@ class AppState:
     def make_workdir(self, yml: Path):
         if self.dct is None:
             self.load_yaml(yml)
-        prefix = os.path.join(
-            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
-        )
-        if not os.path.isdir(prefix):
-            os.makedirs(prefix)
+        if not os.path.isdir(self.dct["general"]["workdir"]):
+            os.makedirs(self.dct["general"]["workdir"])
 
-    def get_prefix(self):
+    def get_prefix(self, subdir=None):
         if self.dct is None:
             return None
         wd = Path(self.dct["general"]["workdir"])
-        prefix = wd / self.dct["general"]["prefix"]
+        if subdir is None:
+            prefix = wd / self.dct["general"]["prefix"]
+        else:
+            prefix = wd / subdir / self.dct["general"]["prefix"]
+            if not os.path.isdir(wd / subdir):
+                os.makedirs(wd / subdir)
         return prefix
+
+    def get_workdir(self):
+        if self.dct is None:
+            return None
+        wd = Path(self.dct["general"]["workdir"])
+        return wd
 
     def reset(self):
         self.dct = None

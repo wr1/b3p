@@ -29,7 +29,7 @@ def build_mesh(
             points=web_intersections[i],
             web_root=web_inputs[i]["z_start"],
             web_tip=web_inputs[i]["z_end"],
-            web_name=f"{prefix}_{i}.txt",
+            web_name=f"{prefix}_{i}",
             coordinate=i,
             # normal=web_inputs[i]["normal"] if "normal" in web_inputs[i] else (0, 1, 0),
             flip_normal=(web_inputs[i]["origin"][1] > 0),
@@ -52,6 +52,7 @@ def build_mesh(
         section_resolution=200,
         web_resolution=n_web_points,
         added_datums=added_datums,
+        prefix=prefix,
     )
 
     for i in weblist:
@@ -62,6 +63,6 @@ def build_mesh(
     # mesh with a given number of points around the circumference
     blade.mesh(n_ch_points, panel_mesh_scale=panel_mesh_scale)
     blade.write_mesh(outfile)
-    print(f"** wrote mesh to {outfile}")
+    print(f"** wrote blade mesh to {outfile}")
 
     return blade

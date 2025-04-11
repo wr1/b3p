@@ -8,6 +8,7 @@ from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
 class CcxApp:
     def __init__(self, state):
         self.state = state
+        self.dir = "fea"
 
     def ccx(self, yml: Path, **kwargs):
         self.prep(yml, **kwargs)
@@ -17,8 +18,9 @@ class CcxApp:
 
     def prep(self, yml: Path, bondline=False, **kwargs):
         dct = self.state.load_yaml(yml)
-        prefix = self.state.get_prefix()
-        available_meshes = glob.glob(f"{prefix}_joined.vtu")
+        base_prefix = self.state.get_prefix("drape")
+        prefix = self.state.get_prefix(self.dir)
+        available_meshes = glob.glob(f"{base_prefix}_joined.vtu")
         print(f"Available meshes: {prefix}")
         if bondline:
             bondline_meshes = glob.glob(f"{prefix}*_bondline.vtu")
@@ -51,7 +53,7 @@ class CcxApp:
         **kwargs,  # Accept additional kwargs to avoid errors
     ):
         dct = self.state.load_yaml(yml)
-        prefix = self.state.get_prefix()
+        prefix = self.state.get_prefix(self.dir)
         if inpfiles is None:
             inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
         inps = [inp for inp in inpfiles]

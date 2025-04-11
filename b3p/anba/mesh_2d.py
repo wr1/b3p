@@ -3,7 +3,6 @@
 import vtk
 import os
 import multiprocessing
-from functools import partial
 import argparse
 import numpy as np
 import pandas as pd
@@ -473,7 +472,10 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, verbose=False):
     """Create a 2D cross-sectional mesh from a 3D VTU file at radius r."""
     var = var or {}
     workdir = os.path.dirname(vtu)
-    output_file = os.path.join(workdir, "msec_%i.vtp" % (1e3 * r))
+    if not os.path.exists(os.path.join(workdir, "2d")):
+        os.makedirs(os.path.join(workdir, "2d"))
+
+    output_file = os.path.join(workdir, "2d", "msec_%i.vtp" % (1e3 * r))
 
     if os.path.exists(output_file):
         print(f"\t** 2d mesh {output_file} already exists - skipping ")
@@ -510,26 +512,29 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, verbose=False):
     align_normals(out)
     write_vtp(out, output_file)
     table_out.to_csv(
-        os.path.join(workdir, "section_location_%i.csv" % (1e3 * r)), index=False
+        os.path.join(workdir, "2d", "section_location_%i.csv" % (1e3 * r)), index=False
     )
     print(f"# written vtk to {output_file}")
     return output_file
 
 
+def run_parallel_tasks(func, items, args_list):
+    """Execute a function over a list of items in parallel or sequentially."""
+    if len(items) == 0:
+        return []
+    parallel = args_list[-1]  # Last argument is parallel flag
+    if parallel:
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(func, [(item, *args_list[:-1]) for item in items])
+        return results
+    return [func(item, *args_list[:-1]) for item in items]
+
+
 def cut_blade_parallel(vtu, rr, if_bondline, rotz, var, verbose=False, parallel=False):
     """Process multiple radii in parallel or sequentially."""
-    var = json.load(open(var, "r"))
-    part = partial(
-        cut_blade, vtu=vtu, if_bondline=if_bondline, rotz=rotz, var=var, verbose=verbose
-    )
-    if parallel:
-        pool = multiprocessing.Pool()
-        al = pool.map(part, rr)
-        pool.close()
-        pool.join()
-    else:
-        al = [part(i) for i in rr]
-    return al
+    var_data = json.load(open(var, "r"))
+    args = [vtu, if_bondline, rotz, var_data, verbose]
+    return run_parallel_tasks(cut_blade, rr, args + [parallel])
 
 
 def main():

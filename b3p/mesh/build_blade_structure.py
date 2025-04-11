@@ -7,11 +7,11 @@ from b3p.mesh import webs
 import numpy as np
 
 
-def build_blade_structure(config):
-    wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
-    pckfile = f"{wdp}.pck"
-    base_vtp = f"{wdp}_base.vtp"
-    shell_vtp = f"{wdp}_shell.vtp"
+def build_blade_structure(config, prefix=None):
+    # wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
+    pckfile = f"{prefix}.pck"
+    base_vtp = f"{prefix}_base.vtp"
+    shell_vtp = f"{prefix}_shell.vtp"
 
     radii = eval(str(config["mesh"]["radii"]))
     config_webs = config["mesh"]["webs"]
@@ -22,10 +22,10 @@ def build_blade_structure(config):
     )
 
     # build the plain blade mesh
-    mesh_from_loft.build_mesh(pckfile, radii, [], [], wdp, outfile=base_vtp)
+    mesh_from_loft.build_mesh(pckfile, radii, [], [], prefix, outfile=base_vtp)
 
     # compute the locations where the webs intersect with the blade mesh
-    web_shell_intersections = webs.build_webs(base_vtp, config_webs, prefix=wdp)
+    web_shell_intersections = webs.build_webs(base_vtp, config_webs, prefix=prefix)
 
     # rejoggle the datums format from the yaml file into dict
     if "coordinates" in config["mesh"]:
@@ -42,7 +42,7 @@ def build_blade_structure(config):
         radii,
         config_webs,
         web_shell_intersections,
-        wdp,
+        prefix,
         config["mesh"]["n_web_points"],
         config["mesh"]["n_chordwise_points"],
         outfile=shell_vtp,
