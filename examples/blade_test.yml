@@ -83,7 +83,7 @@ mesh:
 mesh2d:
   sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
 
-materials: materials_iso.yml
+materials: materials_si.yml
 
 laminates: laminates_v0.yml
 

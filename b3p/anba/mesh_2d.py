@@ -400,35 +400,6 @@ def build_2d_mesh(sec):
     return poly, epid, stacks, join_nodes, web_links
 
 
-# def apply_transforms(poly, rotz, mid_position, local_twist):
-#     """Apply transformations to align the 2D mesh."""
-#     cln = vtk.vtkCleanPolyData()
-#     cln.SetInputData(poly)
-#     cln.Update()
-
-#     transform = vtk.vtkTransform()
-#     transform.RotateZ(rotz)
-#     transformfilter = vtk.vtkTransformFilter()
-#     transformfilter.SetTransform(transform)
-#     transformfilter.SetInputData(cln.GetOutput())
-#     transformfilter.Update()
-
-#     transform = vtk.vtkTransform()
-#     transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
-#     transformfilter2 = vtk.vtkTransformFilter()
-#     transformfilter2.SetTransform(transform)
-#     transformfilter2.SetInputData(transformfilter.GetOutput())
-#     transformfilter2.Update()
-
-#     transform = vtk.vtkTransform()
-#     transform.RotateZ(local_twist)
-#     transformfilter3 = vtk.vtkTransformFilter()
-#     transformfilter3.SetTransform(transform)
-#     transformfilter3.SetInputData(transformfilter2.GetOutput())
-#     transformfilter3.Update()
-#     return transformfilter3.GetOutput()
-
-
 def apply_transforms(poly, rotz, mid_position, local_twist):
     """Apply transformations to align the 2D mesh in a single step."""
     cln = vtk.vtkCleanPolyData()
