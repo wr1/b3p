@@ -32,9 +32,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
 
-    build_drape_parser = build_subparsers.add_parser(
-        "drape", help="Drape plies onto mesh"
-    )
+    build_drape_parser = subparsers.add_parser("drape", help="Drape plies onto mesh")
     build_drape_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
@@ -67,7 +65,10 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_ccx_parser.add_argument(
-        "--bondline_sub", action="store_true", dest="bondline", help="Use bondline meshes"
+        "--bondline_sub",
+        action="store_true",
+        dest="bondline",
+        help="Use bondline meshes",
     )
 
     ccx_prep_parser = ccx_subparsers.add_parser("prep", help="Prepare CCX input files")
@@ -75,7 +76,10 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_prep_parser.add_argument(
-        "--bondline_sub", action="store_true", dest="bondline", help="Use bondline meshes"
+        "--bondline_sub",
+        action="store_true",
+        dest="bondline",
+        help="Use bondline meshes",
     )
 
     ccx_solve_parser = ccx_subparsers.add_parser("solve", help="Solve CCX problem")
@@ -140,7 +144,11 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     twod_mesh2d_parser.add_argument(
-        "--rotz_sub", type=float, default=0.0, dest="rotz", help="Rotation around Z-axis (degrees)"
+        "--rotz_sub",
+        type=float,
+        default=0.0,
+        dest="rotz",
+        help="Rotation around Z-axis (degrees)",
     )
     twod_mesh2d_parser.add_argument(
         "--no-parallel-sub",
@@ -156,7 +164,10 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     twod_run_anba4_parser.add_argument(
-        "--anba-env-sub", default="anba4-env", dest="anba_env", help="Conda environment for ANBA4"
+        "--anba-env-sub",
+        default="anba4-env",
+        dest="anba_env",
+        help="Conda environment for ANBA4",
     )
 
     twod_clean_parser = twod_subparsers.add_parser("clean", help="Remove msec* files")
@@ -175,7 +186,6 @@ def main():
     args = parser.parse_args()
 
     state = AppState.get_instance()
-    build = BuildApp(state)
     ccx = CcxApp(state)
     d2d = TwoDApp(state)
     ccb = CCBladeApp(state)
@@ -183,17 +193,20 @@ def main():
 
     if args.command == "build":
         if not hasattr(args, "subcommand") or args.subcommand is None:
-            build.build(args.yml, bondline=args.bondline)
-        elif args.subcommand == "geometry":
-            build.geometry(args.yml_sub or args.yml)
-        elif args.subcommand == "mesh":
-            build.mesh(args.yml_sub or args.yml)
-        elif args.subcommand == "drape":
-            build.drape(args.yml_sub or args.yml, bondline=args.bondline)
-        elif args.subcommand == "mass":
-            build.mass(args.yml_sub or args.yml)
-        elif args.subcommand == "apply-loads":
-            build.apply_loads(args.yml_sub or args.yml)
+            build = BuildApp(state, args.yml)
+            build.build(bondline=args.bondline)
+        else:
+            build = BuildApp(state, args.yml_sub or args.yml)
+            if args.subcommand == "geometry":
+                build.geometry()
+            elif args.subcommand == "mesh":
+                build.mesh()
+            elif args.subcommand == "drape":
+                build.drape(bondline=args.bondline)
+            elif args.subcommand == "mass":
+                build.mass()
+            elif args.subcommand == "apply-loads":
+                build.apply_loads()
     elif args.command == "ccx":
         if not hasattr(args, "subcommand") or args.subcommand is None:
             ccx.ccx(args.yml, bondline=args.bondline)

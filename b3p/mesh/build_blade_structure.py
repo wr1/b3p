@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-import os
-
 from b3p.mesh import mesh_from_loft
 from b3p.mesh import webs
 import numpy as np
