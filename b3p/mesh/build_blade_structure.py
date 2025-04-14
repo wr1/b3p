@@ -8,7 +8,6 @@ import numpy as np
 
 
 def build_blade_structure(config, prefix=None):
-    # wdp = os.path.join(config["general"]["workdir"], config["general"]["prefix"])
     pckfile = f"{prefix}.pck"
     base_vtp = f"{prefix}_base.vtp"
     shell_vtp = f"{prefix}_shell.vtp"

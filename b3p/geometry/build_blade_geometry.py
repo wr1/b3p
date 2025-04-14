@@ -27,20 +27,11 @@ def build_blade_geometry(config, prefix, xfoil=True):
         ),
         np_spanwise=config["planform"]["npspan"],
     )
-    # wd = config["general"]["workdir"]
-
-    # wdp = os.path.join(wd, config["general"]["prefix"])
-
-    # if not os.path.isdir(wd):
-    #     os.makedirs(wd)
-
-    print(prefix)
 
     blade.mesh(f"{prefix}.vtp")
     blade.dump(f"{prefix}.pck", z_rotation=0)
     blade.export_variables(f"{prefix}_variables.json")
     if xfoil:
-        print(prefix)
         blade.export_xfoil(
             prefix=os.path.join(
                 prefix.parent,
@@ -51,7 +42,5 @@ def build_blade_geometry(config, prefix, xfoil=True):
     blade.plot(f"{prefix}", fname=f"{prefix}.png")
     n_sections = 50
     blade.to_table(np.linspace(0, 1, n_sections), "%s_sca_%i" % (prefix, n_sections))
-
-    # pickle.dump(blade, open(f"{prefix}_blade.pck", "wb"))
 
     return blade
