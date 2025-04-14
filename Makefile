@@ -2,9 +2,16 @@
 fold:
 	cfold fold 
 
+foldt1:
+	cfold fold b3p/**py tests/*py
+
+
 unfold:
 	cfold unfold v1.txt
 	pip install -e . 
+
+
+
 
 
 
