@@ -7,7 +7,7 @@ import fire
 import glob
 import os
 import re
-from frd2vtu import frd2vtu
+import frd2vtu
 
 
 def has_later_vtu(frd):
@@ -23,7 +23,7 @@ def all_frd2vtu(workdir):
     for i in glob.glob(f"{workdir}/*.frd"):
         print(f"processing {i}")
         if not has_later_vtu(i):
-            frd2vtu(i)
+            frd2vtu.frd2vtu(i)
         else:
             print(f"skipping {i}")
 
