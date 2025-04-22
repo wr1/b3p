@@ -34,7 +34,7 @@ class CcxApp:
 
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],
-            matmap=os.path.join(dct["general"]["workdir"], "material_map.json"),
+            matmap=os.path.join(os.path.dirname(base_prefix), "material_map.json"),
             out=f"{prefix}_ccx.inp",
             bondline=bondline,
             **{k: v for k, v in kwargs.items() if k != "bondline"},  # Pass other kwargs
