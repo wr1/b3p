@@ -82,7 +82,8 @@ class CcxApp:
 
     def post(self, yml: Path, wildcard="", nbins=60, bondline=False, **kwargs):
         dct = self.state.load_yaml(yml)
-        ccxpost = ccx2vtu.ccx2vtu(dct["general"]["workdir"], wildcard=wildcard)
+        prefix = self.state.get_prefix(self.dir)
+        ccxpost = ccx2vtu.ccx2vtu(prefix, wildcard=wildcard)
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 

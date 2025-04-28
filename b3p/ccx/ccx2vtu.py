@@ -18,8 +18,8 @@ def has_later_vtu(frd):
     return frd_time < vtu_time
 
 
-def all_frd2vtu(workdir):
-    for i in glob.glob(f"{workdir}/*.frd"):
+def all_frd2vtu(prefix):
+    for i in glob.glob(f"{prefix}*.frd"):
         print(f"processing {i}")
         if not has_later_vtu(i):
             frd2vtu(i)
@@ -53,9 +53,9 @@ def digitize_strain_distribution(z, strain, num_bins=100):
 
 
 class ccx2vtu:
-    def __init__(self, workdir, wildcard=""):
-        self.workdir = workdir
-        self.frds = glob.glob(f"{workdir}/*lc*{wildcard}*.frd")
+    def __init__(self, prefix, wildcard=""):
+        self.prefix = prefix
+        self.frds = glob.glob(f"{prefix}*lc*{wildcard}*.frd")
 
     def load_grids(self):
         print(f"** loading grids {self.frds}")
@@ -71,7 +71,7 @@ class ccx2vtu:
         # Initialize an empty list to store the results
         results = []
         if len(self.grids) == 0:
-            print(f"** no grids found in {self.workdir}")
+            print(f"** no grids found in {self.prefix}")
             return None
 
         # Loop through the file_list
