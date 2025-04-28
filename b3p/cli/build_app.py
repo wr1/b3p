@@ -24,14 +24,16 @@ class BuildApp:
     def geometry(self):
         prefix = self.state.get_prefix("mesh")
         build_blade_geometry.build_blade_geometry(self.dct, prefix)
-        prefix = os.path.join(self.dct["general"]["workdir"], self.dct["general"]["prefix"])
+        prefix = os.path.join(
+            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
+        )
         yml_portable.save_yaml(f"{prefix}_portable.yml", self.dct)
 
     def mesh(self):
         prefix = self.state.get_prefix("mesh")
         build_blade_structure.build_blade_structure(self.dct, prefix)
 
-    def drape(self, bondline: bool = False):
+    def drape(self, bondline: bool = True):
         plybookname = "_plybook.pck"
         prefix = self.state.get_prefix("drape")
         mesh_prefix = self.state.get_prefix("mesh")
@@ -60,6 +62,7 @@ class BuildApp:
         if not wd.is_dir():
             print("\n** No workdir found, building new\n")
             self.build(bondline=True)
+
         mass_table = drape_summary.drape_summary(f"{prefix}_joined.vtu")
         mass_table.to_csv(f"{prefix}_mass.csv")
         mass_table.replace(to_replace="_", value="", regex=True).to_latex(

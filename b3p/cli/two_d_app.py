@@ -7,11 +7,12 @@ from b3p.anba import mesh_2d
 
 
 class TwoDApp:
-    def __init__(self, state):
+    def __init__(self, state, yml: Path):
         self.state = state
+        self.yml = yml
 
-    def mesh2d(self, yml: Path, rotz=0.0, parallel=True):
-        dct = self.state.load_yaml(yml)
+    def mesh2d(self, rotz=0.0, parallel=True):
+        dct = self.state.load_yaml(self.yml)
         if "mesh2d" not in dct:
             print("** No mesh2d section in yml file")
             return
@@ -19,7 +20,7 @@ class TwoDApp:
             print("** No sections in mesh2d section in yml file")
             return
         sections = dct["mesh2d"]["sections"]
-        yml_dir = yml.parent
+        yml_dir = self.yml.parent
         prefix = os.path.join(
             yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
         )
@@ -39,7 +40,7 @@ class TwoDApp:
             return []
         return anba4_prep.anba4_prep(section_meshes, parallel=parallel)
 
-    def run_anba4(self, yml: Path, meshes: list = None, anba_env="anba4-env"):
+    def run_anba4(self, meshes: list = None, anba_env="anba4-env"):
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
         if conda_path is None:
             print("** Conda not found - please install conda.")
@@ -52,16 +53,13 @@ class TwoDApp:
             return
         else:
             print(f"** Using Conda environment for running anba4 {anba_env}")
-        dct = self.state.load_yaml(yml)
+        dct = self.state.load_yaml(self.yml)
         if meshes is None:
-            meshes = self.mesh2d(yml)
-        yml_dir = yml.parent
+            meshes = self.mesh2d()
+        yml_dir = self.yml.parent
 
         prefix = self.state.get_prefix("drape")
         material_map = f"{prefix}/material_map.json"
-        # os.path.join(
-        #     yml_dir, dct["general"]["workdir"], "material_map.json"
-        # )
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
@@ -96,8 +94,8 @@ class TwoDApp:
             print(f"** Stdout: {result.stdout}")
         return result.returncode
 
-    def clean(self, yml: Path):
-        dct = self.state.load_yaml(yml)
+    def clean(self):
+        dct = self.state.load_yaml(self.yml)
         workdir = Path(dct["general"]["workdir"])
         # remove the 2d subdir in workdir
         workdir = workdir / "2d"

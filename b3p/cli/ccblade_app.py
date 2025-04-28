@@ -10,12 +10,13 @@ except ImportError:
 
 
 class CCBladeApp:
-    def __init__(self, state):
+    def __init__(self, state, yml: Path):
         self.state = state
+        self.yml = yml
 
-    def ccblade(self, yml: Path):
+    def ccblade(self):
         if has_ccblade:
-            ccblade = ccblade_run.ccblade_run(yml)
+            ccblade = ccblade_run.ccblade_run(self.yml)
             ccblade.run()
         else:
             print("** ccblade_run is not available.")

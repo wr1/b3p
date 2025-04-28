@@ -6,18 +6,19 @@ from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
 
 
 class CcxApp:
-    def __init__(self, state):
+    def __init__(self, state, yml: Path):
         self.state = state
+        self.yml = yml
         self.dir = "fea"
 
-    def ccx(self, yml: Path, **kwargs):
-        self.prep(yml, **kwargs)
-        self.solve(yml, **kwargs)
-        self.post(yml, **kwargs)
-        self.plot(yml, **kwargs)
+    def ccx(self, **kwargs):
+        self.prep(**kwargs)
+        self.solve(**kwargs)
+        self.post(**kwargs)
+        self.plot(**kwargs)
 
-    def prep(self, yml: Path, bondline=False, **kwargs):
-        dct = self.state.load_yaml(yml)
+    def prep(self, bondline=False, **kwargs):
+        dct = self.state.load_yaml(self.yml)
         base_prefix = self.state.get_prefix("drape")
         prefix = self.state.get_prefix(self.dir)
         available_meshes = glob.glob(f"{base_prefix}_joined.vtu")
@@ -43,7 +44,6 @@ class CcxApp:
 
     def solve(
         self,
-        yml: Path,
         wildcard="",
         nproc=2,
         ccxexe="ccx",
@@ -52,11 +52,11 @@ class CcxApp:
         bondline=False,  # Added to accept bondline, even if unused here
         **kwargs,  # Accept additional kwargs to avoid errors
     ):
-        dct = self.state.load_yaml(yml)
+        dct = self.state.load_yaml(self.yml)
         prefix = self.state.get_prefix(self.dir)
         if inpfiles is None:
             inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
-        inps = [inp for inp in inpfiles]
+        inps = [inp for inp in inps]
         if merged_plies:
             inps = [inp for inp in inps if "_mp_" in inp]
         if not inps:
@@ -80,17 +80,17 @@ class CcxApp:
         p.map(os.system, [f"{ccxexe} {inp.replace('.inp', '')}" for inp in inps_to_run])
         p.close()
 
-    def post(self, yml: Path, wildcard="", nbins=60, bondline=False, **kwargs):
-        dct = self.state.load_yaml(yml)
+    def post(self, wildcard="", nbins=60, bondline=False, **kwargs):
+        dct = self.state.load_yaml(self.yml)
         prefix = self.state.get_prefix(self.dir)
         ccxpost = ccx2vtu.ccx2vtu(prefix, wildcard=wildcard)
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 
     def plot(
-        self, yml: Path, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs
+        self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs
     ):
-        dct = self.state.load_yaml(yml)
+        dct = self.state.load_yaml(self.yml)
         plotter = ccxpost.plot_ccx(dct["general"]["workdir"], wildcard=wildcard)
         if plot3d:
             plotter.plot3d()
