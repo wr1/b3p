@@ -186,10 +186,10 @@ def main():
     args = parser.parse_args()
 
     state = AppState.get_instance()
-    ccx = CcxApp(state)
-    d2d = TwoDApp(state)
-    ccb = CCBladeApp(state)
-    clean = CleanApp(state)
+    ccx = CcxApp(state, args.yml)
+    d2d = TwoDApp(state, args.yml)
+    ccb = CCBladeApp(state, args.yml)
+    clean = CleanApp(state, args.yml)
 
     if args.command == "build":
         if not hasattr(args, "subcommand") or args.subcommand is None:
@@ -233,18 +233,18 @@ def main():
             )
     elif args.command == "2d":
         if not hasattr(args, "subcommand") or args.subcommand is None:
-            d2d.mesh2d(args.yml, rotz=args.rotz, parallel=args.parallel)
-            d2d.run_anba4(args.yml, anba_env=args.anba_env)
+            d2d.mesh2d(rotz=args.rotz, parallel=args.parallel)
+            d2d.run_anba4(anba_env=args.anba_env)
         elif args.subcommand == "mesh2d":
             d2d.mesh2d(args.yml_sub or args.yml, rotz=args.rotz, parallel=args.parallel)
         elif args.subcommand == "run-anba4":
             d2d.run_anba4(args.yml_sub or args.yml, anba_env=args.anba_env)
         elif args.subcommand == "clean":
-            d2d.clean(args.yml_sub or args.yml)
+            d2d.clean()
     elif args.command == "ccblade":
         ccb.ccblade(args.yml)
     elif args.command == "clean":
-        clean.clean(args.yml)
+        clean.clean()
 
 
 if __name__ == "__main__":

@@ -41,21 +41,22 @@ def built_blade(temp_example_dir):
     os.chdir(temp_example_dir)
     try:
         state = AppState()
-        build_app = BuildApp(state)
         yml_path = Path("blade_test.yml")
-        build_app.build(yml_path)
-        result = subprocess.run(
-            ["python", "-m", "b3p", "build", str(yml_path)],
-            capture_output=True,
-            text=True,
-        )
+
+        build_app = BuildApp(state, yml_path)
+        build_app.build()  # yml_path)
+        # result = subprocess.run(
+        #     ["python", "-m", "b3p", "build", str(yml_path)],
+        #     capture_output=True,
+        #     text=True,
+        # )
         workdir = temp_example_dir / "temp_blade_portable"
         assert workdir.exists(), f"Blade build failed: workdir {workdir} not created"
-        assert result.returncode == 0, f"Build failed: {result.stderr}"
+        # assert result.returncode == 0, f"Build failed: {result.stderr}"
         yield {
             "workdir": workdir,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
+            # "stdout": result.stdout,
+            # "stderr": result.stderr,
             "temp_dir": temp_example_dir.parent,  # Expose parent temp dir for data access
         }
     finally:

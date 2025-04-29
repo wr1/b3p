@@ -473,7 +473,7 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, verbose=False):
     var = var or {}
     workdir = os.path.dirname(vtu)
     if not os.path.exists(os.path.join(workdir, "2d")):
-        os.makedirs(os.path.join(workdir, "2d"))
+        os.makedirs(os.path.join(workdir, "2d"), exist_ok=True)
 
     output_file = os.path.join(workdir, "2d", "msec_%i.vtp" % (1e3 * r))
 

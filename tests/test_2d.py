@@ -12,17 +12,18 @@ import shutil
 
 
 @pytest.fixture
-def two_d_app():
+def two_d_app(built_blade):
     """Provide a fresh TwoDApp instance for each test."""
     state = AppState.get_instance()
-    return TwoDApp(state)
-
-
-def test_mesh2d_output(two_d_app, built_blade):
-    """Test that mesh2d generates a non-None result for test.yml after blade build."""
     yml_path = built_blade["temp_dir"] / "examples" / "blade_test.yml"
-    print(f"Testing mesh2d with {yml_path}")
-    result = two_d_app.mesh2d(yml_path, parallel=False)  # Generate meshes
+    return TwoDApp(state, yml_path)
+
+
+def test_mesh2d_output(two_d_app):  # , built_blade):
+    """Test that mesh2d generates a non-None result for test.yml after blade build."""
+    # yml_path = built_blade["temp_dir"] / "examples" / "blade_test.yml"
+    # print(f"Testing mesh2d with {yml_path}")
+    result = two_d_app.mesh2d(parallel=False)  # Generate meshes
     print(f"mesh2d result: {result}")
     assert result is not None, "mesh2d should return a non-None result"
 

@@ -176,7 +176,7 @@ def get_bondline_material(d):
         tuple: Bondline material ID and bondline width, or (None, None) if not found.
     """
     wd = d["general"]["workdir"]
-    mmap = os.path.join(wd, "material_map.json")
+    mmap = os.path.join(wd, "drape", "material_map.json")
 
     if os.path.exists(mmap):
         material_map = glob.glob(mmap)

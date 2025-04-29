@@ -4,6 +4,7 @@ import subprocess
 import shutil
 from b3p.anba import anba4_prep
 from b3p.anba import mesh_2d
+import glob
 
 
 class TwoDApp:
@@ -20,17 +21,21 @@ class TwoDApp:
             print("** No sections in mesh2d section in yml file")
             return
         sections = dct["mesh2d"]["sections"]
-        yml_dir = self.yml.parent
-        prefix = os.path.join(
-            yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
-        )
+        # yml_dir = self.yml.parent
+
+        drape_prefix = self.state.get_prefix("drape")
+        mesh_prefix = self.state.get_prefix("mesh")
+        # prefix = self.state.get_prefix()
+        # prefix = os.path.join(
+        #     yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
+        # )
 
         section_meshes = mesh_2d.cut_blade_parallel(
-            f"{prefix}_joined.vtu",
+            f"{drape_prefix}_joined.vtu",
             sections,
             if_bondline=False,
             rotz=rotz,
-            var=f"{prefix}_variables.json",
+            var=f"{mesh_prefix}_variables.json",
             parallel=parallel,
         )
         if not section_meshes or not all(
@@ -40,7 +45,9 @@ class TwoDApp:
             return []
         return anba4_prep.anba4_prep(section_meshes, parallel=parallel)
 
-    def run_anba4(self, meshes: list = None, anba_env="anba4-env"):
+    def run_anba4(self, anba_env="anba4-env"):
+        prefix = self.state.get_prefix("drape")
+        meshes = glob.glob(os.path.join(prefix.parent, "2d", "msec_*.xdmf"))
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
         if conda_path is None:
             print("** Conda not found - please install conda.")
@@ -56,10 +63,10 @@ class TwoDApp:
         dct = self.state.load_yaml(self.yml)
         if meshes is None:
             meshes = self.mesh2d()
-        yml_dir = self.yml.parent
+        # yml_dir = self.yml.parent
 
-        prefix = self.state.get_prefix("drape")
-        material_map = f"{prefix}/material_map.json"
+        # prefix = self.state.get_prefix("drape")
+        material_map = f"{prefix.parent}/material_map.json"
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
@@ -96,9 +103,11 @@ class TwoDApp:
 
     def clean(self):
         dct = self.state.load_yaml(self.yml)
-        workdir = Path(dct["general"]["workdir"])
+        # workdir = Path(dct["general"]["workdir"])
+
+        workdir = self.state.get_prefix("drape")
         # remove the 2d subdir in workdir
-        workdir = workdir / "2d"
+        workdir = workdir.parent / "2d"
         if not workdir.exists():
             print(f"** Workdir {workdir} does not exist - nothing to clean")
             return

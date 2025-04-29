@@ -10,7 +10,7 @@ def test_laminate_number_of_plies(built_blade):
     """Test if the number of plies is correct."""
     workdir = built_blade["workdir"]
     temp_dir = built_blade["temp_dir"]  # Access the parent temp dir
-    joined = glob.glob(f"{workdir}/*_joined.vtu")[-1]
+    joined = glob.glob(f"{workdir}/drape/*_joined.vtu")[-1]
     vtu = pv.read(joined)
     cell_arrays = [i for i in vtu.cell_data.keys() if "ply" in i]
     assert len(cell_arrays) == 348, f"Expected 348 plies, got {len(cell_arrays)}"
