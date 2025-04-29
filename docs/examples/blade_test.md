@@ -5,6 +5,7 @@ This guide explains how to run the `blade_test.yml` example included in the **B3
 ## Prerequisites
 
 Before running the example, ensure:
+
 - B3P is installed (see [Installation](installation.md)).
 - Dependencies (CalculiX, ANBA4, Conda environment `anba4-env`) are set up.
 - The `examples` folder contains `blade_test.yml` and linked files (`materials.yml`, `loads.yml`, `laminates.yml`).
@@ -63,24 +64,24 @@ To run the workflow manually:
 
 The workflow generates files in `temp_blade_portable`:
 
-- **Mesh Files** (`temp_blade_portable/mesh/`):
-  - Airfoil data (e.g., `xs_test_blade_t_*.dat`).
-  - 3D meshes (e.g., `test_blade.vtp`, `test_blade_shell.vtp`).
-  - Web meshes (e.g., `test_blade_w0.vtp`).
-  - Configuration files (e.g., `test_blade_variables.json`).
+   - **Mesh Files** (`temp_blade_portable/mesh/`):
+      - Airfoil data (e.g., `xs_test_blade_t_*.dat`).
+      - 3D meshes (e.g., `test_blade.vtp`, `test_blade_shell.vtp`).
+      - Web meshes (e.g., `test_blade_w0.vtp`).
+      - Configuration files (e.g., `test_blade_variables.json`).
 
-- **Drape Files** (`temp_blade_portable/drape/`):
-  - Material data (e.g., `material_map.json`, `ply_bom.csv`).
-  - Draped meshes (e.g., `test_blade_shell_dr.vtu`).
-  - Mass summaries (e.g., `test_blade_mass.csv`).
-  - 2D sectional meshes (e.g., `msec_*.vtp`, `msec_*.xdmf`).
+   - **Drape Files** (`temp_blade_portable/drape/`):
+      - Material data (e.g., `material_map.json`, `ply_bom.csv`).
+      - Draped meshes (e.g., `test_blade_shell_dr.vtu`).
+      - Mass summaries (e.g., `test_blade_mass.csv`).
+      - 2D sectional meshes (e.g., `msec_*.vtp`, `msec_*.xdmf`).
 
-- **FEA Files** (`temp_blade_portable/fea/`):
-  - CalculiX inputs (e.g., `test_blade_ccx_mp_lc_forward_flap.inp`).
-  - Results (e.g., `test_blade_ccx_mp_lc_forward_flap.vtu`).
+   - **FEA Files** (`temp_blade_portable/fea/`):
+      - CalculiX inputs (e.g., `test_blade_ccx_mp_lc_forward_flap.inp`).
+      - Results (e.g., `test_blade_ccx_mp_lc_forward_flap.vtu`).
 
-- **Aerodynamic Results**:
-  - `ccblade_output.csv`, `ccblade_output.png`, `polars.png`.
+   - **Aerodynamic Results**:
+      - `ccblade_output.csv`, `ccblade_output.png`, `polars.png`.
 
 ## Workflow Summary
 

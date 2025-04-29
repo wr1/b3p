@@ -5,6 +5,7 @@ This guide covers the installation of **B3P** (Blade Preprocessor) and its depen
 ## Prerequisites
 
 Before installing B3P, ensure the following are installed:
+
 - **Python 3.8+**: Install via your package manager (e.g., `apt install python3` on Ubuntu) or from [python.org](https://www.python.org).
 - **pip**: Python package manager, typically included with Python.
 - **Git**: For cloning the repository (e.g., `apt install git` on Ubuntu).

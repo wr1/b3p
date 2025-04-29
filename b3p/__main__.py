@@ -209,21 +209,20 @@ def main():
                 build.apply_loads()
     elif args.command == "ccx":
         if not hasattr(args, "subcommand") or args.subcommand is None:
-            ccx.ccx(args.yml, bondline=args.bondline)
+            ccx.ccx(bondline=args.bondline)
         elif args.subcommand == "ccx":
-            ccx.ccx(args.yml_sub or args.yml, bondline=args.bondline)
+            ccx.ccx(bondline=args.bondline)
         elif args.subcommand == "prep":
-            ccx.prep(args.yml_sub or args.yml, bondline=args.bondline)
+            ccx.prep(bondline=args.bondline)
         elif args.subcommand == "solve":
             ccx.solve(
-                args.yml_sub or args.yml,
                 wildcard=args.wildcard,
                 nproc=args.nproc,
                 ccxexe=args.ccxexe,
                 merged_plies=args.merged_plies,
             )
         elif args.subcommand == "post":
-            ccx.post(args.yml_sub or args.yml, wildcard=args.wildcard, nbins=args.nbins)
+            ccx.post(wildcard=args.wildcard, nbins=args.nbins)
         elif args.subcommand == "plot":
             ccx.plot(
                 args.yml_sub or args.yml,
