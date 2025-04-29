@@ -28,19 +28,15 @@ def test_mesh2d_output(two_d_app):  # , built_blade):
     assert result is not None, "mesh2d should return a non-None result"
 
 
-def test_anba4_output_json(two_d_app, built_blade):
+def test_anba4_output_json(two_d_app):
     """Test that ANBA4 produces at least one JSON output file with valid content after blade build."""
-    yml_path = built_blade["temp_dir"] / "examples" / "blade_test.yml"
-    original_dir = os.getcwd()
-    os.chdir(built_blade["temp_dir"] / "examples")
     try:
-        two_d_app.mesh2d(yml_path, parallel=False)  # Generate meshes
-        two_d_app.run_anba4(yml_path)  # Run ANBA4 analysis
-        with open(yml_path, "r") as f:
-            config = yaml.safe_load(f)
-        workdir = config["general"]["workdir"] + "_portable"
+        two_d_app.mesh2d(parallel=False)  # Generate meshes
+        two_d_app.run_anba4()  # Run ANBA4 analysis
 
-        output_jsons = list(Path(built_blade["workdir"]).glob("msec_*.json"))
+        prefix = two_d_app.state.get_prefix("drape")
+
+        output_jsons = list(prefix.parent.glob("2d/msec_*.json"))
         assert output_jsons, "ANBA4 should create at least one output JSON file"
 
         with open(output_jsons[0], "r") as f:
@@ -48,25 +44,20 @@ def test_anba4_output_json(two_d_app, built_blade):
         print(f"Found JSON files: {output_jsons}")
         print(f"First JSON content: {json_data}")
     finally:
-        os.chdir(original_dir)
+        pass
 
 
-def test_anba4_output_file(two_d_app, built_blade):
+def test_anba4_output_file(two_d_app):
     """Test that ANBA4 creates the expected XDMF output file after blade build."""
-    yml_path = built_blade["temp_dir"] / "examples" / "blade_test.yml"
-    original_dir = os.getcwd()
-    os.chdir(built_blade["temp_dir"] / "examples")
     try:
-        two_d_app.mesh2d(yml_path, parallel=False)  # Generate meshes
-        two_d_app.run_anba4(yml_path)  # Run ANBA4 analysis
-        with open(yml_path, "r") as f:
-            config = yaml.safe_load(f)
-        workdir = config["general"]["workdir"] + "_portable"
+        two_d_app.mesh2d(parallel=False)  # Generate meshes
+        two_d_app.run_anba4()  # Run ANBA4 analysis
+        prefix = two_d_app.state.get_prefix("drape")
 
-        output_file = built_blade["workdir"] / "msec_100000.xdmf"
+        output_file = prefix.parent / "2d" / "msec_100000.xdmf"
         assert output_file.exists(), "ANBA4 should create msec_100000.xdmf"
     finally:
-        os.chdir(original_dir)
+        pass
 
 
 def test_mesh2d_compare_reference(two_d_app, built_blade):

@@ -103,8 +103,6 @@ class TwoDApp:
 
     def clean(self):
         dct = self.state.load_yaml(self.yml)
-        # workdir = Path(dct["general"]["workdir"])
-
         workdir = self.state.get_prefix("drape")
         # remove the 2d subdir in workdir
         workdir = workdir.parent / "2d"

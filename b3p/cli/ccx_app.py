@@ -56,7 +56,7 @@ class CcxApp:
         prefix = self.state.get_prefix(self.dir)
         if inpfiles is None:
             inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
-        inps = [inp for inp in inps]
+        inps = [inp for inp in inpfiles]
         if merged_plies:
             inps = [inp for inp in inps if "_mp_" in inp]
         if not inps:
@@ -87,10 +87,9 @@ class CcxApp:
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 
-    def plot(
-        self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs
-    ):
+    def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
         dct = self.state.load_yaml(self.yml)
+
         plotter = ccxpost.plot_ccx(dct["general"]["workdir"], wildcard=wildcard)
         if plot3d:
             plotter.plot3d()
