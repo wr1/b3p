@@ -60,25 +60,27 @@ def test_anba4_output_file(two_d_app):
         pass
 
 
-def test_mesh2d_compare_reference(two_d_app, built_blade):
+def test_mesh2d_compare_reference(two_d_app):
     """Test that 2D meshes match reference meshes in tests/data/reference_2d_meshes/ after blade build."""
-    yml_path = built_blade["temp_dir"] / "examples" / "blade_test.yml"
-    original_dir = os.getcwd()
-    os.chdir(built_blade["temp_dir"] / "examples")
+    # yml_path = built_blade["temp_dir"] / "examples" / "blade_test.yml"
+    # original_dir = os.getcwd()
+    # os.chdir(built_blade["temp_dir"] / "examples")
     try:
         # Run mesh2d to generate meshes
-        two_d_app.mesh2d(yml_path, parallel=False)
-        with open(yml_path, "r") as f:
-            config = yaml.safe_load(f)
-        workdir = config["general"]["workdir"] + "_portable"
+        two_d_app.mesh2d(parallel=False)
+        # with open(yml_path, "r") as f:
+        #     config = yaml.safe_load(f)
+        # workdir = config["general"]["workdir"] + "_portable"
+
+        prefix = two_d_app.state.get_prefix("drape")
 
         # Get generated mesh files
-        generated_meshes = list(Path(built_blade["workdir"]).glob("msec_*0.xdmf"))
+        generated_meshes = list(Path(prefix.parent / "2d").glob("msec_*0.xdmf"))
         assert generated_meshes, "mesh2d should generate at least one .xdmf file"
 
         # Reference directory
-        ref_dir = built_blade["temp_dir"] / "data" / "reference_2d_meshes"
-        assert ref_dir.exists(), f"Reference directory {ref_dir} not found"
+        # ref_dir = built_blade["temp_dir"] / "data" / "reference_2d_meshes"
+        # assert ref_dir.exists(), f"Reference directory {ref_dir} not found"
 
         # Compare each generated mesh with its reference
         for gen_mesh in generated_meshes:
