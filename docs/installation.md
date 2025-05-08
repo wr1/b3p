@@ -6,11 +6,11 @@ This guide covers the installation of **B3P** (Blade Preprocessor) and its depen
 
 Before installing B3P, ensure the following are installed:
 
-- **Python 3.8+**: Install via your package manager (e.g., `apt install python3` on Ubuntu) or from [python.org](https://www.python.org).
-- **pip**: Python package manager, typically included with Python.
-- **Git**: For cloning the repository (e.g., `apt install git` on Ubuntu).
-- **Conda** (optional): For managing dependencies like ANBA4 (install Miniconda or Anaconda from [conda.io](https://conda.io)).
-- **CalculiX** (optional): Required for 3D FEA (install via `apt install calculix-ccx` on Ubuntu or follow [CalculiX instructions](http://www.calculix.de)).
+   - **Python 3.8+**: Install via your package manager (e.g., `apt install python3` on Ubuntu) or from [python.org](https://www.python.org).
+   - **pip**: Python package manager, typically included with Python.
+   - **Git**: For cloning the repository (e.g., `apt install git` on Ubuntu).
+   - **Conda** (optional): For managing dependencies like ANBA4 (install Miniconda or Anaconda from [conda.io](https://conda.io)).
+   - **CalculiX** (optional): Required for 3D FEA (install via `apt install calculix-ccx` on Ubuntu or follow [CalculiX instructions](http://www.calculix.de)).
 
 ## Installation Options
 
@@ -49,6 +49,7 @@ To install from source (e.g., for development or access to the latest features):
 ### Additional Dependencies
 
 For specific analyses, additional tools may be required:
+
 - **ANBA4**: For 2D sectional analysis, install ANBA4 in a Conda environment (e.g., `anba4-env`). Follow ANBA4's installation instructions or use the `default_install.sh` script in the B3P repository.
 - **CCBlade**: For aerodynamic analysis, included with B3P but requires airfoil polar data.
 
