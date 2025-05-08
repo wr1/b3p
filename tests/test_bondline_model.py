@@ -1,12 +1,11 @@
-from .test_build import run_test_build, workdir
-
 import pyvista as pv
+from .test_build import built_blade
 
 
-def test_bondline_model(run_test_build):
+def test_bondline_model(built_blade):
     """Test if the bondline model is created."""
-    bondline_vtu = workdir.glob("*bondline.vtu")
-    print(bondline_vtu)
-
-    # assert True
-    # assert build_output_exists()
+    workdir = built_blade["workdir"]
+    bondline_vtu = list(workdir.glob("*bondline.vtu"))
+    assert bondline_vtu, "Bondline VTU file should exist"
+    vtu = pv.read(bondline_vtu[0])
+    assert vtu.n_points > 0, "Bondline VTU should contain points"

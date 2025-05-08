@@ -16,15 +16,15 @@ __pycache__/
 *.dat
 *.cvg
 *.xdmf*
-*.txt
+**/*.txt
 *.png
 *.pck
 *.zip
 *.pyc
-
+*.out
 # Ignore directories containing 'portable' in their name
 *portable*/
-
+__dump
 # Distribution / packaging
 .Python
 build/

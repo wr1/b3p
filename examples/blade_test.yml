@@ -24,6 +24,7 @@ aero:
     0.21: airfoils/DU93-W-210_smoothed_dero_0.210.dat, 0.179928: airfoils/naca633418_te.dat,
     0.17: airfoils/naca0017.dat}
   bem:
+    rated_power : 1.2e7
     polars: {1.0: polars/Cylinder1.dat, 0.21: polars/DU21_A17.dat, 0.25: polars/DU25_A17.dat,
       0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
       0.17: polars/NACA64_A17.dat}
@@ -81,6 +82,7 @@ mesh:
 
 mesh2d:
   sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
+  
 
 materials: materials_iso.yml
 
