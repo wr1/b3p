@@ -18,10 +18,10 @@ def run_ccx(temp_example_dir):
         yml_path = Path("blade_test.yml")
 
         build_app = BuildApp(state, yml_path)
-        ccx_app = CcxApp(state)
-        yml_path = Path("blade_test.yml")
+        ccx_app = CcxApp(state,yml_path)
+        # yml_path = Path("blade_test.yml")
         build_app.build(yml_path)  # Build the project first
-        ccx_app.prep(yml_path, bondline=False)  # Test with bondline option
+        ccx_app.prep( bondline=False)  # Test with bondline option
         yield {
             "workdir": temp_example_dir / "temp_blade_portable",
             "yml_path": yml_path,
