@@ -8,7 +8,6 @@ import meshio
 import numpy as np
 from b3p.cli.app_state import AppState
 from b3p.cli.two_d_app import TwoDApp
-import shutil
 
 
 @pytest.fixture
@@ -67,13 +66,13 @@ def test_mesh2d_compare_reference(two_d_app, built_blade):
     os.chdir(built_blade["temp_dir"] / "examples")
     try:
         # Run mesh2d to generate meshes
-        two_d_app.mesh2d(yml_path, parallel=False)
+        two_d_app.mesh2d( parallel=False)
         with open(yml_path, "r") as f:
             config = yaml.safe_load(f)
         workdir = config["general"]["workdir"] + "_portable"
 
         # Get generated mesh files
-        generated_meshes = list(Path(built_blade["workdir"]).glob("msec_*0.xdmf"))
+        generated_meshes = list(Path(built_blade["workdir"]).glob("drape/2d/msec_*0.xdmf"))
         assert generated_meshes, "mesh2d should generate at least one .xdmf file"
 
         # Reference directory
