@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Miniforge for the main b3p environment
+      - name: Install Miniforge and main environment
+        uses: conda-incubator/setup-miniforge@v3
+        with:
+          miniforge-version: latest
+          activate-environment: b3p-env
+          python-version: "3.12"
+          channels: conda-forge,defaults
+
+      # Install Poetry and b3p dependencies
+      - name: Install b3p dependencies
+        shell: bash -el {0}
+        run: |
+          conda install -c conda-forge poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction
+
+      # Create the anba4-env environment for run_anba4
+      - name: Set up anba4-env
+        shell: bash -el {0}
+        run: |
+          conda create -n anba4-env -c conda-forge -y fenics=2019.1.0 python=3.9
+          conda info --envs  # Verify environment creation
+
+      # Run tests
+      - name: Run tests
+        shell: bash -el {0}
+        run: |
+          pytest -v tests/test_build.py
+          pytest -v tests/test_ccx.py
+          pytest -v tests/test_ccblade.py
+          pytest -v tests/test_2d.py
+
+      # Cache Conda environments
+      - name: Cache Conda environments
+        uses: actions/cache@v4
+        with:
+          path: ~/miniforge/envs
+          key: ${{ runner.os }}-conda-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-
