@@ -19,7 +19,7 @@ def test_planform(built_blade):
     """Test if the planform CSV matches expected values."""
     workdir = built_blade["workdir"]
     temp_dir = built_blade["temp_dir"]  # Access the parent temp dir
-    pref = glob.glob(f"{workdir}/*/*50.csv")[0]
+    pref = glob.glob(f"{workdir}/mesh/*50.csv")[0]
     planform = pd.read_csv(pref, sep=";")
 
     # Load the reference CSV from the copied data directory
