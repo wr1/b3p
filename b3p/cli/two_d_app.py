@@ -71,8 +71,7 @@ class TwoDApp:
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
         print(f"** Running ANBA4 using {script_path} in env {anba_env}")
-        result = subprocess.run(
-            [
+        conda_command =            [
                 conda_path,
                 "run",
                 "-n",
@@ -81,7 +80,10 @@ class TwoDApp:
                 script_path,
                 *meshes,
                 material_map,
-            ],
+            ]
+        print(' '.join(conda_command))
+        result = subprocess.run(
+            conda_command,
             capture_output=True,
             text=True,
             env={

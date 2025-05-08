@@ -32,7 +32,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
 
-    build_drape_parser = subparsers.add_parser("drape", help="Drape plies onto mesh")
+    build_drape_parser = build_subparsers.add_parser("drape", help="Drape plies onto mesh")
     build_drape_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
