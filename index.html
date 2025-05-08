@@ -60,7 +60,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#introduction" class="md-skip">
+        <a href="#welcome-to-b3p-documentation" class="md-skip">
           Skip to content
         </a>
       
@@ -201,6 +201,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="." class="md-nav__link md-nav__link--active">
         
   
@@ -212,6 +225,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting Started
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -353,6 +430,97 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/blade_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blade Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="examples/test_run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Run
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -373,6 +541,59 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting Started
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -387,14 +608,45 @@
 
 
 
-<h1 id="introduction">Introduction</h1>
-<p><em>b3p</em> is a preprocessor for wind turbine blade models. </p>
+<h1 id="welcome-to-b3p-documentation">Welcome to B3P Documentation</h1>
+<p><strong>B3P</strong> (Blade Preprocessor) is a Python-based tool designed to preprocess wind turbine blade models for structural and aerodynamic analyses. It translates blade input files into formats suitable for solvers such as CalculiX (<code>ccx</code>), ANBA4 (<code>anba</code>), and CCBlade (<code>ccblade</code>). B3P supports the creation of 3D blade geometries, 2D sectional meshes, and finite element analysis (FEA) inputs, enabling comprehensive blade design and analysis workflows.</p>
+<h2 id="overview">Overview</h2>
+<p>B3P provides a command-line interface (CLI) and Python API to:</p>
+<ul>
+<li>Build 3D blade models from YAML input files.</li>
+<li>Generate 2D cross-sectional meshes for structural analysis.</li>
+<li>Perform aerodynamic analyses using CCBlade.</li>
+<li>Prepare and run 3D FEA with CalculiX.</li>
+<li>Drape composite plies and compute mass properties.</li>
+</ul>
+<p>The following diagram illustrates the B3P workflow:</p>
 <pre class="mermaid"><code>graph TD
-    A[Blade input file] --&gt; B[b3p build]
-    B --&gt; FEA[3D FEA]
-    B --&gt; 2D[Section meshes]
-    B --&gt; BEM </code></pre>
-<!-- python package that translates a blade input file to allow running various solvers such as *ccx*, *anba* or *ccblade*. -->
+    A[Blade Input YAML] --&gt; B[b3p build]
+    B --&gt; C[3D Blade Mesh]
+    C --&gt; D[2D Section Meshes]
+    C --&gt; E[3D FEA with CalculiX]
+    D --&gt; F[ANBA4 Sectional Analysis]
+    A --&gt; G[CCBlade Aerodynamic Analysis]</code></pre>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>Modular Design</strong>: Supports individual steps (e.g., geometry building, meshing, analysis) or complete workflows.</li>
+<li><strong>YAML Input</strong>: Uses human-readable YAML files to define blade geometry, materials, and loads.</li>
+<li><strong>Composite Support</strong>: Handles complex laminate definitions and ply draping.</li>
+<li><strong>Parallel Processing</strong>: Leverages multiprocessing for efficient mesh conversions and analyses.</li>
+<li><strong>Visualization</strong>: Generates output files compatible with tools like Paraview for result inspection.</li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<p>To begin using B3P, follow these steps:</p>
+<ol>
+<li><a href="installation/">Install B3P</a> via PyPI or from source.</li>
+<li>Explore the <a href="usage/">Usage Guide</a> for CLI and API instructions.</li>
+<li>Check out the <a href="use/inputfile/">Input File Format</a> to create blade definitions.</li>
+<li>Run example workflows as described in <a href="examples/blade_test/">Examples</a>.</li>
+</ol>
+<h2 id="contributing">Contributing</h2>
+<p>Contributions are welcome! See the <a href="contributing/">Contributing Guide</a> for details on setting up a development environment, coding standards, and submitting pull requests.</p>
+<h2 id="support">Support</h2>
+<p>For issues, questions, or feature requests, visit the <a href="https://github.com/wr1/b3p">GitHub repository</a> and open an issue.</p>
 
 
 

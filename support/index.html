@@ -16,7 +16,7 @@
     
     
       
-        <title>Usage Guide - b3p</title>
+        <title>Support - b3p</title>
       
     
     
@@ -58,7 +58,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#usage-guide" class="md-skip">
+        <a href="#support" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Usage Guide
+              Support
             
           </span>
         </div>
@@ -459,28 +459,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#command-line-interface-cli" class="md-nav__link">
+  <a href="#github-repository" class="md-nav__link">
     <span class="md-ellipsis">
-      Command-Line Interface (CLI)
+      GitHub Repository
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Command-Line Interface (CLI)">
+    <nav class="md-nav" aria-label="GitHub Repository">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#key-commands" class="md-nav__link">
+  <a href="#filing-issues" class="md-nav__link">
     <span class="md-ellipsis">
-      Key Commands
+      Filing Issues
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-workflow" class="md-nav__link">
+  <a href="#discussions" class="md-nav__link">
     <span class="md-ellipsis">
-      Example Workflow
+      Discussions
     </span>
   </a>
   
@@ -492,27 +492,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#python-api" class="md-nav__link">
+  <a href="#troubleshooting-common-issues" class="md-nav__link">
     <span class="md-ellipsis">
-      Python API
+      Troubleshooting Common Issues
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#output-files" class="md-nav__link">
+  <a href="#community-and-resources" class="md-nav__link">
     <span class="md-ellipsis">
-      Output Files
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
+      Community and Resources
     </span>
   </a>
   
@@ -534,123 +525,36 @@
 
 
 
-<h1 id="usage-guide">Usage Guide</h1>
-<p>This guide explains how to use <strong>B3P</strong> (Blade Preprocessor) via its command-line interface (CLI) and Python API. B3P processes wind turbine blade models defined in YAML files, enabling geometry creation, meshing, and analyses.</p>
-<h2 id="command-line-interface-cli">Command-Line Interface (CLI)</h2>
-<p>B3P provides a CLI with commands for building models, running analyses, and cleaning workspaces. The general syntax is:</p>
-<div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>&lt;command&gt;<span class="w"> </span>&lt;yaml_file&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div>
-<h3 id="key-commands">Key Commands</h3>
-<ol>
-<li><strong>Build</strong>: Constructs the 3D blade model and meshes.
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>build<span class="w"> </span>blade.yml
-</code></pre></div>
-   Subcommands:</li>
-<li><code>geometry</code>: Build blade geometry only.</li>
-<li><code>mesh</code>: Generate meshes.</li>
-<li><code>drape</code>: Drape composite plies.</li>
-<li><code>mass</code>: Calculate blade mass.</li>
-<li>
-<p><code>apply-loads</code>: Apply loads to the mesh.
-   Example:
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>build<span class="w"> </span>blade.yml<span class="w"> </span>--no-bondline
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>2D Analysis</strong>: Generates 2D sectional meshes and runs ANBA4 analysis.
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>2d<span class="w"> </span>blade.yml
-</code></pre></div>
-   Subcommands:</p>
-</li>
-<li><code>mesh2d</code>: Create 2D meshes.</li>
-<li><code>run-anba4</code>: Run ANBA4 analysis.</li>
-<li><code>clean</code>: Remove temporary <code>msec*</code> files.
-   Options:</li>
-<li><code>--rotz &lt;degrees&gt;</code>: Rotate meshes around Z-axis.</li>
-<li>
-<p><code>--anba-env &lt;env&gt;</code>: Specify Conda environment for ANBA4.
-   Example:
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>2d<span class="w"> </span>blade.yml<span class="w"> </span>--rotz<span class="w"> </span><span class="m">10</span><span class="w"> </span>--anba-env<span class="w"> </span>anba4-env
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>CCX (CalculiX)</strong>: Runs 3D finite element analysis.
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>ccx<span class="w"> </span>blade.yml
-</code></pre></div>
-   Subcommands:</p>
-</li>
-<li><code>prep</code>: Prepare CalculiX input files.</li>
-<li><code>solve</code>: Solve the FEA problem.</li>
-<li><code>post</code>: Post-process results.</li>
-<li><code>plot</code>: Generate 2D/3D plots.
-   Options:</li>
-<li><code>--bondline</code>: Include bondline meshes.</li>
-<li><code>--nproc &lt;n&gt;</code>: Number of processes for solving.</li>
-<li>
-<p><code>--wildcard &lt;pattern&gt;</code>: Filter input/result files.
-   Example:
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>ccx<span class="w"> </span>blade.yml<span class="w"> </span>--nproc<span class="w"> </span><span class="m">4</span><span class="w"> </span>--bondline
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>CCBlade</strong>: Performs aerodynamic analysis.
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>ccblade<span class="w"> </span>blade.yml
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Clean</strong>: Removes temporary files from the working directory.
-   <div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>clean<span class="w"> </span>blade.yml
-</code></pre></div></p>
-</li>
-</ol>
-<h3 id="example-workflow">Example Workflow</h3>
-<p>To process a blade model from start to finish:</p>
-<div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>clean<span class="w"> </span>blade.yml
-b3p<span class="w"> </span>build<span class="w"> </span>blade.yml
-b3p<span class="w"> </span>2d<span class="w"> </span>blade.yml
-b3p<span class="w"> </span>ccx<span class="w"> </span>blade.yml
-b3p<span class="w"> </span>ccblade<span class="w"> </span>blade.yml
-</code></pre></div>
-<h2 id="python-api">Python API</h2>
-<p>B3P can be used programmatically for custom workflows. Below is an example of running a CCBlade analysis:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">b3p.ccblade_run</span><span class="w"> </span><span class="kn">import</span> <span class="n">ccblade_run</span>
-
-<span class="c1"># Run CCBlade analysis</span>
-<span class="n">analysis</span> <span class="o">=</span> <span class="n">ccblade_run</span><span class="p">(</span><span class="s2">&quot;blade.yml&quot;</span><span class="p">)</span>
-
-<span class="c1"># Access results</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
-</code></pre></div>
-<p>For advanced control optimization:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">b3p.ccblade_run</span><span class="w"> </span><span class="kn">import</span> <span class="n">ccblade_run</span><span class="p">,</span> <span class="n">controloptimize</span>
-
-<span class="n">blade</span> <span class="o">=</span> <span class="n">ccblade_run</span><span class="p">(</span><span class="s2">&quot;blade.yml&quot;</span><span class="p">)</span>
-<span class="n">rotor</span> <span class="o">=</span> <span class="n">blade</span><span class="o">.</span><span class="n">_setup_rotor</span><span class="p">()</span>
-<span class="n">copt</span> <span class="o">=</span> <span class="n">controloptimize</span><span class="p">(</span>
-    <span class="n">rotor</span><span class="p">,</span>
-    <span class="n">max_tipspeed</span><span class="o">=</span><span class="mf">95.0</span><span class="p">,</span>
-    <span class="n">rtip</span><span class="o">=</span><span class="n">blade</span><span class="o">.</span><span class="n">rtip</span><span class="p">,</span>
-    <span class="n">rating</span><span class="o">=</span><span class="mf">15e6</span><span class="p">,</span>
-    <span class="n">uinf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">25</span><span class="p">]),</span>
-    <span class="n">workdir</span><span class="o">=</span><span class="s2">&quot;./custom_output&quot;</span>
-<span class="p">)</span>
-<span class="n">copt</span><span class="o">.</span><span class="n">control_opt_below_rated</span><span class="p">(</span><span class="n">starting_tsr</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">starting_pitch</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">output</span> <span class="o">=</span> <span class="n">copt</span><span class="o">.</span><span class="n">control_opt_above_rated</span><span class="p">()</span>
-</code></pre></div>
-<h2 id="output-files">Output Files</h2>
-<p>B3P generates files in the working directory (e.g., <code>output_portable</code>):
-- <strong>Mesh Files</strong>: <code>.vtp</code>, <code>.vtu</code> for 3D geometry; <code>.xdmf</code> for 2D meshes.
-- <strong>Drape Files</strong>: <code>material_map.json</code>, <code>ply_bom.csv</code>, <code>mass.csv</code> for composite data.
-- <strong>FEA Results</strong>: <code>.frd</code>, <code>.vtu</code> for CalculiX outputs.
-- <strong>CCBlade Results</strong>: <code>ccblade_output.csv</code>, <code>ccblade_output.png</code>, <code>polars.png</code>.</p>
-<p>Use visualization tools like Paraview to inspect <code>.vtp</code>, <code>.vtu</code>, and <code>.xdmf</code> files.</p>
-<h2 id="troubleshooting">Troubleshooting</h2>
+<h1 id="support">Support</h1>
+<p>If you encounter issues, have questions, or want to suggest features for <strong>B3P</strong> (Blade Preprocessor), this guide outlines how to seek help.</p>
+<h2 id="github-repository">GitHub Repository</h2>
+<p>The primary support channel is the B3P GitHub repository: <a href="https://github.com/wr1/b3p">https://github.com/wr1/b3p</a>.</p>
+<h3 id="filing-issues">Filing Issues</h3>
+<p>For bugs, installation problems, or feature requests:
+1. Check existing issues to avoid duplicates.
+2. Open a new issue with:
+   - A clear title (e.g., "Error in 2D mesh generation").
+   - Description of the problem, including error messages and steps to reproduce.
+   - Environment details (OS, Python version, B3P version, dependencies).
+   - Relevant logs or screenshots.</p>
+<h3 id="discussions">Discussions</h3>
+<p>Use GitHub Discussions for general questions, ideas, or community feedback:
+- Ask about usage, best practices, or clarification on documentation.
+- Share ideas for new features or improvements.</p>
+<h2 id="troubleshooting-common-issues">Troubleshooting Common Issues</h2>
 <ul>
-<li><strong>File not found</strong>: Verify YAML file paths and linked files (e.g., airfoils, materials).</li>
-<li><strong>ANBA4 errors</strong>: Ensure the <code>anba4-env</code> Conda environment is activated.</li>
-<li><strong>CalculiX failures</strong>: Check <code>ccx</code> executable path and input file syntax.</li>
+<li><strong>Installation failures</strong>: Ensure Python 3.8+, <code>pip</code>, and dependencies are up-to-date. Use a virtual environment to avoid conflicts.</li>
+<li><strong>ANBA4 errors</strong>: Verify the <code>anba4-env</code> Conda environment is activated and ANBA4 is installed.</li>
+<li><strong>CalculiX not found</strong>: Confirm <code>ccx</code> is in your PATH or specify with <code>--ccxexe</code>.</li>
+<li><strong>YAML errors</strong>: Check file paths and syntax. Use <code>b3p yml_portable</code> to embed linked files.</li>
+<li><strong>Memory issues</strong>: Reduce radial positions (<code>mesh.radii</code>) or use a machine with more RAM.</li>
 </ul>
-<p>Refer to <a href="../examples/blade_test/">Examples</a> for detailed workflows.</p>
+<h2 id="community-and-resources">Community and Resources</h2>
+<ul>
+<li><strong>Documentation</strong>: Refer to <a href="../usage/">Usage</a>, <a href="../use/inputfile/">Input File Format</a>, and <a href="../examples/blade_test/">Examples</a> for guidance.</li>
+<li><strong>Examples</strong>: The <code>examples</code> folder in the repository includes workflows to learn from.</li>
+<li><strong>Paraview</strong>: Use Paraview to visualize <code>.vtp</code>, <code>.vtu</code>, and <code>.xdmf</code> output files.</li>
+</ul>
 
 
 
