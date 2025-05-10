@@ -486,7 +486,7 @@ class ccblade_run:
             blade (str): Path to the blade YAML file.
         """
         self.dct = yml_portable.yaml_make_portable(blade)
-        workdir = self.dct["general"]["workdir"]
+        workdir = os.path.join(self.dct["general"]["workdir"], "mesh")
         bem = {
             "rated_power": 10e6,
             "polars": {},
@@ -508,9 +508,7 @@ class ccblade_run:
         )
         bem |= self.dct["aero"]["bem"]
 
-        self.prefix = os.path.join(
-            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
-        )
+        self.prefix = os.path.join(workdir, self.dct["general"]["prefix"])
 
         if "polars" not in bem:
             exit("no polars in blade file")

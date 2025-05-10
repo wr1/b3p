@@ -32,7 +32,9 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
 
-    build_drape_parser = build_subparsers.add_parser("drape", help="Drape plies onto mesh")
+    build_drape_parser = build_subparsers.add_parser(
+        "drape", help="Drape plies onto mesh"
+    )
     build_drape_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
@@ -241,7 +243,7 @@ def main():
         elif args.subcommand == "clean":
             d2d.clean()
     elif args.command == "ccblade":
-        ccb.ccblade(args.yml)
+        ccb.ccblade()
     elif args.command == "clean":
         clean.clean()
 
