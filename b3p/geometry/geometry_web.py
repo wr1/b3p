@@ -1,12 +1,13 @@
+import logging
 import vtk
 import numpy as np
 import pyvista as pv
 
+logger = logging.getLogger(__name__)
 
 def equals(v1, v2):
     tol = 1e-6
     return (v1 - v2) ** 2 < tol
-
 
 def mesh_line(pnt1, pnt2, n_cells, id):
     xyz = []
@@ -18,14 +19,13 @@ def mesh_line(pnt1, pnt2, n_cells, id):
         ab = [j * (i[1] - i[0]) + i[0] for j in rel]
         xyz.append(np.array(ab))
 
-    dst = [i[1:] - i[:-1] for i in xyz]  # distances between points in 3 dimensions
-    sl = (dst[0] ** 2 + dst[1] ** 2 + dst[2] ** 2) ** 0.5  # length of the line segments
+    dst = [i[1:] - i[:-1] for i in xyz]
+    sl = (dst[0] ** 2 + dst[1] ** 2 + dst[2] ** 2) ** 0.5
 
-    # path location from the first web point
     pl = [0] + [sum(sl[:i]) for i in range(1, len(sl) + 1)]
 
     ppl = [-i + pl[-1] for i in pl]
-    ml = [abs(i - 0.5 * web_height) for i in pl]  # distance from the web centerline
+    ml = [abs(i - 0.5 * web_height) for i in pl]
 
     wh = [web_height for _ in ml]
 
@@ -38,14 +38,12 @@ def mesh_line(pnt1, pnt2, n_cells, id):
         "d_le_r": [i / max(ppl) for i in ppl],
         f"d_{id}_r": [i / max(ml) for i in ml],
         f"d_{id}": ml,
-        # "d_along_airfoil": ml,
         "web_height": wh,
         "radius": r,
         "is_web": [1.0 for _ in ppl],
     }
 
     return list(zip(*xyz)), arrays
-
 
 class web:
     def __init__(
@@ -63,48 +61,19 @@ class web:
         self.evaluations = {}
         self.name = web_name
         self.coordinate = coordinate
-        # self.normal = normal
         self.flip_normal = flip_normal
 
     def average_splits(self):
-        """
-        routine to define the average of the split position (averaged over
-        radius), this is used to calculate the number of points for a shell
-        part (which can't be done on the local split positions, since then it
-        would vary over R and require the ability to drop and gain element
-        strips)
-        """
         g = list(zip(*self.points))
         return np.mean(g[1]), np.mean(g[2])
 
     def splits(self, r, r_relative):
-        """
-        a split is a point at which the airfoil section has a set point where
-        there needs to be a spline evaluation, this ensures that there is a line
-        of nodes on the shell to which the web can be attached (or at least
-        lined up)
-        """
         out = (0, 0)
         out = (self.splines[0].Evaluate(r), self.splines[1].Evaluate(r))
-        # log the evaluations of the web position, so that it can be used later
-        # to look up the 3D coordinates, store in mm, so that it can be used as
-        # an integer key to look up corresponding web split locations
         self.evaluations[int(round(r * 1e2) * 10)] = [out]
         return out
 
     def _find_top_and_bottom_points(self, mesh):
-        """
-        loop through the mesh (which represents a shell), when it has been
-        constructed to accomodate this web, it will have points on the shell
-        where the web starts and ends, this routine finds those points for the
-        radius locations where the web is. Note that the length of the web is
-        only exact down to the element size
-
-        parameters:
-        -----------
-        mesh: vtkUnstructuredGrid
-            shell mesh to find web points in
-        """
         rad = mesh.GetPointData().GetArray("radius")
         rel_dist = mesh.GetPointData().GetArray("d_rel_dist_from_te")
         for i in range(mesh.GetNumberOfPoints()):
@@ -119,16 +88,6 @@ class web:
                     self.evaluations[rmm].append(pnt)
 
     def _create_quad_connectivity(self, n_points, n_total, flip=False):
-        """create quad element connectivity array
-
-        parameters:
-        -----------
-        n_points: int
-            number of points along web
-        n_total: int
-            total number of points in mesh
-        returns:
-            connectivity array"""
         nrows = int(n_total / n_points)
         colids = np.arange(n_points - 1)
         npp = (
@@ -154,9 +113,6 @@ class web:
         return np.stack(stck).T.flatten()
 
     def _create_points(self, n_cells):
-        """
-        generate the points needed to build the mesh
-        """
         ev = self.evaluations
         vp = []
         added_arrays = {}
@@ -174,19 +130,9 @@ class web:
 
     def write_mesh(self, vtpfile):
         self.mesh.save(vtpfile)
-        print(f"** wrote mesh to {vtpfile}")
+        logger.info(f"Wrote mesh to {vtpfile}")
 
     def mesh(self, mesh, n_cells):
-        """
-        create the mesh for the web
-
-        parameters:
-        -----------
-        mesh: vtkUnstructuredGrid
-            shell mesh to find web points in
-        n_cells: int
-            number of cells to use to represent the web
-        """
         self._find_top_and_bottom_points(mesh)
         points, pdata = self._create_points(n_cells)
 

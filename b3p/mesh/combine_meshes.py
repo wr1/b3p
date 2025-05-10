@@ -3,6 +3,9 @@ import argparse
 import numpy as np
 import pyvista as pv
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def add_missing_data(inp):
@@ -72,12 +75,12 @@ def combine_meshes(meshes, output_filename):
 
     toc2 = time.time()
 
-    print(
-        f"timing: \n\tcreate 0 arrays: { toc0 - tic:.3f} \n\ttime adding: {toc1-toc0:.3f}\n\ttime merging: {toc2-toc1:.3f}"
+    logger.info(
+        f"timing:\tcreate 0 arrays: {toc0 - tic:.3f}\ttime adding: {toc1 - toc0:.3f}\ttime merging: {toc2 - toc1:.3f}"
     )
 
     out.save(output_filename)
-    print(f"written mesh to {output_filename}")
+    logger.info(f"written mesh to {output_filename}")
     return out
 
 

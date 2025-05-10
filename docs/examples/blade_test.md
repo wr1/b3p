@@ -13,20 +13,17 @@ Before running the example, ensure:
 
 ## Running the Example
 
-The `blade_test.yml` example processes a wind turbine blade model (e.g., SI122) through geometry creation, meshing, 2D sectional analysis, and 3D finite element analysis (FEA). You can run it using the `testrun.py` script or individual B3P commands.
+The `blade_test.yml` example processes a wind turbine blade model through geometry creation, meshing, 2D sectional analysis, and 3D finite element analysis (FEA). You can run it using the `testrun.py` script or individual B3P commands.
 
-### Option 1: Using `testrun.py`
-
-The `testrun.py` script automates the workflow:
+### Run all steps
 
 ```bash
 cd examples
-python testrun.py --example 1
+bash runex.sh
 ```
 
-This executes the sequence of B3P commands for the SI122 blade model.
 
-### Option 2: Manual Execution
+### Manual Execution
 
 To run the workflow manually:
 

@@ -21,9 +21,7 @@ Thank you for your interest in contributing to **B3P** (Blade Preprocessor)! Thi
    ```
 2. (Optional) Set up a Conda environment for ANBA4:
    ```bash
-   conda create -n anba4-env
-   conda activate anba4-env
-   bash default_install.sh
+   bash scripts/anba4_wsl_setup.sh
    ```
 
 ### 3. Create a Branch

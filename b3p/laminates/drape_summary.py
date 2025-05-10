@@ -6,6 +6,9 @@ import json
 import os
 import yaml
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_mm(matmap):
@@ -15,7 +18,7 @@ def load_mm(matmap):
     mm = json.load(open(matmap))
     mdbpath = os.path.join(os.path.dirname(matmap), mm["matdb"])
     mdb = yaml.load(open(mdbpath, "r"), Loader=yaml.FullLoader)
-    print(f"Loaded material database from {mdbpath}")
+    logger.info(f"Loaded material database from {mdbpath}")
     return mm, mdb
 
 
@@ -76,10 +79,12 @@ def drape_summary(vtu, matmap=None):
             }
 
     dt = pd.DataFrame(out).T
-    print("Total Volume and Mass:")
-    print(dt.sum()[["volume", "mass"]].T)
-    print(f"Total volume backcheck: {total_volume.sum():.4f} m^3")
-    print(f"Total mass backcheck: {total_mass1:.4f} kg")
+    logger.info("Total Volume and Mass:")
+    logger.info(dt.sum()[["volume", "mass"]].T)
+    logger.info(f"Total volume backcheck: {total_volume.sum():.4f} m^3")
+    logger.info(f"Total mass backcheck: {total_mass1:.4f} kg")
     sum_mass_mom = mass_moment.sum()
-    print(f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom / dt.sum()['mass']}")
+    logger.info(
+        f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom / dt.sum()['mass']}"
+    )
     return dt

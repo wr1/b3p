@@ -3,6 +3,9 @@ import pyvista as pv
 import numpy as np
 from matplotlib import pyplot as plt
 import glob
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def digitize_strain_distribution(z, strain, num_bins=100):
@@ -70,7 +73,7 @@ class plot_ccx:
             transparent_background=True,
             return_img=False,
         )
-        print(f"Saved {output_path}")
+        logger.info(f"Saved {output_path}")
 
     def __str__(self):
         return ""
@@ -96,4 +99,4 @@ class plot_ccx:
         ax.set_ylim(-7e-3, 7e-3)
         ax.grid(True)
         fig.savefig(output_path)
-        print(f"Saved {output_path}")
+        logger.info(f"Saved {output_path}")

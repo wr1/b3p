@@ -1,11 +1,14 @@
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 try:
     from b3p.bem import ccblade_run
 
     has_ccblade = True
 except ImportError:
-    print("** Could not import ccblade_run. Functionality will be disabled.")
+    logger.warning("Could not import ccblade_run. Functionality will be disabled.")
     has_ccblade = False
 
 
@@ -19,4 +22,4 @@ class CCBladeApp:
             ccblade = ccblade_run.ccblade_run(self.yml)
             ccblade.run()
         else:
-            print("** ccblade_run is not available.")
+            logger.error("ccblade_run is not available.")

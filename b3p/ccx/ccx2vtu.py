@@ -7,6 +7,9 @@ import glob
 import os
 import re
 import frd2vtu
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def has_later_vtu(frd):
@@ -20,11 +23,11 @@ def has_later_vtu(frd):
 
 def all_frd2vtu(prefix):
     for i in glob.glob(f"{prefix}*.frd"):
-        print(f"processing {i}")
+        logger.info(f"processing {i}")
         if not has_later_vtu(i):
             frd2vtu(i)
         else:
-            print(f"skipping {i}")
+            logger.info(f"skipping {i}")
 
 
 def digitize_strain_distribution(z, strain, num_bins=100):
@@ -58,7 +61,7 @@ class ccx2vtu:
         self.frds = glob.glob(f"{prefix}*lc*{wildcard}*.frd")
 
     def load_grids(self):
-        print(f"** loading grids {self.frds}")
+        logger.info(f"loading grids {self.frds}")
         self.grids = {}
         for i in self.frds:
             self.grids[i] = (
@@ -71,7 +74,7 @@ class ccx2vtu:
         # Initialize an empty list to store the results
         results = []
         if len(self.grids) == 0:
-            print(f"** no grids found in {self.prefix}")
+            logger.info(f"no grids found in {self.prefix}")
             return None
 
         # Loop through the file_list
@@ -79,8 +82,8 @@ class ccx2vtu:
             # Read the input data from the current file
             input_data = self.grids[grid]
             # pd.read_csv(file_name)
-            print(grid)
-            # print(input_data.point_data.keys())
+            logger.info(grid)
+            # logger.info(input_data.point_data.keys())
 
             strain0 = next(
                 (
@@ -103,7 +106,7 @@ class ccx2vtu:
             vals = np.hstack([min_vals, max_vals])
 
             # Create MultiColumns for the current input
-            # print(grid)
+            # logger.info(grid)
             columns = pd.MultiIndex.from_product(
                 [
                     [re.search(r"_lc_(.+)\.frd", grid)[1]],
@@ -118,7 +121,7 @@ class ccx2vtu:
 
             of = grid.replace(".frd", "_eps2d.pq")
             df.to_parquet(of)
-            print(f"** written to {of}")
+            logger.info(f"written to {of}")
 
             # Append the current DataFrame to the results list
         #     results.append(df)

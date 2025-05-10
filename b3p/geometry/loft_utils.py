@@ -2,6 +2,9 @@
 import contextlib
 import numpy as np
 import vtk
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load(fl, normalise=False):
@@ -20,7 +23,7 @@ def load(fl, normalise=False):
 
     """
     d = []
-    print(f"loading airfoil {fl}")
+    logger.info(f"loading airfoil {fl}")
     for i in open(fl, "r"):
         with contextlib.suppress(Exception):
             xy = [float(j) for j in i.split()]
@@ -30,7 +33,7 @@ def load(fl, normalise=False):
     if normalise:
         mx = min(x)
         dx = max(x) - min(x)
-        print("normalise factor %f" % dx)
+        logger.info("normalise factor %f" % dx)
         x = [(i - mx) / dx for i in x]
         y = [i / dx for i in y]
 

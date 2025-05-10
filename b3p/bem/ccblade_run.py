@@ -11,6 +11,9 @@ from scipy.optimize import fmin
 import numpy as np
 from ccblade.ccblade import CCAirfoil, CCBlade
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_polar(pname):
@@ -23,7 +26,7 @@ def load_polar(pname):
     Returns:
         list: A list containing alpha, cl, cd, and cm values.
     """
-    print("loading polar", pname)
+    logger.info("loading polar", pname)
     if not os.path.isfile(pname):
         raise IOError(f"Polar {pname} not found")
 
@@ -325,7 +328,7 @@ def plot_bladeloads(r, data_dict, of="bladeloads.png"):
 
     fig.tight_layout()
     fig.savefig(of)
-    print(f"Saved {of}")
+    logger.info(f"Saved {of}")
 
 
 class controloptimize:
@@ -369,11 +372,11 @@ class controloptimize:
         optimizer = RotorOptimizer(self.rotor, [starting_uinf])
         initial_guess = np.array([omega, starting_pitch])
         optimal_values = optimizer.optimize(initial_guess)
-        print(f"initial guess {initial_guess} optimal values {optimal_values}")
+        logger.info(f"initial guess {initial_guess} optimal values {optimal_values}")
         init_val = optimizer.evaluate(initial_guess)[0]
         opt_val, optt = optimizer.evaluate(optimal_values, coefficients=True)
 
-        print(f" {init_val} {opt_val}, improvement {opt_val / init_val}")
+        logger.info(f" {init_val} {opt_val}, improvement {opt_val / init_val}")
         self.optimal_tsr = omega2tsr(optimal_values[0], starting_uinf, self.rtip)
         self.fine_pitch = optimal_values[1]
 
@@ -383,7 +386,7 @@ class controloptimize:
         plot_bladeloads(
             self.rotor.r, loads, of=os.path.join(self.workdir, "ccblade_bladeloads.png")
         )
-        print(f"optimal tsr {self.optimal_tsr} {self.fine_pitch}")
+        logger.info(f"optimal tsr {self.optimal_tsr} {self.fine_pitch}")
 
     def control_opt_above_rated(self):
         """
@@ -409,7 +412,7 @@ class controloptimize:
 
         # find the wind speeds that are over rated power
         overrated = np.where(init_pc["P"] > self.rating)
-        print(f"overrated {overrated}, {self.uinf[overrated]}")
+        logger.info(f"overrated {overrated}, {self.uinf[overrated]}")
         upost = self.uinf[overrated]
         ompost = self.omega[overrated]
         pitch_over_rated = []
@@ -444,7 +447,7 @@ class controloptimize:
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
             of=os.path.join(self.workdir, "ccblade_out.png"),
         )
-        print(f"pitch {self.pitch}")
+        logger.info(f"pitch {self.pitch}")
         return out_pc
 
 
@@ -470,7 +473,7 @@ def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
 
     fig.tight_layout()
     fig.savefig(of)
-    print(f"saved {of}")
+    logger.info(f"saved {of}")
 
 
 class ccblade_run:
@@ -503,7 +506,7 @@ class ccblade_run:
         }
         missing_keys = [key for key in bem if key not in self.dct["aero"]["bem"]]
 
-        print(
+        logger.info(
             f"the following keys are not specified in aero/bem: {missing_keys}, using defaults {bem}"
         )
         bem |= self.dct["aero"]["bem"]
@@ -544,7 +547,7 @@ class ccblade_run:
             derivatives=False,
         )
 
-        print(f"Rotor from {rhub} to {rtip}")
+        logger.info(f"Rotor from {rhub} to {rtip}")
 
         self.copt = controloptimize(
             self.rotor,

@@ -41,9 +41,6 @@ To begin using B3P, follow these steps:
 3. Check out the [Input File Format](use/inputfile.md) to create blade definitions.
 4. Run example workflows as described in [Examples](examples/blade_test.md).
 
-## Contributing
-
-Contributions are welcome! See the [Contributing Guide](contributing.md) for details on setting up a development environment, coding standards, and submitting pull requests.
 
 ## Support
 

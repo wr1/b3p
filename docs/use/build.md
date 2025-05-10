@@ -6,15 +6,13 @@ b3p build blade_test.yml
 ```
 This is subdivided into the following steps:
 ```bash
-
-usage: b3p [-h] {build,drape,ccx,2d,ccblade,clean} ...
+usage: b3p [-h] {build,ccx,2d,ccblade,clean} ...
 
 Blade Design CLI
 
 positional arguments:
-  {build,drape,ccx,2d,ccblade,clean}
+  {build,ccx,2d,ccblade,clean}
     build               Build the full blade model
-    drape               Drape plies onto mesh
     ccx                 Run Calculix operations
     2d                  2D mesh and ANBA4 operations
     ccblade             Run CCBlade analysis
@@ -22,7 +20,6 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-
 ```
 
 ## Interpolation of planform parameters

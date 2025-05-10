@@ -6,6 +6,13 @@ from b3p.cli.ccx_app import CcxApp
 from b3p.cli.two_d_app import TwoDApp
 from b3p.cli.ccblade_app import CCBladeApp
 from b3p.cli.clean_app import CleanApp
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("output.log")],
+)
 
 
 def main():

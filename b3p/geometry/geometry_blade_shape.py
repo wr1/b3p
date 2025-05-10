@@ -2,6 +2,9 @@ import vtk
 from b3p.geometry import geometry_section
 import numpy
 from b3p.geometry import geom_utils
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class blade_shape:
@@ -144,8 +147,8 @@ class blade_shape:
             writer.SetInputData(self.poly)
             writer.Write()
         except Exception:
-            print("no valid mesh available")
+            logger.info("no valid mesh available")
 
         for i in self.webs:
-            print(i.name)
+            logger.info(i.name)
             i.write_mesh(f"{i.name}{'.vtp'}")

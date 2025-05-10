@@ -5,6 +5,9 @@ import pandas as pd
 import pickle
 import numpy as np
 import pyvista
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_slab_cover(inp):
@@ -26,7 +29,7 @@ def get_slab_cover(inp):
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
 
-    # print(name, cover)
+    # logger.info(name, cover)
     one = np.ones_like(rr)
 
     names = ["ply_%.8i_%s" % (i, name) for i in numbering]
@@ -45,7 +48,6 @@ def get_slab_cover(inp):
         cov = np.ones_like(df.radius, dtype=bool)
         for i in cover:
             start, end, __ = cover[i]
-            # print(i, cover[i])
             over_start = np.interp(df.radius, rr, one * start) <= df[i].values
             under_end = np.interp(df.radius, rr, one * end) >= df[i].values
             cov = cov & over_start & under_end
@@ -101,7 +103,7 @@ def drape_mesh(vtp, stack, key, output_file):
     for i in o.cell_data.keys():
         df[i] = o.cell_data[i]
 
-    print("** computing ply coverage")
+    logger.info("computing ply coverage")
 
     slab_data = [
         [i["name"]]
@@ -120,7 +122,7 @@ def drape_mesh(vtp, stack, key, output_file):
         for i in stack
         if key.strip() == i["grid"] and i["stack"] != []
     ]
-    print("** assigning ply data to grid")
+    logger.info("** assigning ply data to grid")
 
     # add arrays for each ply, and for each slab
     total_thickness = np.zeros_like(df.radius).astype(np.float32)
@@ -162,7 +164,7 @@ def drape_mesh(vtp, stack, key, output_file):
 
     output_grid = pyvista.UnstructuredGrid(o)
     output_grid.save(output_file, binary=True)
-    print(f"** written to {output_file}")
+    logger.info(f"written to {output_file}")
     return output_grid
 
 

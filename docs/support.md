@@ -9,8 +9,10 @@ The primary support channel is the B3P GitHub repository: [https://github.com/wr
 ### Filing Issues
 
 For bugs, installation problems, or feature requests:
+
 1. Check existing issues to avoid duplicates.
 2. Open a new issue with:
+
    - A clear title (e.g., "Error in 2D mesh generation").
    - Description of the problem, including error messages and steps to reproduce.
    - Environment details (OS, Python version, B3P version, dependencies).
@@ -19,6 +21,7 @@ For bugs, installation problems, or feature requests:
 ### Discussions
 
 Use GitHub Discussions for general questions, ideas, or community feedback:
+
 - Ask about usage, best practices, or clarification on documentation.
 - Share ideas for new features or improvements.
 

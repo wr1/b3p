@@ -8,6 +8,9 @@ import json
 import os
 import yaml
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def zero_midside_loads(mesh):
@@ -76,7 +79,9 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
             )
 
             if "C" in material_properties and not force_iso:
-                print(material_properties["name"], "is assumed to be orthotropic")
+                logger.info(
+                    f"{material_properties['name']} is assumed to be orthotropic"
+                )
                 C = np.array(material_properties["C"])
                 matblock += "** orthotropic material\n"
                 matblock += "*material,name=m%i\n*elastic,type=ortho\n" % i
@@ -96,7 +101,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     + f"{D[5, 5]:.4g},293\n"
                 )
             elif "e11" in material_properties and not force_iso:
-                print(material_properties["name"], "has engineering constants")
+                logger.info(f"{material_properties['name']} has engineering constants")
                 matblock += "** orthotropic material\n"
                 matblock += (
                     "*material,name=m%i\n*elastic,type=engineering constants\n" % i
@@ -108,7 +113,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     + f"{material_properties['g23']:.4g},293\n"
                 )
             else:
-                print(material_properties["name"], "is assumed to be isotropic")
+                logger.info(f"{material_properties['name']} is assumed to be isotropic")
                 nu = min(
                     0.45,
                     max(
@@ -181,7 +186,7 @@ def compute_slab_groups(grid, prefix):
 
 def nodebuffer(grid):
     nodes = np.column_stack((np.arange(1, len(grid.points) + 1), grid.points))
-    print(f"** exporting {len(nodes)} nodes")
+    logger.info(f"exporting {len(nodes)} nodes")
     return (
         "*node,nset=nall\n"
         + "\n".join([f"{int(n)},{x:f},{y:f},{z:f}" for n, x, y, z in nodes])
@@ -191,7 +196,7 @@ def nodebuffer(grid):
 
 def element_buffer(grid):
     conn = grid.cells_dict
-    print(conn)
+    logger.info(f"{conn}")
     extypes = [23]
 
     vtk_ccx = {23: "s8r"}
@@ -234,7 +239,7 @@ def get_loadcases(mesh, multiplier=1.0, buckling=False):
 
     for i in mesh.point_data:
         if i.startswith("lc_"):
-            print(f"loadcase {i}")
+            logger.info(f"loadcase {i}")
             multiplier = 1.0  # TODO fix for quadratic meshes
             if buckling:
                 lbuf = f"** {i}\n*step\n*buckle\n5\n*cload\n"
@@ -285,31 +290,12 @@ def mesh2ccx(
     meshonly=False,
     bondline=False,  # Added to accept bondline argument
 ):
-    """
-    Export a grid to ccx input file
-
-    :param vtu: Grid file (vtu)
-    :param out: Output file. Defaults to "test.inp".
-    :param matmap: Material map file. Defaults to "temp/material_map.json".
-    :param merge_adjacent_layers: Whether to merge adjacent plies with same material.
-    :param zeroangle: Use zero angle for orientations.
-    :param single_step: Write all loadcases in a single step.
-    :param quadratic: Convert to quadratic elements.
-    :param add_centers: Include centers in orientation definitions.
-    :param force_isotropic: Force isotropic material properties.
-    :param export_hyperworks: Export plybook for HyperWorks.
-    :param export_plygroups: Export ply groups.
-    :param buckling: Use buckling analysis instead of static.
-    :param meshonly: Export only the mesh without loadcases.
-    :param bondline: If True, prefer bondline mesh if available.
-    :return: List of output files written.
-    """
-    print(f"** Running {vtu}")
+    logger.info(f"** Running {vtu}")
     grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
-    print(f"** Exporting {gr.GetNumberOfCells()} elements")
+    logger.info(f"** Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
         lf = vtk.vtkLinearToQuadraticCellsFilter()
         lf.SetInputData(gr)
@@ -330,7 +316,7 @@ def mesh2ccx(
     if meshonly:
         of = out.replace(".inp", "_meshonly.inp")
         open(of, "w").write(buf)
-        print(f"** written to {of}")
+        logger.info(f"written to {of}")
         return [of]
 
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
@@ -346,7 +332,7 @@ def mesh2ccx(
 
     buf += orientation_buffer(mesh, add_centers)
 
-    print("** made orientation buffer")
+    logger.info("made orientation buffer")
     matblock = material_db_to_ccx(materials, matmap=matmap, force_iso=force_isotropic)
 
     buf += "** START MATERIALS\n"
@@ -359,16 +345,16 @@ def mesh2ccx(
         make_shell_section(i, plydat[:, i, :], merge_adjacent_layers, zeroangle)
         for i in range(plydat.shape[1])
     ]
-    print("** made shell sections")
+    logger.info("made shell sections")
 
     nplies = np.array([i[0] for i in blx])
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
-    print(f"max number of plies: {nplmax}")
-    print(f"associated stack \n{blx[npxid[0]][1]}")
+    logger.info(f"max number of plies: {nplmax}")
+    logger.info(f"associated stack \n{blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
-    print("** time spent creating shell sections %f" % (toc - tic))
+    logger.info(f"time spent creating shell sections {toc - tic:f}")
     comps = "".join(
         f"*shell section,composite,elset=e{n + 1},offset=-.5"
         + (f",orientation=or{n + 1}\n" if zeroangle else "\n")
@@ -386,7 +372,7 @@ def mesh2ccx(
     if single_step:
         output = buf + "".join(loadcases.values())
         open(out, "w").write(output)
-        print(f"** written ccx input file with all loadcases to {out}")
+        logger.info(f"written ccx input file with all loadcases to {out}")
         output_files.append(out)
     else:
         for i in loadcases:
@@ -394,12 +380,12 @@ def mesh2ccx(
             of = out.replace(".inp", f"_{i}.inp")
             open(of, "w").write(output)
             output_files.append(of)
-            print(f"** written ccx input file to {of}")
+            logger.info(f"written ccx input file to {of}")
 
     if export_hyperworks:
         otb = out.replace(".inp", ".csv")
         df.to_csv(otb, index=False)
-        print(f"** written plybook to hyperworks table {otb}")
+        logger.info(f"written plybook to hyperworks table {otb}")
         output_files.append(otb)
 
     return output_files

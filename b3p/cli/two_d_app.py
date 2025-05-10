@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 import os
 import subprocess
@@ -6,6 +7,7 @@ from b3p.anba import anba4_prep
 from b3p.anba import mesh_2d
 import glob
 
+logger = logging.getLogger(__name__)
 
 class TwoDApp:
     def __init__(self, state, yml: Path):
@@ -15,20 +17,15 @@ class TwoDApp:
     def mesh2d(self, rotz=0.0, parallel=True):
         dct = self.state.load_yaml(self.yml)
         if "mesh2d" not in dct:
-            print("** No mesh2d section in yml file")
+            logger.error("No mesh2d section in yml file")
             return
         if "sections" not in dct["mesh2d"]:
-            print("** No sections in mesh2d section in yml file")
+            logger.error("No sections in mesh2d section in yml file")
             return
         sections = dct["mesh2d"]["sections"]
-        # yml_dir = self.yml.parent
 
         drape_prefix = self.state.get_prefix("drape")
         mesh_prefix = self.state.get_prefix("mesh")
-        # prefix = self.state.get_prefix()
-        # prefix = os.path.join(
-        #     yml_dir, dct["general"]["workdir"], dct["general"]["prefix"]
-        # )
 
         section_meshes = mesh_2d.cut_blade_parallel(
             f"{drape_prefix}_joined.vtu",
@@ -41,7 +38,7 @@ class TwoDApp:
         if not section_meshes or not all(
             Path(mesh).exists() for mesh in section_meshes
         ):
-            print("** Error: Section meshes were not generated correctly.")
+            logger.error("Section meshes were not generated correctly")
             return []
         return anba4_prep.anba4_prep(section_meshes, parallel=parallel)
 
@@ -50,38 +47,36 @@ class TwoDApp:
         meshes = glob.glob(os.path.join(prefix.parent, "2d", "msec_*.xdmf"))
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
         if conda_path is None:
-            print("** Conda not found - please install conda.")
+            logger.error("Conda not found - please install conda")
             return
         result = subprocess.run(
             [conda_path, "env", "list"], capture_output=True, text=True
         )
         if result.returncode != 0 or anba_env not in result.stdout:
-            print(f"** Conda environment {anba_env} not found - please create it")
+            logger.error(f"Conda environment {anba_env} not found - please create it")
             return
-        else:
-            print(f"** Using Conda environment for running anba4 {anba_env}")
+
+        logger.info(f"Using Conda environment for running anba4 {anba_env}")
         dct = self.state.load_yaml(self.yml)
         if meshes is None:
             meshes = self.mesh2d()
-        # yml_dir = self.yml.parent
 
-        # prefix = self.state.get_prefix("drape")
         material_map = f"{prefix.parent}/material_map.json"
         script_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "anba", "anba4_solve.py")
         )
-        print(f"** Running ANBA4 using {script_path} in env {anba_env}")
-        conda_command =            [
-                conda_path,
-                "run",
-                "-n",
-                anba_env,
-                "python",
-                script_path,
-                *meshes,
-                material_map,
-            ]
-        print(' '.join(conda_command))
+        logger.info(f"Running ANBA4 using {script_path} in env {anba_env}")
+        conda_command = [
+            conda_path,
+            "run",
+            "-n",
+            anba_env,
+            "python",
+            script_path,
+            *meshes,
+            material_map,
+        ]
+        logger.debug(' '.join(conda_command))
         result = subprocess.run(
             conda_command,
             capture_output=True,
@@ -95,25 +90,24 @@ class TwoDApp:
             },
         )
         if result.returncode != 0:
-            print(f"** Error: ANBA4 script failed with return code {result.returncode}")
-            print(f"** Stdout: {result.stdout}")
-            print(f"** Stderr: {result.stderr}")
+            logger.error(f"ANBA4 script failed with return code {result.returncode}")
+            logger.error(f"Stdout: {result.stdout}")
+            logger.error(f"Stderr: {result.stderr}")
         else:
-            print(f"** ANBA4 script completed successfully.")
-            print(f"** Stdout: {result.stdout}")
+            logger.info(f"ANBA4 script completed successfully")
+            logger.debug(f"Stdout: {result.stdout}")
         return result.returncode
 
     def clean(self):
         dct = self.state.load_yaml(self.yml)
         workdir = self.state.get_prefix("drape")
-        # remove the 2d subdir in workdir
         workdir = workdir.parent / "2d"
         if not workdir.exists():
-            print(f"** Workdir {workdir} does not exist - nothing to clean")
+            logger.info(f"Workdir {workdir} does not exist - nothing to clean")
             return
 
         try:
             shutil.rmtree(workdir)
-            print(f"Removed workdir {workdir}")
+            logger.info(f"Removed workdir {workdir}")
         except Exception as e:
-            print(f"Failed to remove workdir {workdir}: {e}")
+            logger.error(f"Failed to remove workdir {workdir}: {e}")
