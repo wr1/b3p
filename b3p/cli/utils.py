@@ -12,3 +12,12 @@ def wslpath_convert(path: str, to_windows: bool = False) -> str:
     command = ["wslpath", "-w" if to_windows else "-u", path]
     result = subprocess.run(command, capture_output=True, text=True, check=True)
     return result.stdout.strip()
+
+def check_existing_outputs(files):
+    """
+    Check if all specified files exist.
+
+    :param files: List of Path objects to check.
+    :return: True if all files exist, False otherwise.
+    """
+    return all(f.exists() for f in files)
