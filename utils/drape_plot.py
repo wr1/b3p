@@ -3,7 +3,6 @@
 import pyvista as pv
 from matplotlib import pyplot as plt
 import numpy as np
-import fire
 import os
 import json
 
@@ -25,7 +24,7 @@ def plot_thresholded(sm, ax, title, material_map=None):
                 y1=base,
                 y2=base + pt[i, :],
                 label=f"{material_map[mat[i]]}",
-                color=f"C{max(mat[i],0)}",
+                color=f"C{max(mat[i], 0)}",
                 alpha=0.3,
             )
             base += pt[i, :]
@@ -91,11 +90,3 @@ def drape_plot(meshname, output=None):
 
     fig.savefig(output)
     print(f"written output to {output}")
-
-
-def main():
-    fire.Fire(drape_plot)
-
-
-if __name__ == "__main__":
-    main()

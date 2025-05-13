@@ -2,10 +2,11 @@
 
 import numpy as np
 import re
-import fire
 import os
-
+import logging
 from ruamel.yaml import YAML
+
+logger = logging.getLogger(__name__)
 
 
 def load_airfoil(af):
@@ -36,7 +37,7 @@ def load_airfoils(afs, prefix=""):
         dct[i] = {"xy": xy}
         dct[i]["name"] = name
         dct[i]["path"] = afs[i]
-        print(f"\t** imported airfoil {name} at thickness {i}")
+        logger.info(f"imported airfoil {name} at thickness {i}")
 
     return dct
 
@@ -47,7 +48,7 @@ def yaml_make_portable(yaml_file):
     :param yaml_file: path to yaml file
     :param safe: if True, use safe loader and basic data types (dict, list, str, int, float)
     :return: None"""
-    print(f"** Loading yaml file {yaml_file} and loading linked files")
+    logger.info(f"Loading yaml file {yaml_file} and loading linked files")
     prefix = os.path.dirname(yaml_file)
 
     yaml = YAML()
@@ -62,8 +63,7 @@ def yaml_make_portable(yaml_file):
 
     for s in subsections:
         if type(d[s]) == str and d[s].find(".yml") != -1:
-
-            print(f"\t** loading {s} from: {d[s]}")
+            logger.info(f"loading {s} from: {d[s]}")
             d[s] = yaml.load(open(os.path.join(prefix, d[s]), "r"))
 
     if d["general"]["workdir"].find("portable") == -1:
@@ -82,18 +82,10 @@ def save_yaml(of, dct):
     yaml.representer.add_representer(list, represent_list)
     with open(of, "w") as f:
         yaml.dump(dct, f)
-        print(f"\twritten to: {of}")
+        logger.info(f"written to: {of}")
 
 
 def save_yaml_portable(yaml_file):
     d = yaml_make_portable(yaml_file)
     of = yaml_file.replace(".yml", "_portable.yml").replace(".yaml", "_portable.yml")
     save_yaml(of, d)
-
-
-def main():
-    fire.Fire(save_yaml_portable)
-
-
-if __name__ == "__main__":
-    main()

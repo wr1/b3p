@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "v*.*.*"
+    branches:
+      - master
+      - dev
 
 jobs:
   build-linux:

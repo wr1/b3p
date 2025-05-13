@@ -6,16 +6,20 @@ b3p build blade_test.yml
 ```
 This is subdivided into the following steps:
 ```bash
-Usage: b3p COMMAND
+usage: b3p [-h] {build,ccx,2d,ccblade,clean} ...
 
-╭─ Commands ───────────────────────────────────────────────────────────────────╮
-│ 2d         Create 2D meshes for calculation of 6x6 matrices.                 │
-│ build      Build the blade model: geometry, mesh, drape, and mass.           │
-│ ccx        Run Calculix on this model                                        │
-│ clean      Clean the working directory.                                      │
-│ --help,-h  Display this message and exit.                                    │
-│ --version  Display application version.                                      │
-╰──────────────────────────────────────────────────────────────────────────────╯
+Blade Design CLI
+
+positional arguments:
+  {build,ccx,2d,ccblade,clean}
+    build               Build the full blade model
+    ccx                 Run Calculix operations
+    2d                  2D mesh and ANBA4 operations
+    ccblade             Run CCBlade analysis
+    clean               Clean working directory
+
+options:
+  -h, --help            show this help message and exit
 ```
 
 ## Interpolation of planform parameters
