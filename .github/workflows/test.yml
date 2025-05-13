@@ -66,45 +66,38 @@ jobs:
           fi
           cd anba4
           pip install -e .
-          conda install -y pyyaml pyvista
+          conda install -y pyyaml pyvista numpy scipy
           echo "Set up anba4-env with ANBA4"
 
       # Install CCBlade
       - name: Install CCBlade
         run: |
-          python scripts/ccblade_install.py
+          python -m pip install git+https://github.com/WISDEM/CCBlade.git
+          python -c "import ccblade; print('CCBlade version:', ccblade.__version__)"
           echo "Installed CCBlade"
 
-      # # Install B3P dependencies
-      # - name: Install B3P dependencies
-      #   run: |
-      #     pip install \
-      #       frd2vtu>=0.1.3 \
-      #       h5py>=3.11.0 \
-      #       jinja2>=3.1.4 \
-      #       meshio>=5.3.5 \
-      #       numpy>2.0.0 \
-      #       pandas>=2.2.3 \
-      #       pyarrow>18 \
-      #       pytest>=8.3.3 \
-      #       pytest-cov>=6.0.0 \
-      #       pyvista>=0.43.5 \
-      #       pyyaml>=6.0.2 \
-      #       ruamel-yaml>=0.18.6 \
-      #       scipy>=1.13.0 \
-      #       sympy>=1.13.3 \
-      #       vtk>=9.3,<9.4
-      #     echo "Installed B3P dependencies"
+      # Install test dependencies
+      - name: Install test dependencies
+        run: |
+          python -m pip install "pytest>=8.3.3" "pytest-cov>=6.0.0"
+          echo "Installed test dependencies"
 
       # Install B3P
       - name: Install B3P
         run: |
-          pip install -e .
+          python -m pip install -e .
+          python -c "import b3p; print('B3P installed')"
           echo "Installed B3P in editable mode"
+
+      # Verify package installations
+      - name: Verify package installations
+        run: |
+          python -c "import ccblade, pytest, pyvista, vtk, numpy; print('All key packages imported successfully')"
+          echo "Verified package installations"
 
       # Run tests
       - name: Run tests with pytest
         run: |
-          pytest -v -s --log-cli-level=INFO --cov=b3p
+          pytest tests/ -v -s --log-cli-level=INFO --cov=b3p
         env:
           VERBOSE: 1
