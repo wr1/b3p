@@ -5,6 +5,7 @@ import os
 import glob
 import multiprocessing
 import subprocess
+from tqdm.auto import tqdm
 from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
 
 logger = logging.getLogger(__name__)
@@ -12,19 +13,28 @@ logger = logging.getLogger(__name__)
 
 def run_ccx(inp, ccxexe, logger):
     """
-    Run CalculiX (ccx) on a given input file.
+    Run CalculiX (ccx) on a given input file, capturing stdout/stderr.
 
     Args:
         inp (str): Path to the input file.
         ccxexe (str): Path or name of the ccx executable.
         logger (logging.Logger): Logger instance for logging messages.
+
+    Returns:
+        tuple: (input file path, success boolean, error message if failed)
     """
     cmd = [ccxexe, inp.replace(".inp", "")]
-    logger.info(f"Running command: {' '.join(cmd)}")
+    logger.debug(f"Running command: {' '.join(cmd)}")
     try:
-        subprocess.run(cmd, check=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        logger.debug(f"CCX output for {inp}:\n{result.stdout}")
+        return inp, True, None
     except subprocess.CalledProcessError as e:
-        logger.error(f"ccx failed for {inp}: {e}")
+        error_msg = (
+            f"ccx failed for {inp}: {e}\nStdout:\n{e.stdout}\nStderr:\n{e.stderr}"
+        )
+        logger.error(error_msg)
+        return inp, False, error_msg
 
 
 class CcxApp:
@@ -97,10 +107,20 @@ class CcxApp:
                         inps_to_run.append(inp)
                     else:
                         logger.info(f"Skipping {inp} because {frd_file} exists")
-        logger.info(f"Running ccx on: {inps_to_run} using {wildcard}")
+        logger.info(f"Running ccx on {len(inps_to_run)} files")
 
-        with multiprocessing.Pool(nproc) as p:
-            p.map(partial(run_ccx, ccxexe=ccxexe, logger=logger), inps_to_run)
+        if inps_to_run:
+            with multiprocessing.Pool(nproc) as pool:
+                with tqdm(
+                    total=len(inps_to_run), desc="Running CCX", unit="file"
+                ) as pbar:
+                    for inp, success, error_msg in pool.imap_unordered(
+                        partial(run_ccx, ccxexe=ccxexe, logger=logger), inps_to_run
+                    ):
+                        pbar.set_postfix(file=os.path.basename(inp))
+                        pbar.update(1)
+                        if not success:
+                            logger.error(error_msg)
 
     def post(self, wildcard="", nbins=60, bondline=False, **kwargs):
         dct = self.state.load_yaml(self.yml)
