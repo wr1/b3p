@@ -15,7 +15,7 @@ __pycache__/
 *.inp
 *.dat
 *.cvg
-*.xdmf*
+# *.xdmf*
 **/*.txt
 *.png
 *.pck
