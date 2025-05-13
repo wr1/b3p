@@ -30,6 +30,13 @@ jobs:
           python -m pip install --upgrade pip
           echo "Upgraded pip to $(pip --version)"
 
+      # Install build dependencies
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc python3-dev gfortran libopenblas-dev
+          echo "Installed build dependencies"
+
       # Install Miniforge for Conda
       - name: Install Miniforge
         run: |
@@ -49,7 +56,7 @@ jobs:
       # Set up anba4-env
       - name: Set up anba4-env
         run: |
-          source $HOME/miniforge3/bin/activate
+          source $HOME/miniforge3/etc/profile.d/conda.sh
           if conda env list | grep -q 'anba4-env'; then
             echo "anba4-env already exists"
           else
@@ -67,12 +74,29 @@ jobs:
           cd anba4
           pip install -e .
           conda install -y pyyaml pyvista numpy scipy
+          conda deactivate
           echo "Set up anba4-env with ANBA4"
+
+      # Verify anba4-env
+      - name: Verify anba4-env
+        run: |
+          source $HOME/miniforge3/etc/profile.d/conda.sh
+          conda env list | grep anba4-env || { echo "anba4-env not found"; exit 1; }
+          conda run -n anba4-env python -c "import anba4; print('ANBA4 imported successfully')"
+          echo "Verified anba4-env"
+
+      # Install numpy for CCBlade
+      - name: Install numpy
+        run: |
+          python -m pip install "numpy>2.0.0"
+          echo "Installed numpy"
 
       # Install CCBlade
       - name: Install CCBlade
         run: |
-          python -m pip install git+https://github.com/WISDEM/CCBlade.git
+          python -m pip install --verbose git+https://github.com/WISDEM/CCBlade.git || python scripts/ccblade_install.py
+          pip show ccblade
+          python -c "import ccblade; print('CCBlade imported successfully')"
           echo "Installed CCBlade"
 
       # Install test dependencies
@@ -89,14 +113,16 @@ jobs:
           echo "Installed B3P in editable mode"
 
       # Verify package installations
-      # - name: Verify package installations
-      #   run: |
-      #     python -c "import ccblade, pytest, pyvista, vtk, numpy; print('All key packages imported successfully')"
-      #     echo "Verified package installations"
+      - name: Verify package installations
+        run: |
+          python -c "import ccblade, pytest, pyvista, vtk, numpy; print('All key packages imported successfully')"
+          echo "Verified package installations"
 
       # Run tests
       - name: Run tests with pytest
         run: |
+          source $HOME/miniforge3/etc/profile.d/conda.sh
+          conda init bash
           pytest tests/ -v -s --log-cli-level=INFO --cov=b3p
         env:
           VERBOSE: 1
