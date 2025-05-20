@@ -6,6 +6,8 @@ import pickle
 import numpy as np
 import pyvista
 import logging
+import multiprocessing
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -105,23 +107,31 @@ def drape_mesh(vtp, stack, key, output_file):
 
     logger.info("computing ply coverage")
 
-    slab_data = [
-        [i["name"]]
-        + list(
-            get_slab_cover(
-                (
-                    i["name"],
-                    i["cover"],
-                    i["numbering"],
-                    i["r"],
-                    i["stack"],
-                    df,
-                )
-            )
-        )
+    # Prepare inputs for parallel processing
+    slab_inputs = [
+        (i["name"], i["cover"], i["numbering"], i["r"], i["stack"], df)
         for i in stack
         if key.strip() == i["grid"] and i["stack"] != []
     ]
+
+    # Run get_slab_cover in parallel with progress bar
+    logger.info("Processing slabs in parallel")
+    with multiprocessing.Pool() as pool:
+        slab_data = list(tqdm(
+            pool.imap(get_slab_cover, slab_inputs),
+            total=len(slab_inputs),
+            desc="Computing ply coverage"
+        ))
+
+    # Combine results with slab names
+    slab_data = [
+        [i["name"], names, data]
+        for i, (names, data) in zip(
+            [s for s in stack if key.strip() == s["grid"] and s["stack"] != []],
+            slab_data
+        )
+    ]
+
     logger.info("** assigning ply data to grid")
 
     # add arrays for each ply, and for each slab

@@ -9,11 +9,25 @@ from b3p.cli.clean_app import CleanApp
 import logging
 import sys
 
-logging.basicConfig(
-    level=logging.INFO,
-    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("output.log")],
-)
+# Configure logging with a formatter to include log level prefix
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
+# Clear existing handlers to prevent duplicates
+logger.handlers.clear()
+
+# Create formatter with log level prefix
+formatter = logging.Formatter('%(levelname)s: %(message)s')
+
+# Stream handler for console output
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+# File handler for output.log
+file_handler = logging.FileHandler("output.log")
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 def main():
     parser = argparse.ArgumentParser(description="Blade Design CLI")
