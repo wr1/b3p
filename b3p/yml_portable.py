@@ -4,7 +4,8 @@ import numpy as np
 import re
 import os
 import logging
-from ruamel.yaml import YAML
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +52,11 @@ def yaml_make_portable(yaml_file):
     logger.info(f"Loading yaml file {yaml_file} and loading linked files")
     prefix = os.path.dirname(yaml_file)
 
-    yaml = YAML()
+    # yaml = YAML()
     # typ="safe")
     # typ="safe")  # YAML(typ="safe") if safe else YAML(typ="rt")
-    d = yaml.load(open(yaml_file, "r"))
+    # d = yaml.load(open(yaml_file, "r"))
+    d = yaml.safe_load(open(yaml_file, "r"))  # or use yaml.CSafeLoader
     # yaml.load(open(yaml_file, "r"), Loader=yaml.CLoader)
 
     d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
@@ -64,7 +66,7 @@ def yaml_make_portable(yaml_file):
     for s in subsections:
         if type(d[s]) == str and d[s].find(".yml") != -1:
             logger.info(f"loading {s} from: {d[s]}")
-            d[s] = yaml.load(open(os.path.join(prefix, d[s]), "r"))
+            d[s] = yaml.safe_load(open(os.path.join(prefix, d[s]), "r"))
 
     if d["general"]["workdir"].find("portable") == -1:
         d["general"]["workdir"] += "_portable"
@@ -77,11 +79,12 @@ def represent_list(dumper, data):
 
 
 def save_yaml(of, dct):
-    yaml = YAML()
-    yaml.default_flow_style = True
-    yaml.representer.add_representer(list, represent_list)
+    # yaml = YAML()
+    # yaml.default_flow_style = True
+    # yaml.representer.add_representer(list, represent_list)
     with open(of, "w") as f:
-        yaml.dump(dct, f)
+        yaml.safe_dump(dct, f, default_flow_style=True, sort_keys=False)
+        # yaml.dump(dct, f)
         logger.info(f"written to: {of}")
 
 

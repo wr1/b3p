@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
-from ruamel import yaml
+import yaml
 import os
 from itertools import chain, zip_longest
 import pickle
@@ -125,7 +125,9 @@ def expand_chamfered_cores(bldict):
     ofile = os.path.join(
         dctcopy["general"]["workdir"], dctcopy["general"]["prefix"] + "_expanded.yml"
     )
-    yaml.YAML().dump(dctcopy, open(ofile, "w"))
+    yaml.safe_dump(
+        dctcopy, open(ofile, "w"), default_flow_style=None
+    )  # , default_flow_style=False)
     return dctcopy
 
 
@@ -308,10 +310,16 @@ def export_matdb(blade, material_map):
         add_bondline_material(blade["materials"], material_map), open(matmap, "w")
     )
 
-    yaml.YAML().dump(
+    yaml.safe_dump(
         blade["materials"],
-        open(os.path.join(blade["general"]["workdir"], "drape", mdbname), "w"),
+        open(os.path.join(blade["general"]["workdir"], "drape", "__matdb.yml"), "w"),
+        default_flow_style=False,
     )
+
+    # yaml.YAML().dump(
+    #     blade["materials"],
+    #     open(os.path.join(blade["general"]["workdir"], "drape", mdbname), "w"),
+    # )
 
     logger.info(f"written material map to {matmap}")
 
@@ -405,11 +413,6 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
 
 
 def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
-    """Convert a lamplan to a list of plies.
-    :param yamlfile: lamplan yaml file
-    :param outputfile: output file name"""
-    blade = yaml.load(open(yamlfile, "r"), Loader=yaml.CLoader)
-
+    blade = yaml.safe_load(open(yamlfile, "r"))
     allstacks = lamplan2plies(blade, outputfile)
-
     logger.info(f"written plydrape to {outputfile}")
