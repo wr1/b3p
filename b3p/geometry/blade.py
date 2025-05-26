@@ -1,7 +1,4 @@
-from b3p.geometry import splining
-from b3p.geometry import loft_utils
-from b3p.geometry import blade_section
-
+import logging
 import pandas as pd
 import numpy as np
 from copy import deepcopy as dc
@@ -9,7 +6,12 @@ from matplotlib import pyplot as plt
 import pickle
 import pyvista as pv
 import json
+from b3p.geometry import splining
+from b3p.geometry import loft_utils
+from b3p.geometry import blade_section
 
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class blade:
     def __init__(
@@ -60,20 +62,18 @@ class blade:
         df.to_csv(f"{prefix}.csv", index=False, sep=";")
 
     def _load_airfoils(self, airfoils, x):
-        print("** loading airfoils")
+        logger.info("Loading airfoils")
         self.airfoils = {}
         for i in sorted(airfoils):
             if type(airfoils[i]) == str:
                 if airfoils[i].find("du") != -1:
-                    print(f"** load {airfoils[i]} normalised")
+                    logger.debug(f"Loading {airfoils[i]} normalized")
                     t = loft_utils.load(airfoils[i], normalise=True)
                 else:
-                    print(f"** load {airfoils[i]} unnormalised")
-                    t = loft_utils.load(airfoils[i], normalise=False)  # fix so we don't
-                    # normalise flatback root
+                    logger.debug(f"Loading {airfoils[i]} unnormalized")
+                    t = loft_utils.load(airfoils[i], normalise=False)
             else:
-                # load an airfoil from the self-contained format, which is a dict with keys xy
-                print(f"** loading airfoil {airfoils[i]['name']} at thickness {i}")
+                logger.debug(f"Loading airfoil {airfoils[i]['name']} at thickness {i}")
                 t = airfoils[i]["xy"]
 
             self.airfoils[i] = loft_utils.interp(x, t)[:2]
@@ -195,10 +195,6 @@ class blade:
     def _place_airfoils(self):
         self.sections = self._interpolate_airfoils()
 
-        # build the blade up out of sections in two loops
-        # first, scale and twist the section
-        # a variable is created, analogous to focus, which represents the
-        # fraction of the chord around which the twist is defined
         twist_center = 0.5
 
         for i in zip(self.x, self.chord[1], self.twist[1], self.sections):
@@ -209,14 +205,12 @@ class blade:
         for i in self.sections:
             i.local_to_global()
 
-        # then, translate the section coordinates to global
         for i in zip(self.sections, self.dx[1], self.dy[1], self.z[1]):
             i[0].translate(i[1], i[2], i[3])
 
     def export_variables(self, fname):
         var = {
             "dx": self.dx,
-            # "dxf": self.dxf,
             "dy": self.dy,
             "z": self.z,
             "twist": self.twist,
@@ -228,15 +222,11 @@ class blade:
         for i in var:
             vv[i] = np.array(var[i]).tolist()
 
-        json.dump(
-            vv,
-            open(fname, "w"),
-        )
-        print("** saved variables to", fname)
+        json.dump(vv, open(fname, "w"))
+        logger.info(f"Saved variables to {fname}")
         return var
 
     def dump(self, fname="__sections.txt", z_rotation=0.0):
-        "dump to a sections list for use in FEA (with webs)"
         lst = [i.get_pointlist(z_rotation=z_rotation) for i in self.sections]
         if fname.endswith(".txt"):
             open(fname, "wb").write(str(lst).encode("utf-8"))
@@ -244,25 +234,11 @@ class blade:
             pickle.dump(lst, open(fname, "wb"))
 
     def export_xfoil(self, prefix="airfoil_out/_xf"):
-        """Export the sections to xfoil format
-
-        parameters
-        ----------
-        prefix : str
-            prefix to use for the filenames
-        """
         for i in zip(self.sections, self.thickness[1], self.z[1]):
             nm = prefix + "_t_%.3f_r_%.3f" % (i[1], i[2])
             i[0].to_xfoil(nm.replace(".", "_") + ".dat")
 
     def mesh(self, fname=None):
-        """Join up the sections to make a polydata object and save it to a file
-
-        parameters
-        ----------
-        fname : str
-            filename to save the polydata to.  If None, don't save to file.
-        """
         n_points = self.np_chordwise
         points = []
         for i in self.sections:
@@ -282,6 +258,6 @@ class blade:
             )
 
         self.poly = pv.PolyData(points, np.hstack(cells))
-        if fname != None:
-            print("saving to", fname)
+        if fname is not None:
+            logger.info(f"Saving mesh to {fname}")
             self.poly.save(fname)

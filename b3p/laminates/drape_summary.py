@@ -6,6 +6,9 @@ import json
 import os
 import yaml
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def load_mm(matmap):
@@ -15,20 +18,22 @@ def load_mm(matmap):
     mm = json.load(open(matmap))
     mdbpath = os.path.join(os.path.dirname(matmap), mm["matdb"])
     mdb = yaml.load(open(mdbpath, "r"), Loader=yaml.FullLoader)
-    print(f"Loaded material database from {mdbpath}")
+    logger.info(f"Loaded material database from {mdbpath}")
     return mm, mdb
 
 
 def drape_summary(vtu, matmap=None):
-    """Summarize the drape results from a vtu file
+    """Summarize the drape results from a vtu file, including ply and slab-based summaries
 
     :param vtu: path to the vtu file
     :param matmap: path to the material map file, if not given, then search for material_map.json in the same directory as the vtu file
     """
     gr = pv.read(vtu).compute_cell_sizes()
     pl = [i for i in gr.cell_data.keys() if i.startswith("ply_")]
+    sl = [i for i in gr.cell_data.keys() if i.startswith("slab_thickness_")]
 
     mat = np.stack([gr.cell_data[i] for i in pl])
+    slab_thicknesses = np.stack([gr.cell_data[i] for i in sl])
 
     area = gr.cell_data["Area"]
     radius = gr.cell_data["radius"]
@@ -37,20 +42,22 @@ def drape_summary(vtu, matmap=None):
 
     mminv = {v: k for k, v in mm.items()}
 
+    # Ply-based summary
+    logger.info("Computing ply-based summary")
     ply_volumes = (1e-3 * mat[:, :, 1] * area).sum(axis=1)
 
     matid = mat[:, :, 0].max(axis=1).astype(int).tolist()
     matmdb = [(mminv[i] if i in mminv else "no mat") for i in matid]
     rho = np.array([(mdb[i]["rho"] if i in mdb else 0) for i in matmdb])
 
-    df = pd.DataFrame(
+    df_ply = pd.DataFrame(
         zip(pl, ply_volumes, matid, matmdb, rho * ply_volumes),
         columns=["ply", "volume", "matfea", "matmdb", "ply_mass"],
     )
     dirname = os.path.dirname(vtu)
-    df.to_csv(os.path.join(dirname, "ply_bom.csv"))
+    df_ply.to_csv(os.path.join(dirname, "ply_bom.csv"))
 
-    total_mass1 = df.ply_mass.sum()
+    total_mass_ply = df_ply.ply_mass.sum()
 
     total_volume = 1e-3 * mat[:, :, 1] * area * (mat[:, :, 0] > 0)
     mat_used = np.unique(mat[:, :, 0])
@@ -76,10 +83,12 @@ def drape_summary(vtu, matmap=None):
             }
 
     dt = pd.DataFrame(out).T
-    print("Total Volume and Mass:")
-    print(dt.sum()[["volume", "mass"]].T)
-    print(f"Total volume backcheck: {total_volume.sum():.4f} m^3")
-    print(f"Total mass backcheck: {total_mass1:.4f} kg")
+    logger.info("Total Volume and Mass (Ply-based):")
+    logger.info(dt.sum()[["volume", "mass"]].T)
+    logger.info(f"Total volume backcheck (ply-based): {total_volume.sum():.4f} m^3")
+    logger.info(f"Total mass backcheck (ply-based): {total_mass_ply:.4f} kg")
     sum_mass_mom = mass_moment.sum()
-    print(f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom / dt.sum()['mass']}")
+    logger.info(
+        f"Mass_moment: {sum_mass_mom} kg*m, radius {sum_mass_mom / dt.sum()['mass']}"
+    )
     return dt

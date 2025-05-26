@@ -1,12 +1,9 @@
+import logging
 from pathlib import Path
 import os
 import pickle
-from b3p import (
-    yml_portable,
-)
-from b3p.geometry import (
-    build_blade_geometry,
-)
+from b3p import yml_portable
+from b3p.geometry import build_blade_geometry
 from b3p.mesh import (
     add_load_to_mesh,
     add_te_solids,
@@ -14,6 +11,8 @@ from b3p.mesh import (
     combine_meshes,
 )
 from b3p.laminates import build_plybook, drape_mesh, drape_summary
+
+logger = logging.getLogger(__name__)
 
 
 class BuildApp:
@@ -47,20 +46,21 @@ class BuildApp:
             meshes = []
             for grid in used_grids:
                 out = f"{prefix}_{grid}_dr.vtu"
-                print(f"** Drape mesh for grid {grid} to {out}")
+                logger.info(f"Draping mesh for grid {grid} to {out}")
                 drape_mesh.drape_mesh(f"{mesh_prefix}_{grid}.vtp", plybook, grid, out)
                 meshes.append(out)
             combine_meshes.combine_meshes(meshes, f"{prefix}_joined.vtu")
             if bondline:
                 add_te_solids.add_bondline(self.dct, prefix)
         else:
-            raise FileNotFoundError("Plybook not found")
+            logger.error(f"Plybook not found at {pbookpath}")
+            raise FileNotFoundError(f"Plybook not found at {pbookpath}")
 
     def mass(self):
         wd = Path(self.dct["general"]["workdir"])
         prefix = self.state.get_prefix("drape")
         if not wd.is_dir():
-            print("\n** No workdir found, building new\n")
+            logger.warning("No workdir found, building new")
             self.build(bondline=True)
 
         mass_table = drape_summary.drape_summary(f"{prefix}_joined.vtu")
@@ -68,8 +68,7 @@ class BuildApp:
         mass_table.replace(to_replace="_", value="", regex=True).to_latex(
             f"{prefix}_mass.tex", index=False
         )
-        print("Mass table per material")
-        print(mass_table)
+        logger.info("Mass table per material:\n%s", mass_table)
 
     def apply_loads(self):
         prefix = self.state.get_prefix("drape")

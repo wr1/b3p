@@ -1,6 +1,9 @@
+import logging
 from pathlib import Path
 import os
 import shutil
+
+logger = logging.getLogger(__name__)
 
 class CleanApp:
     def __init__(self, state, yml: Path):
@@ -12,6 +15,6 @@ class CleanApp:
         prefix = dct["general"]["workdir"]
         if os.path.isdir(prefix):
             shutil.rmtree(prefix)
-            print(f"** Removing workdir {prefix}")
+            logger.info(f"Removed workdir {prefix}")
         else:
-            print(f"** Workdir {prefix} does not exist")
+            logger.info(f"Workdir {prefix} does not exist")

@@ -10,6 +10,9 @@ import math
 import copy
 import json
 import pyvista as pv
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_eids(sec, n):
@@ -184,7 +187,7 @@ def write_vtp(section, vtp):
     wr.SetInputData(section)
     wr.Update()
     wr.Write()
-    print(f"writing to {vtp}")
+    logger.info(f"writing to {vtp}")
 
 
 def get_avg_normal(normals):
@@ -399,21 +402,68 @@ def build_2d_mesh(sec):
     return poly, epid, stacks, join_nodes, web_links
 
 
+# def apply_transforms(poly, rotz, mid_position, local_twist):
+#     """Apply transformations to align the 2D mesh in a single step."""
+#     cln = vtk.vtkCleanPolyData()
+#     cln.SetInputData(poly)
+#     cln.Update()
+
+#     transform = vtk.vtkTransform()
+#     transform.RotateZ(rotz)
+#     transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
+#     transform.RotateZ(local_twist)
+#     transformfilter = vtk.vtkTransformFilter()
+#     transformfilter.SetTransform(transform)
+#     transformfilter.SetInputData(cln.GetOutput())
+#     transformfilter.Update()
+#     return transformfilter.GetOutput()
+
+
+# def apply_transforms(poly, rotz, mid_position, local_twist):
+#     """Apply transformations to align the 2D mesh in a single step."""
+#     cln = vtk.vtkCleanPolyData()
+#     cln.SetInputData(poly)
+#     cln.Update()
+
+#     transform = vtk.vtkTransform()
+#     transform.PreMultiply()  # Explicitly set to ensure matrix composition order
+#     transform.RotateZ(rotz)
+#     transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
+#     transform.RotateZ(local_twist)
+#     transformfilter = vtk.vtkTransformFilter()
+#     transformfilter.SetTransform(transform)
+#     transformfilter.SetInputData(cln.GetOutput())
+#     transformfilter.Update()
+#     return transformfilter.GetOutput()
+
+
 def apply_transforms(poly, rotz, mid_position, local_twist):
-    """Apply transformations to align the 2D mesh in a single step."""
+    """Apply transformations to align the 2D mesh."""
     cln = vtk.vtkCleanPolyData()
     cln.SetInputData(poly)
     cln.Update()
 
     transform = vtk.vtkTransform()
     transform.RotateZ(rotz)
-    transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
-    transform.RotateZ(local_twist)
     transformfilter = vtk.vtkTransformFilter()
     transformfilter.SetTransform(transform)
     transformfilter.SetInputData(cln.GetOutput())
     transformfilter.Update()
-    return transformfilter.GetOutput()
+
+    transform = vtk.vtkTransform()
+    transform.Translate(-mid_position[0], -mid_position[1], -mid_position[2])
+    transformfilter2 = vtk.vtkTransformFilter()
+    transformfilter2.SetTransform(transform)
+    transformfilter2.SetInputData(transformfilter.GetOutput())
+    transformfilter2.Update()
+
+    transform = vtk.vtkTransform()
+    transform.RotateZ(local_twist)
+    transformfilter3 = vtk.vtkTransformFilter()
+    transformfilter3.SetTransform(transform)
+    transformfilter3.SetInputData(transformfilter2.GetOutput())
+    transformfilter3.Update()
+    return transformfilter3.GetOutput()
 
 
 def assign_triangle_properties(poly):
@@ -475,13 +525,13 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, verbose=False):
     if not os.path.exists(os.path.join(workdir, "2d")):
         os.makedirs(os.path.join(workdir, "2d"), exist_ok=True)
 
-    output_file = os.path.join(workdir, "2d", "msec_%i.vtp" % (1e3 * r))
+    output_file = os.path.join(workdir, "2d", f"msec_{int(1e3 * r)}.vtp")
 
     if os.path.exists(output_file):
-        print(f"\t** 2d mesh {output_file} already exists - skipping ")
+        logger.info(f"2d mesh {output_file} already exists - skipping ")
         return output_file
 
-    print("# creating cross section mesh from %s at r=%.3f" % (vtu, r))
+    logger.info(f"# creating cross section mesh from {vtu} at r={r:.3f}")
     sec = slice_mesh(vtu, r, rotz)
     table_out, mid_position = compute_section_properties(sec, r, var)
 
@@ -500,21 +550,21 @@ def cut_blade(r, vtu, if_bondline=True, rotz=0, var=None, verbose=False):
         create_bondline(0.1, epid, stacks, sec, poly)
 
     if verbose:
-        write_vtp(poly, os.path.join(workdir, "inter_%i.vtp" % (1e3 * r)))
+        write_vtp(poly, os.path.join(workdir, f"inter_{int(1e3 * r)}.vtp"))
 
     out = apply_transforms(poly, rotz, mid_position, get_local_twist(r, var))
     assign_triangle_properties(out)
     compute_angle2(out)
 
     if verbose:
-        write_vtp(out, os.path.join(workdir, "prerealign_%i.vtp" % (1e3 * r)))
+        write_vtp(out, os.path.join(workdir, f"prerealign_{int(1e3 * r)}.vtp"))
 
     align_normals(out)
     write_vtp(out, output_file)
     table_out.to_csv(
-        os.path.join(workdir, "2d", "section_location_%i.csv" % (1e3 * r)), index=False
+        os.path.join(workdir, "2d", f"section_location_{int(1e3 * r)}.csv"), index=False
     )
-    print(f"# written vtk to {output_file}")
+    logger.info(f"# written vtk to {output_file}")
     return output_file
 
 

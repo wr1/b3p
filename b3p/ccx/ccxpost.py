@@ -6,6 +6,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from cycler import cycler
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_quadrant(vector):
@@ -27,7 +30,7 @@ class plot_ccx:
     def __init__(self, wdir, wildcard=""):
         self.wdir = wdir
         self.meshes = glob.glob(wdir + f"/*ccx*{wildcard}*.vtu")
-        # print(self.meshes)
+        # logger.info(self.meshes)
 
     def plot3d(self):
         for i in self.meshes:
@@ -37,7 +40,6 @@ class plot_ccx:
         return self
 
     def __plot3d(self, mesh, output_path):
-        print(mesh.point_data.keys())
         ts = [i.split("_")[1] for i in mesh.point_data.keys() if i.startswith("disp")]
 
         for i in ts:
@@ -98,7 +100,7 @@ class plot_ccx:
                 transparent_background=True,
                 return_img=False,
             )
-            print(f"Saved {of}")
+            logger.info(f"Saved {of}")
             # clear up memory
             plotter.close()
             del plotter
@@ -130,5 +132,5 @@ class plot_ccx:
             ax.grid(True)
             output_path = pq.replace(".pq", ".png")
             fig.savefig(output_path, dpi=300)  # , transparent=True)
-            print(f"Saved {output_path}")
+            logger.info(f"Saved {output_path}")
             plt.close(fig)

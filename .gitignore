@@ -15,11 +15,17 @@ __pycache__/
 *.inp
 *.dat
 *.cvg
-*.xdmf*
+# *.xdmf*
 **/*.txt
 *.png
 *.pck
 *.zip
+*prj
+*xlsx
+*pq
+*var
+*sta
+
 *.pyc
 *.out
 # Ignore directories containing 'portable' in their name

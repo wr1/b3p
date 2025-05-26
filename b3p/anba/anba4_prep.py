@@ -3,6 +3,9 @@ import pyvista as pv
 import argparse
 import multiprocessing
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def conv3d_2d(mesh):
@@ -47,7 +50,7 @@ def vtp2xdmf(vtp):
     assert vtp.endswith(".vtp")
     xd = vtp.replace(".vtp", ".xdmf")
     if os.path.exists(xd):
-        print(f"\t** ANBA mesh {xd} already exists - skipping")
+        logger.info(f"ANBA mesh {xd} already exists - skipping")
         return xd
 
     mesh = pv.read(vtp)
@@ -56,7 +59,7 @@ def vtp2xdmf(vtp):
     tri.points[:, 2] = 0
     pv.save_meshio(xd, tri, data_format="XML")
     conv3d_2d(xd)
-    print(f"\t**converted {vtp} to {xd}")
+    logger.info(f"converted {vtp} to {xd}")
     return xd
 
 
@@ -73,7 +76,7 @@ def anba4_prep(section_meshes, parallel=True):
     Returns:
         list: A list of converted section meshes in XDMF format.
     """
-    print("** converting section meshes to XDMF")
+    logger.info("converting section meshes to XDMF")
     if parallel:
         p = multiprocessing.Pool()
         xds = p.map(vtp2xdmf, section_meshes)
@@ -83,7 +86,7 @@ def anba4_prep(section_meshes, parallel=True):
         xds = []
         for i in section_meshes:
             xds.append(vtp2xdmf(i))
-    print("** done converting section meshes to XDMF")
+    logger.info("done converting section meshes to XDMF")
     return xds
 
 

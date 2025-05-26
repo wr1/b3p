@@ -6,6 +6,9 @@ import os
 import glob
 import json
 import warnings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def add_zero_arrays(msh, mesh):
@@ -162,7 +165,7 @@ def add_bondline_to_vtu(
     out = pv.merge([mesh, msh])
     of = file_path.replace(".vtu", "_bondline.vtu")
     out.save(of)
-    print(f"Saved {of}")
+    logger.info(f"Saved {of}")
 
 
 def get_bondline_material(d):

@@ -6,7 +6,28 @@ from b3p.cli.ccx_app import CcxApp
 from b3p.cli.two_d_app import TwoDApp
 from b3p.cli.ccblade_app import CCBladeApp
 from b3p.cli.clean_app import CleanApp
+import logging
+import sys
 
+# Configure logging with a formatter to include log level prefix
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Clear existing handlers to prevent duplicates
+logger.handlers.clear()
+
+# Create formatter with log level prefix
+formatter = logging.Formatter('%(levelname)s: %(message)s')
+
+# Stream handler for console output
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+# File handler for output.log
+file_handler = logging.FileHandler("output.log")
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 def main():
     parser = argparse.ArgumentParser(description="Blade Design CLI")
@@ -32,7 +53,9 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
 
-    build_drape_parser = subparsers.add_parser("drape", help="Drape plies onto mesh")
+    build_drape_parser = build_subparsers.add_parser(
+        "drape", help="Drape plies onto mesh"
+    )
     build_drape_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
@@ -209,21 +232,20 @@ def main():
                 build.apply_loads()
     elif args.command == "ccx":
         if not hasattr(args, "subcommand") or args.subcommand is None:
-            ccx.ccx(args.yml, bondline=args.bondline)
+            ccx.ccx(bondline=args.bondline)
         elif args.subcommand == "ccx":
-            ccx.ccx(args.yml_sub or args.yml, bondline=args.bondline)
+            ccx.ccx(bondline=args.bondline)
         elif args.subcommand == "prep":
-            ccx.prep(args.yml_sub or args.yml, bondline=args.bondline)
+            ccx.prep(bondline=args.bondline)
         elif args.subcommand == "solve":
             ccx.solve(
-                args.yml_sub or args.yml,
                 wildcard=args.wildcard,
                 nproc=args.nproc,
                 ccxexe=args.ccxexe,
                 merged_plies=args.merged_plies,
             )
         elif args.subcommand == "post":
-            ccx.post(args.yml_sub or args.yml, wildcard=args.wildcard, nbins=args.nbins)
+            ccx.post(wildcard=args.wildcard, nbins=args.nbins)
         elif args.subcommand == "plot":
             ccx.plot(
                 args.yml_sub or args.yml,
@@ -242,7 +264,7 @@ def main():
         elif args.subcommand == "clean":
             d2d.clean()
     elif args.command == "ccblade":
-        ccb.ccblade(args.yml)
+        ccb.ccblade()
     elif args.command == "clean":
         clean.clean()
 

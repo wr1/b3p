@@ -3,6 +3,9 @@
 import numpy as np
 import pyvista
 from matplotlib import pyplot as plt
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def compute_nodal_forces(nz, target_z, target_moment, fmult=1.0):
@@ -37,7 +40,7 @@ def add_load_to_mesh(config, gridname, plotfile=None):
 
     lds = config["loads"]
     for i in lds:
-        print(f"** loadcase {i}")
+        logger.info(f"** loadcase {i}")
         # get applicable nodes
         for n, j in enumerate(config["loads"][i]["apply"]):
             key, [mn, mx] = j, config["loads"][i]["apply"][j]
@@ -76,10 +79,10 @@ def add_load_to_mesh(config, gridname, plotfile=None):
         force_vector[loaded_node_ids, 1] = fy
         grid.point_data[f"lc_{i}"] = force_vector
 
-    print(f"writing loadcases to grid {gridname}")
+    logger.info(f"writing loadcases to grid {gridname}")
     grid.save(gridname)
 
     if plotfile:
         fig.savefig(plotfile)
-        print(f"** written load plot to {plotfile}")
+        logger.info(f"** written load plot to {plotfile}")
     return grid

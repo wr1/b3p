@@ -10,6 +10,9 @@ from numpy import array
 import copy as cp
 from pathlib import Path
 from sympy import symbols, sympify
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def plyify(r, t, ply_thickness, reverse=False):
@@ -290,7 +293,7 @@ def export_matdb(blade, material_map):
             #     open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
             # )
     else:
-        print("no material db defined in blade file")
+        logger.info("no material db defined in blade file")
 
     matmap = os.path.join(blade["general"]["workdir"], "drape", "material_map.json")
     if type(blade["materials"]) == str:
@@ -310,12 +313,12 @@ def export_matdb(blade, material_map):
         open(os.path.join(blade["general"]["workdir"], "drape", mdbname), "w"),
     )
 
-    print(f"written material map to {matmap}")
+    logger.info(f"written material map to {matmap}")
 
 
 def export_plybook(stacks, outputfile):
     pickle.dump(stacks, open(outputfile, "wb"))
-    print(f"written to {outputfile}")
+    logger.info(f"written to {outputfile}")
 
 
 def lamplan2plies(blade, outputfile="__plybook.pck"):
@@ -409,4 +412,4 @@ def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
 
     allstacks = lamplan2plies(blade, outputfile)
 
-    print(f"written plydrape to {outputfile}")
+    logger.info(f"written plydrape to {outputfile}")

@@ -4,6 +4,9 @@ from b3p.geometry import geometry_section
 from b3p.geometry import geometry_blade_shape
 from b3p.geometry import geometry_web
 import pickle
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def build_mesh(
@@ -63,6 +66,6 @@ def build_mesh(
     # mesh with a given number of points around the circumference
     blade.mesh(n_ch_points, panel_mesh_scale=panel_mesh_scale)
     blade.write_mesh(outfile)
-    print(f"** wrote blade mesh to {outfile}")
+    logger.info(f"wrote blade mesh to {outfile}")
 
     return blade
