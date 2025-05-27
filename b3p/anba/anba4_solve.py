@@ -7,7 +7,7 @@ import os
 import traceback
 import numpy as np
 import pyvista as pv
-from dolfin import Mesh, XDMFFile, MeshFunction
+from dolfin import Mesh, XDMFFile, File, MeshFunction
 from anba4 import (
     material,
     anbax,
@@ -119,22 +119,19 @@ def get_material_db(material_map, unit_factor=1):
 
     return materials, mm_inv
 
+def export_unit_strains(anba, result_file_name, pv_mesh):
+    """Export strain fields for unit displacements to separate VTK files."""
 
-def export_unit_strains(anba, result_file_name):
-    """Export strain fields for unit displacements to an XDMF file."""
-    result_file = XDMFFile(result_file_name)
-    result_file.parameters["functions_share_mesh"] = True
-    result_file.parameters["rewrite_function_mesh"] = False
-    result_file.parameters["flush_output"] = True
+    for disp, suffix in [
+        ([1, 0, 0], "mx"),
+        ([0, 1, 0], "my"),
+        ([0, 0, 1], "mz")
+    ]:
+        anba.strain_field([0, 0, 0], disp, "local", "paraview")
+        nodevalues = anba.STRAIN.vector().get_local().reshape(-1, 6)
+        pv_mesh.cell_data[f"strain_{suffix}"] = nodevalues
 
-    anba.strain_field([0, 0, 0], [1, 0, 0], "local", "paraview")
-    result_file.write(anba.STRAIN, t=0.0)
-    anba.strain_field([0, 0, 0], [0, 1, 0], "local", "paraview")
-    result_file.write(anba.STRAIN, t=1.0)
-    anba.strain_field([0, 0, 0], [0, 0, 1], "local", "paraview")
-    result_file.write(anba.STRAIN, t=2.0)
-
-    logger.info(f"Wrote strain results to {result_file_name}")
+    pv_mesh.save(result_file_name)
 
 
 def solve_anba4(mesh_filename, material_db_filename):
@@ -227,8 +224,13 @@ def solve_anba4(mesh_filename, material_db_filename):
     with open(json_output_filename, "w") as f:
         json.dump(output, f, indent=4)
 
-    result_filename = mesh_filename.replace(".xdmf", "_results.xdmf")
-    export_unit_strains(anba, result_filename)
+    result_file = mesh_filename.replace(".xdmf", "_results.vtp")
+    export_unit_strains(anba, result_file, pv_mesh)
+    # import pyvista as pv
+    # mesh = pv.read(result_filename)
+    # mesh.save(result_filename.replace(".xdmf", ".vtu")) 
+    logger.info(f"Wrote results to {json_output_filename} and {result_file}")
+
 
 
 def run_solver(mesh, material_db):
