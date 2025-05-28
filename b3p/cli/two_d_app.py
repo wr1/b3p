@@ -9,14 +9,14 @@ import glob
 
 logger = logging.getLogger(__name__)
 
+
 class TwoDApp:
     def __init__(self, state, yml: Path):
         """Initialize TwoDApp with state and YAML config file."""
         self.state = state
         self.yml = yml
 
-
-    def mesh2d(self,  rotz=0.0, parallel=True):
+    def mesh2d(self, rotz=0.0, parallel=True):
         """Create 2D meshes from blade sections."""
         # yml = yml or self.yml
         dct = self.state.load_yaml(self.yml)
@@ -49,7 +49,8 @@ class TwoDApp:
     def run_anba4(self, anba_env="anba4-env"):
         """Run ANBA4 on 2D meshes."""
         # yml = yml or self.yml
-        self.state.load_yaml(self.yml)
+        yml = self.yml
+        self.state.load_yaml(yml)
         prefix = self.state.get_prefix("drape")
         meshes = glob.glob(os.path.join(prefix.parent, "2d", "msec_*.xdmf"))
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
@@ -84,7 +85,7 @@ class TwoDApp:
             material_map,
         ]
 
-        logger.info(' '.join(conda_command))
+        logger.info(" ".join(conda_command))
         result = subprocess.run(
             conda_command,
             capture_output=True,
@@ -105,7 +106,6 @@ class TwoDApp:
             logger.info(f"ANBA4 script completed successfully")
             logger.debug(f"Stdout: {result.stdout}")
         return result.returncode
-
 
     def clean(self):
         """Remove 2D working directory and its contents."""
