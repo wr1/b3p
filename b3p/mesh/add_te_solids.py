@@ -37,13 +37,8 @@ def add_zero_arrays(msh, mesh):
 def split_glueline(fl):
     """
     Splits a glueline row of solids into 3 rows through thickness adding intermediate points.
-    Parameters:
-    - fl (vtk.vtkPolyData): The input glueline as a VTK PolyData object.
-    Returns:
-    - msh (pyvista.UnstructuredGrid): The resulting mesh after splitting the glueline.
-    Raises:
-    - None
     """
+    logger.debug(fl.n_cells)
 
     p = fl.points
 
@@ -69,7 +64,7 @@ def split_glueline(fl):
 
     apids = np.arange(fl.points.shape[0], fl.points.shape[0] + added_points.shape[0])
 
-    lkp = np.zeros(upr.max() + 1, dtype=int)
+    lkp = np.zeros(upr.max() + 1, dtype=int)  # .astype(int)  # , dtype=int)
     lkp[upr[:, 0]] = apids[::2]
 
     end1 = lkp[cn[:, [1, 0, 5, 4]]]
@@ -98,14 +93,10 @@ def split_glueline(fl):
 def add_bondline_to_vtu(
     file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]], bondline_material_id=0
 ):
-    """
-    Add bondline to a VTU file.
-    Parameters:
-    - file_path (str): The path to the VTU file.
-    - bondline_width (list, optional): The bondline width values. Default is [[0, 0], [0.5, 0.5], [1, 0.1]].
-    Returns:
-    None
-    """
+    """Add bondline to a VTU file."""
+    print(file_path)
+    print(bondline_width)
+    # logger.info(f"Adding bondline to {file_path} {bondline_width}")
     # Load the VTU file
     mesh = pv.read(file_path)
     mesh.point_data["bondline_width"] = 0.0
@@ -119,6 +110,8 @@ def add_bondline_to_vtu(
     df["rr"] = mesh.point_data["rr"]
 
     bw = np.array(bondline_width)
+
+    # print(bw, df.rr, mesh.point_data["rr"].max())
 
     df["bw"] = np.interp(df.rr, bw[:, 0], bw[:, 1])
 
@@ -151,7 +144,7 @@ def add_bondline_to_vtu(
                 ]
             )
     msh = pv.UnstructuredGrid(
-        np.array(cells).flatten(),
+        np.array(cells).astype(int).flatten(),
         np.array([pv.CellType.HEXAHEDRON for i in cells]),
         mesh.points,
     )
@@ -171,12 +164,6 @@ def add_bondline_to_vtu(
 def get_bondline_material(d):
     """
     Retrieve bondline material ID and width from the configuration.
-
-    Args:
-        d (dict): Blade dictionary containing configuration data.
-
-    Returns:
-        tuple: Bondline material ID and bondline width, or (None, None) if not found.
     """
     wd = d["general"]["workdir"]
     mmap = os.path.join(wd, "drape", "material_map.json")
@@ -219,3 +206,16 @@ def add_bondline(bladedict, prefix=None):
             bondline_width=bondline_width,
             bondline_material_id=bondline_material_id,
         )
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Add bondline to VTU file.")
+    parser.add_argument("vtu_file", type=str, help="Path to the VTU file.")
+
+    args = parser.parse_args()
+
+    add_bondline_to_vtu(
+        args.vtu_file,
+    )

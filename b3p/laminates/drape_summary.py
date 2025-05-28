@@ -4,7 +4,9 @@ import pyvista as pv
 import numpy as np
 import json
 import os
-import yaml
+
+# import yaml
+from ruamel.yaml import YAML
 import pandas as pd
 import logging
 
@@ -17,7 +19,11 @@ def load_mm(matmap):
     :param matmap: path to the material map file"""
     mm = json.load(open(matmap))
     mdbpath = os.path.join(os.path.dirname(matmap), mm["matdb"])
-    mdb = yaml.load(open(mdbpath, "r"), Loader=yaml.FullLoader)
+    # mdb = yaml.load(open(mdbpath, "r"), Loader=yaml.FullLoader)
+
+    yaml = YAML(typ="safe")
+    mdb = yaml.load(open(mdbpath, "r"))
+
     logger.info(f"Loaded material database from {mdbpath}")
     return mm, mdb
 

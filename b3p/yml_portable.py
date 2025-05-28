@@ -54,7 +54,8 @@ def yaml_make_portable(yaml_file):
     yaml = YAML()
     # typ="safe")
     # typ="safe")  # YAML(typ="safe") if safe else YAML(typ="rt")
-    d = yaml.load(open(yaml_file, "r"))
+    # d = yaml.load(open(yaml_file, "r"))
+    d = yaml.load(open(yaml_file, "r"))  # or use yaml.CSafeLoader
     # yaml.load(open(yaml_file, "r"), Loader=yaml.CLoader)
 
     d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
@@ -72,16 +73,18 @@ def yaml_make_portable(yaml_file):
 
 
 # Alternatively, define a custom representation for lists to ensure all are inline
-def represent_list(dumper, data):
-    return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
+# def represent_list(dumper, data):
+#     return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
 
 
 def save_yaml(of, dct):
     yaml = YAML()
     yaml.default_flow_style = True
-    yaml.representer.add_representer(list, represent_list)
+    # yaml.representer.add_representer(list, represent_list)
     with open(of, "w") as f:
-        yaml.dump(dct, f)
+        yaml.dump(dct, f)  # , default_flow_style=False, sort_keys=False)
+        # yaml.safe_dump(dct, f, default_flow_style=True, sort_keys=False)
+        # yaml.dump(dct, f)
         logger.info(f"written to: {of}")
 
 

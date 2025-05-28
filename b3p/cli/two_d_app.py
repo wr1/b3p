@@ -9,12 +9,16 @@ import glob
 
 logger = logging.getLogger(__name__)
 
+
 class TwoDApp:
     def __init__(self, state, yml: Path):
+        """Initialize TwoDApp with state and YAML config file."""
         self.state = state
         self.yml = yml
 
     def mesh2d(self, rotz=0.0, parallel=True):
+        """Create 2D meshes from blade sections."""
+        # yml = yml or self.yml
         dct = self.state.load_yaml(self.yml)
         if "mesh2d" not in dct:
             logger.error("No mesh2d section in yml file")
@@ -43,6 +47,10 @@ class TwoDApp:
         return anba4_prep.anba4_prep(section_meshes, parallel=parallel)
 
     def run_anba4(self, anba_env="anba4-env"):
+        """Run ANBA4 on 2D meshes."""
+        # yml = yml or self.yml
+        yml = self.yml
+        self.state.load_yaml(yml)
         prefix = self.state.get_prefix("drape")
         meshes = glob.glob(os.path.join(prefix.parent, "2d", "msec_*.xdmf"))
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
@@ -57,8 +65,8 @@ class TwoDApp:
             return
 
         logger.info(f"Using Conda environment for running anba4 {anba_env}")
-        dct = self.state.load_yaml(self.yml)
-        if meshes is None:
+        dct = self.state.load_yaml(yml)
+        if not meshes:
             meshes = self.mesh2d()
 
         material_map = f"{prefix.parent}/material_map.json"
@@ -76,7 +84,8 @@ class TwoDApp:
             *meshes,
             material_map,
         ]
-        logger.debug(' '.join(conda_command))
+
+        logger.info(" ".join(conda_command))
         result = subprocess.run(
             conda_command,
             capture_output=True,
@@ -99,6 +108,7 @@ class TwoDApp:
         return result.returncode
 
     def clean(self):
+        """Remove 2D working directory and its contents."""
         dct = self.state.load_yaml(self.yml)
         workdir = self.state.get_prefix("drape")
         workdir = workdir.parent / "2d"
