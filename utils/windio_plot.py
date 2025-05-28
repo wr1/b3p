@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-# from ruamel import YAML as YAML
-from ruamel.yaml import YAML
 import argparse
 from matplotlib import pyplot as plt
 import numpy as np
