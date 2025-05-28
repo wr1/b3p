@@ -6,7 +6,9 @@ import vtk
 import time
 import json
 import os
-import yaml
+
+# import yaml
+from ruamel.yaml import YAML
 import pandas as pd
 import logging
 
@@ -58,9 +60,12 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
         gdir = os.path.dirname(matmap)
         mm = json.load(open(matmap, "r"))
         if "matdb" in mm:  # check if the material map file points to a material db
-            mat_db = yaml.load(
-                open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader
-            )
+            yaml = YAML(typ="safe")
+            mat_db = yaml.load(open(os.path.join(gdir, mm["matdb"]), "r"))
+
+            # mat_db = yaml.load(
+            #     open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader
+            # )
         else:
             exit(
                 "material map available, but no link to material db, need matdb definition to do FEA"

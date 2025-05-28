@@ -119,14 +119,11 @@ def get_material_db(material_map, unit_factor=1):
 
     return materials, mm_inv
 
+
 def export_unit_strains(anba, result_file_name, pv_mesh):
     """Export strain fields for unit displacements to separate VTK files."""
 
-    for disp, suffix in [
-        ([1, 0, 0], "mx"),
-        ([0, 1, 0], "my"),
-        ([0, 0, 1], "mz")
-    ]:
+    for disp, suffix in [([1, 0, 0], "mx"), ([0, 1, 0], "my"), ([0, 0, 1], "mz")]:
         anba.strain_field([0, 0, 0], disp, "local", "paraview")
         nodevalues = anba.STRAIN.vector().get_local().reshape(-1, 6)
         pv_mesh.cell_data[f"strain_{suffix}"] = nodevalues
@@ -228,9 +225,8 @@ def solve_anba4(mesh_filename, material_db_filename):
     export_unit_strains(anba, result_file, pv_mesh)
     # import pyvista as pv
     # mesh = pv.read(result_filename)
-    # mesh.save(result_filename.replace(".xdmf", ".vtu")) 
+    # mesh.save(result_filename.replace(".xdmf", ".vtu"))
     logger.info(f"Wrote results to {json_output_filename} and {result_file}")
-
 
 
 def run_solver(mesh, material_db):

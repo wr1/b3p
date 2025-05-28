@@ -1,7 +1,9 @@
 #! /usr/bin/env python3
 
 import numpy as np
-import yaml
+
+# import yaml
+from ruamel.yaml import YAML
 import os
 from itertools import chain, zip_longest
 import pickle
@@ -125,9 +127,11 @@ def expand_chamfered_cores(bldict):
     ofile = os.path.join(
         dctcopy["general"]["workdir"], dctcopy["general"]["prefix"] + "_expanded.yml"
     )
-    yaml.safe_dump(
-        dctcopy, open(ofile, "w"), default_flow_style=None
-    )  # , default_flow_style=False)
+    yaml = YAML()
+    yaml.dump(dctcopy, open(ofile, "w"))  # , default_flow_style=None)
+    # yaml.safe_dump(
+    #     dctcopy, open(ofile, "w"), default_flow_style=None
+    # )  # , default_flow_style=False)
     return dctcopy
 
 
@@ -310,11 +314,16 @@ def export_matdb(blade, material_map):
         add_bondline_material(blade["materials"], material_map), open(matmap, "w")
     )
 
-    yaml.safe_dump(
+    yaml = YAML()
+    yaml.dump(
         blade["materials"],
         open(os.path.join(blade["general"]["workdir"], "drape", "__matdb.yml"), "w"),
-        default_flow_style=False,
     )
+    # yaml.safe_dump(
+    #     blade["materials"],
+    #     open(os.path.join(blade["general"]["workdir"], "drape", "__matdb.yml"), "w"),
+    #     default_flow_style=False,
+    # )
 
     # yaml.YAML().dump(
     #     blade["materials"],
