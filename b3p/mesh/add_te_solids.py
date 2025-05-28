@@ -94,8 +94,6 @@ def add_bondline_to_vtu(
     file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]], bondline_material_id=0
 ):
     """Add bondline to a VTU file."""
-    print(file_path)
-    print(bondline_width)
     # logger.info(f"Adding bondline to {file_path} {bondline_width}")
     # Load the VTU file
     mesh = pv.read(file_path)

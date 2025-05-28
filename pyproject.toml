@@ -33,6 +33,9 @@ vtk = "9.3.1"
 # url = "https://pypi.org/simple/"
 # priority = "primary"
 
+[tool.poetry.group.dev.dependencies]
+pytest-xdist = "^3.7.0"
+
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = [
