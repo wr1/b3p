@@ -5,6 +5,9 @@ import pyvista as pv
 import pandas as pd
 from io import StringIO
 import glob
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +31,7 @@ def test_planform(built_blade):
         pytest.skip("Reference CSV 'test_blade_csv.csv' not found in tests/data/")
     expected_df = pd.read_csv(csv_path, sep=";")
 
-    print(expected_df)
+    logger.info(f"Expected DataFrame:\n{expected_df}")
     pd.testing.assert_frame_equal(expected_df, planform)
 
 

@@ -4,6 +4,9 @@ import numpy as np
 from .conftest import built_blade  # Explicitly imporbuilt_bladeld
 import json
 import pytest
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def test_laminate_number_of_plies(built_blade):
@@ -16,7 +19,7 @@ def test_laminate_number_of_plies(built_blade):
     assert len(cell_arrays) == 348, f"Expected 348 plies, got {len(cell_arrays)}"
 
     sums = [float(vtu.cell_data[i][:, 1].sum()) for i in cell_arrays]
-    print(sums)
+    logger.info(f"Computed ply sums: {sums}")
 
     # Load expected sums from JSON file in the temporary data directory
     json_path = temp_dir / "data" / "laminate_sums.json"
