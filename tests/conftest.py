@@ -44,7 +44,8 @@ def built_blade(temp_example_dir):
         yml_path = Path("blade_test.yml")
 
         build_app = BuildApp(state, yml_path)
-        build_app.build()  # yml_path)
+        build_app.build()
+        # yml_path)
         # result = subprocess.run(
         #     ["python", "-m", "b3p", "build", str(yml_path)],
         #     capture_output=True,

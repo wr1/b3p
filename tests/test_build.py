@@ -20,9 +20,7 @@ def test_build_output_files(built_blade):
     #  AssertionError: Missing expected files: {'test_blade_joined_bondline.vtu', 'test_blade.var', 'test_blade_base.vtptest_blade_base.vtp', '__plybook.pck', 'test_blade_portable.yml'}
     #  assert not {'__plybook.pck', 'test_blade.var', 'test_blade_base.vtptest_blade_base.vtp', 'test_blade_joined_bondline.vtu', 'test_blade_portable.yml'}
     workdir = built_blade["workdir"]
-    print(workdir)
     output_files = {os.path.basename(f) for f in glob.glob(str(workdir / "**/*"))}
-    print(output_files)
     expected_files = {
         "test_blade_base.vtp",
         "test_blade.png",
