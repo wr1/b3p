@@ -14,26 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 def load_mm(matmap):
-    """Load the material map and material database from a material map file.
-
-    :param matmap: path to the material map file"""
+    """Load the material map and material database from a material map file."""
     mm = json.load(open(matmap))
-    mdbpath = os.path.join(os.path.dirname(matmap), mm["matdb"])
-    # mdb = yaml.load(open(mdbpath, "r"), Loader=yaml.FullLoader)
 
-    yaml = YAML(typ="safe")
-    mdb = yaml.load(open(mdbpath, "r"))
-
-    logger.info(f"Loaded material database from {mdbpath}")
-    return mm, mdb
+    logger.info(f"Loaded material database from {matmap}")
+    return mm["map"], mm["matdb"]
 
 
 def drape_summary(vtu, matmap=None):
-    """Summarize the drape results from a vtu file, including ply and slab-based summaries
-
-    :param vtu: path to the vtu file
-    :param matmap: path to the material map file, if not given, then search for material_map.json in the same directory as the vtu file
-    """
+    """Summarize the drape results from a vtu file, including ply and slab-based summaries"""
     gr = pv.read(vtu).compute_cell_sizes()
     pl = [i for i in gr.cell_data.keys() if i.startswith("ply_")]
     sl = [i for i in gr.cell_data.keys() if i.startswith("slab_thickness_")]

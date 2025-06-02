@@ -43,25 +43,15 @@ def load_airfoils(afs, prefix=""):
 
 
 def yaml_make_portable(yaml_file):
-    """Import a yaml file and all linked files, and write to a _portable version of itself.
-
-    :param yaml_file: path to yaml file
-    :param safe: if True, use safe loader and basic data types (dict, list, str, int, float)
-    :return: None"""
+    """Import a yaml file and all linked files, and write to a _portable version of itself."""
     logger.info(f"Loading yaml file {yaml_file} and loading linked files")
     prefix = os.path.dirname(yaml_file)
 
     yaml = YAML()
-    # typ="safe")
-    # typ="safe")  # YAML(typ="safe") if safe else YAML(typ="rt")
-    # d = yaml.load(open(yaml_file, "r"))
     d = yaml.load(open(yaml_file, "r"))  # or use yaml.CSafeLoader
-    # yaml.load(open(yaml_file, "r"), Loader=yaml.CLoader)
 
     d["aero"]["airfoils"] = load_airfoils(d["aero"]["airfoils"], prefix=prefix)
-
     subsections = ["materials", "loads", "laminates"]
-
     for s in subsections:
         if type(d[s]) == str and d[s].find(".yml") != -1:
             logger.info(f"loading {s} from: {d[s]}")
@@ -70,11 +60,6 @@ def yaml_make_portable(yaml_file):
     if d["general"]["workdir"].find("portable") == -1:
         d["general"]["workdir"] += "_portable"
     return d  # deep_convert_to_float(d)
-
-
-# Alternatively, define a custom representation for lists to ensure all are inline
-# def represent_list(dumper, data):
-#     return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
 
 
 def save_yaml(of, dct):

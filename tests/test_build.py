@@ -33,7 +33,7 @@ def test_build_output_files(built_blade):
         "test_blade_w3_dr.vtu",
         "test_blade_shell_dr.vtu",
         "test_blade_w4_dr.vtu",
-        "__matdb.yml",
+        # "__matdb.yml",
         "test_blade_joined.vtu",
         "material_map.json",
         "test_blade_loads.png",

@@ -11,7 +11,6 @@ def build_blade_geometry(config, prefix, xfoil=True):
     """
     Perform blade 3d model generation based on b3p dictionary.
 
-    :param config: b3p dictionary
     """
     pln = config["planform"]
     blade = b3p.geometry.blade.blade(

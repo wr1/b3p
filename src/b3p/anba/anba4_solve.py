@@ -30,20 +30,9 @@ def get_material_db(material_map, unit_factor=1):
         raise FileNotFoundError(f"Material map file not found: {material_map}")
 
     with open(material_map, "r") as f:
-        mm = json.load(f)
-
-    gdir = os.path.dirname(material_map)
-    if "matdb" not in mm:
-        raise ValueError(
-            "Material map must contain 'matdb' key pointing to material database"
-        )
-
-    mat_db_path = os.path.join(gdir, mm["matdb"])
-    if not os.path.isfile(mat_db_path):
-        raise FileNotFoundError(f"Material database file not found: {mat_db_path}")
-
-    with open(mat_db_path, "r") as f:
-        mat_db = yaml.safe_load(f)
+        mm1 = json.load(f)
+        mm = mm1.get("map", mm1)  # Support both old and new format
+        mat_db = mm1.get("matdb", None)
 
     if "-1" in mat_db:
         mm["-1"] = -1
@@ -63,15 +52,6 @@ def get_material_db(material_map, unit_factor=1):
             f"Processing material {matdb_id} (mesh ID {mesh_id}): {matdb_entry}"
         )
         density = matdb_entry.get("rho", matdb_entry.get("density", 1.0))
-
-        # if "e11" in matdb_entry:
-        #     if "nu12" not in matdb_entry:
-        #         raise ValueError(
-        #             f"Missing 'nu12' for material {matdb_id} treated as isotropic. Entry: {matdb_entry}"
-        #         )
-        #     E = matdb_entry["e11"] * unit_factor
-        #     nu = min(matdb_entry["nu12"], 0.49)
-        #     materials[matdb_id] = material.IsotropicMaterial([E, nu], density)
 
         if "e11" in matdb_entry:
             required_keys = [

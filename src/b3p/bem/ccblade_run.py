@@ -17,15 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_polar(pname):
-    """
-    Load a polar with a given name, interpolate to set alpha range.
-
-    Args:
-        pname (str): Path to the polar file.
-
-    Returns:
-        list: A list containing alpha, cl, cd, and cm values.
-    """
+    """Load a polar with a given name, interpolate to set alpha range."""
     logger.info("loading polar", pname)
     if not os.path.isfile(pname):
         raise IOError(f"Polar {pname} not found")
