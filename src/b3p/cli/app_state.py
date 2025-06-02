@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-from b3p import yml_portable
+from b3p.portable_json import PortableJsonConfig
 from b3p.laminates import build_plybook
 
 
@@ -20,7 +20,9 @@ class AppState:
 
     def load_yaml(self, yml: Path):
         if self.dct is None:
-            self.dct = yml_portable.yaml_make_portable(yml)
+            config = PortableJsonConfig()
+            json_path = config.make_portable(yml)
+            self.dct = config.load_portable(json_path)
             self.make_workdir(yml)
             self.expand_chamfered_cores()
         return self.dct
@@ -54,4 +56,6 @@ class AppState:
         return wd
 
     def reset(self):
+        """Reset the singleton state."""
         self.dct = None
+        AppState._state = None

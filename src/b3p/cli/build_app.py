@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import os
 import pickle
-from b3p import yml_portable
+from b3p.portable_json import PortableJsonConfig
 from b3p.geometry import build_blade_geometry
 from b3p.mesh import (
     add_load_to_mesh,
@@ -14,19 +14,18 @@ from b3p.laminates import build_plybook, drape_mesh, drape_summary
 
 logger = logging.getLogger(__name__)
 
-
 class BuildApp:
     def __init__(self, state, yml: Path):
         self.state = state
-        self.dct = self.state.load_yaml(yml)
+        self.yml = yml
 
     def geometry(self):
+        config = PortableJsonConfig()
         prefix = self.state.get_prefix("mesh")
+        workdir = Path(self.dct["general"]["workdir"])
+        json_path = config.make_portable(self.yml, workdir / f"{self.yml.stem}_portable.json")
+        self.dct = config.load_portable(json_path)
         build_blade_geometry.build_blade_geometry(self.dct, prefix)
-        prefix = os.path.join(
-            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
-        )
-        yml_portable.save_yaml(f"{prefix}_portable.yml", self.dct)
 
     def mesh(self):
         prefix = self.state.get_prefix("mesh")
