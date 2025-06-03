@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-from b3p import yml_portable
+from b3p.cli import yml_portable
 from b3p.laminates import build_plybook
 
 
