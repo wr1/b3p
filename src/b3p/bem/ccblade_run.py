@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from b3p import yml_portable
+from b3p.cli import yml_portable
 import argparse
 import numpy as np
 import os
@@ -8,16 +8,16 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from scipy.optimize import fmin
 from ccblade.ccblade import CCAirfoil, CCBlade
-
+from pathlib import Path
 import math
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def load_polar(pname):
+def load_polar(pname: Path):
     """Load and interpolate a polar by name to a set alpha range."""
-    logger.info("loading polar", pname)
+    logger.info(f"loading polar {pname}")
     if not os.path.isfile(pname):
         raise IOError(f"Polar {pname} not found")
 
@@ -332,7 +332,7 @@ class ccblade_run:
             exit("blade not built yet, run b3p build <blade.yml> first")
         plf = pd.read_csv(f"{self.prefix}_sca_50.csv", sep=";")
         plrs = sorted(
-            [(i[0], load_polar(i[1])) for i in bem["polars"].items()],
+            [(i[0], load_polar(Path(i[1]))) for i in bem["polars"].items()],
             reverse=True,
         )
         iplr = interpolate_polars(

@@ -37,9 +37,9 @@ def test_ccx_prep(run_ccx):
     workdir = run_ccx["workdir"]
     inp_files = glob.glob(f"{workdir}/fea/*_ccx_*.inp")
     assert inp_files, "CCX prep should generate at least one .inp file"
-    assert os.path.exists(inp_files[0]), (
-        f"Expected CCX input file {inp_files[0]} not found"
-    )
+    assert os.path.exists(
+        inp_files[0]
+    ), f"Expected CCX input file {inp_files[0]} not found"
 
 
 def test_ccx_bondline_selection(run_ccx):
@@ -48,9 +48,9 @@ def test_ccx_bondline_selection(run_ccx):
     bondline_vtu = glob.glob(f"{workdir}/drape/*_bondline.vtu")
     assert bondline_vtu, "Bondline VTU should exist from the build process"
     inp_files = glob.glob(f"{workdir}/fea/*_ccx_*.inp")
-    assert inp_files[0].startswith(str(workdir / "fea" / "test_blade")), (
-        "CCX input file should be generated from bondline mesh"
-    )
+    assert inp_files[0].startswith(
+        str(workdir / "fea" / "test_blade")
+    ), "CCX input file should be generated from bondline mesh"
 
 
 def test_ccx_produce_fwd_edge_inp(run_ccx):
@@ -58,9 +58,9 @@ def test_ccx_produce_fwd_edge_inp(run_ccx):
     workdir = run_ccx["workdir"]
     inp_files = glob.glob(f"{workdir}/fea/*_ccx_*.inp")
     assert inp_files, "CCX prep should generate at least one .inp file"
-    assert any("_forward_edge" in f for f in inp_files), (
-        "CCX prep should produce a forward edge input file"
-    )
+    assert any(
+        "_forward_edge" in f for f in inp_files
+    ), "CCX prep should produce a forward edge input file"
 
 
 @pytest.mark.skip(
@@ -71,26 +71,17 @@ def test_ccx_forward_edge_content(run_ccx):
     workdir = run_ccx["workdir"]
     temp_dir = run_ccx["temp_dir"]
     generated_files = glob.glob(f"{workdir}/fea/*_ccx_lc_forward_edge.inp")
-    assert generated_files, (
-        "CCX prep should generate a forward edge input file named *_ccx_lc_forward_edge.inp"
-    )
+    assert generated_files, "CCX prep should generate a forward edge input file named *_ccx_lc_forward_edge.inp"
     generated_file = generated_files[0]
 
     # Reference file from tests/data/, copied to temp_dir/data/
     reference_file = temp_dir / "data" / "test_blade_ccx_lc_forward_edge.inp"
-    assert reference_file.exists(), (
-        f"Reference file {reference_file} not found in temp data directory"
-    )
+    assert (
+        reference_file.exists()
+    ), f"Reference file {reference_file} not found in temp data directory"
     # Compare the generated file with the reference file
     # Use filecmp to compare the files
     cmp = filecmp.cmp(generated_file, reference_file, shallow=False)
-    assert cmp, (
-        f"Generated file {generated_file} does not match reference file {reference_file}"
-    )
-
-    # with open(generated_file, "r") as gen_f, open(reference_file, "r") as ref_f:
-    #     generated_content = gen_f.read()
-    #     reference_content = ref_f.read()
-    #     assert generated_content == reference_content, (
-    #         "Generated CCX forward edge .inp file content does not match reference file"
-    #     )
+    assert (
+        cmp
+    ), f"Generated file {generated_file} does not match reference file {reference_file}"
