@@ -23,9 +23,7 @@ class BuildApp:
     def geometry(self):
         prefix = self.state.get_prefix("mesh")
         build_blade_geometry.build_blade_geometry(self.dct, prefix)
-        prefix = os.path.join(
-            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
-        )
+        prefix = self.state.get_prefix()
         yml_portable.save_yaml(f"{prefix}_portable.yml", self.dct)
 
     def mesh(self):
@@ -59,7 +57,7 @@ class BuildApp:
             raise FileNotFoundError(f"Plybook not found at {pbookpath}")
 
     def mass(self):
-        wd = Path(self.dct["general"]["workdir"])
+        wd = self.state.get_workdir()
         prefix = self.state.get_prefix("drape")
         if not wd.is_dir():
             logger.warning("No workdir found, building new")

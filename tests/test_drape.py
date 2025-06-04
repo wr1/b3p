@@ -1,7 +1,7 @@
 import glob
 import pyvista as pv
 import numpy as np
-from .conftest import built_blade  # Explicitly imporbuilt_bladeld
+from .conftest import built_blade
 import json
 import pytest
 import logging
@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 def test_laminate_number_of_plies(built_blade):
     """Test if the number of plies is correct."""
     workdir = built_blade["workdir"]
-    temp_dir = built_blade["temp_dir"]  # Access the parent temp dir
-    joined = glob.glob(f"{workdir}/drape/*_joined.vtu")[-1]
+    temp_dir = built_blade["temp_dir"]
+    joined = workdir / "drape" / "test_blade_joined.vtu"
+    # joined = glob.glob(f"{workdir}/drape/*_joined.vtu")[-1]
     vtu = pv.read(joined)
     cell_arrays = [i for i in vtu.cell_data.keys() if "ply" in i]
     assert len(cell_arrays) == 348, f"Expected 348 plies, got {len(cell_arrays)}"
@@ -21,7 +22,6 @@ def test_laminate_number_of_plies(built_blade):
     sums = [float(vtu.cell_data[i][:, 1].sum()) for i in cell_arrays]
     logger.info(f"Computed ply sums: {sums}")
 
-    # Load expected sums from JSON file in the temporary data directory
     json_path = temp_dir / "data" / "laminate_sums.json"
     if not json_path.exists():
         pytest.skip("Reference JSON 'laminate_sums.json' not found in tests/data/")

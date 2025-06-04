@@ -67,9 +67,6 @@ def yaml_make_portable(yaml_file):
                 logger.warning(f"File {sub_path} not found, keeping as reference")
                 d[s] = {"path": d[s]}
 
-    if d["general"]["workdir"].find("portable") == -1:
-        d["general"]["workdir"] += "_portable"
-
     return d
 
 
@@ -85,5 +82,5 @@ def save_yaml(of, dct):
 def save_yaml_portable(yaml_file):
     """Save portable yaml file."""
     d = yaml_make_portable(yaml_file)
-    of = yaml_file.replace(".yml", "_portable.yml").replace(".yaml", "_portable.yml")
+    of = os.path.join(os.path.dirname(yaml_file), "portable.yml")
     save_yaml(of, d)

@@ -2,7 +2,6 @@ import pytest
 import os
 import shutil
 from pathlib import Path
-import subprocess
 from b3p.cli.app_state import AppState
 from b3p.cli.build_app import BuildApp
 
@@ -45,19 +44,10 @@ def built_blade(temp_example_dir):
 
         build_app = BuildApp(state, yml_path)
         build_app.build()
-        # yml_path)
-        # result = subprocess.run(
-        #     ["python", "-m", "b3p", "build", str(yml_path)],
-        #     capture_output=True,
-        #     text=True,
-        # )
-        workdir = temp_example_dir / "temp_blade_portable"
+        workdir = temp_example_dir / "temp_blade"  # New default workdir
         assert workdir.exists(), f"Blade build failed: workdir {workdir} not created"
-        # assert result.returncode == 0, f"Build failed: {result.stderr}"
         yield {
             "workdir": workdir,
-            # "stdout": result.stdout,
-            # "stderr": result.stderr,
             "temp_dir": temp_example_dir.parent,  # Expose parent temp dir for data access
         }
     finally:
