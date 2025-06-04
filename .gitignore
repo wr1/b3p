@@ -15,7 +15,7 @@ __pycache__/
 *.inp
 *.dat
 *.cvg
-# *.xdmf*
+*.xdmf
 **/*.txt
 *.png
 *.pck
@@ -25,7 +25,9 @@ __pycache__/
 *pq
 *var
 *sta
-
+examples/*/*/*json
+examples/**yml
+examples/*/*yml
 *.pyc
 *.out
 # Ignore directories containing 'portable' in their name
