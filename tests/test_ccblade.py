@@ -8,8 +8,11 @@ from b3p.cli.build_app import BuildApp
 from b3p.cli.ccblade_app import CCBladeApp, has_ccblade
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 @pytest.fixture(scope="session")
 def run_ccblade(temp_example_dir):
@@ -31,11 +34,11 @@ def run_ccblade(temp_example_dir):
         ccblade_app = CCBladeApp(state, yml_path)
         ccblade_app.ccblade()
 
-        workdir = temp_example_dir / "temp_blade_portable"
+        workdir = temp_example_dir / "temp_blade"
         logger.info("CCBlade workdir: %s", workdir)
         yield {
             "workdir": workdir,
-            "temp_dir": temp_example_dir.parent,  # Expose parent temp dir for data access
+            "temp_dir": temp_example_dir.parent,
         }
     finally:
         os.chdir(original_dir)
@@ -46,25 +49,21 @@ def test_ccblade_output(run_ccblade):
     workdir = run_ccblade["workdir"]
     temp_dir = run_ccblade["temp_dir"]
 
-    # Generated output file
     generated_file = workdir / "ccblade_output.csv"
     logger.info("Checking for generated CCBlade output: %s", generated_file)
     assert generated_file.exists(), (
         f"CCBlade should generate {generated_file} in the working directory"
     )
 
-    # Reference file from tests/data/, copied to temp_dir/data/
     reference_file = temp_dir / "data" / "ccblade_output.csv"
     logger.info("Reference CCBlade output: %s", reference_file)
     assert reference_file.exists(), (
         f"Reference file {reference_file} not found in temp data directory"
     )
 
-    # Compare the CSV contents using pandas
     generated_df = pd.read_csv(generated_file)
     reference_df = pd.read_csv(reference_file)
 
-    # Use equals() for basic comparison if assert_frame_equal params are unsupported
     assert generated_df.equals(reference_df), (
         "Generated CCBlade output does not match reference file"
     )

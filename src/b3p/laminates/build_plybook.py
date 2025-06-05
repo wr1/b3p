@@ -274,61 +274,18 @@ def add_bondline_material(matdb, material_map):
 
 
 def export_matdb(blade, material_map):
-    """Export the material database to the working directory
+    """Export material database to JSON."""
+    workdir = blade["general"]["workdir"]
+    matmap = os.path.join(workdir, "drape", "material_map.json")
 
-    :param blade: blade dictionary
-    :param material_map: material map
-    """
-    if "materials" in blade:
-        if type(blade["materials"]) == str:
-            mdb = blade["materials"]
-            assert os.path.isfile(mdb)
-            material_map["matdb"] = mdb
-            # copy the material db over to the working directory, this means that rerunning
-            # a model in a workdir is not affected by changes in the source matdb, this is
-            # the desired behaviour
-            # shutil.copyfile(
-            #     blade["materials"], os.path.join(blade["general"]["workdir"], mdb)
-            # )
-        else:
-            mdbname = "__matdb.yml"
-            material_map["matdb"] = mdbname
+    if "bondline" in blade["mesh"] and "material" in blade["mesh"]["bondline"]:
+        maxid = max(v for v in material_map.values() if isinstance(v, int))
+        material_map[blade["mesh"]["bondline"]["material"]] = maxid + 1
 
-            # yaml.YAML().dump(
-            #     blade["materials"],
-            #     open(os.path.join(blade["general"]["workdir"], mdbname), "w"),
-            # )
-    else:
-        logger.info("no material db defined in blade file")
+    material_map = add_bondline_material(blade["materials"], material_map)
 
-    matmap = os.path.join(blade["general"]["workdir"], "drape", "material_map.json")
-    if type(blade["materials"]) == str:
-        blade["materials"] = yaml.round_trip_load(open(blade["materials"]))
-
-    if "bondline" in blade["mesh"]:
-        if "material" in blade["mesh"]["bondline"]:
-            maxid = max([material_map[j] for j in material_map if j != "matdb"])
-            material_map[blade["mesh"]["bondline"]["material"]] = maxid + 1
-
-    json.dump(
-        add_bondline_material(blade["materials"], material_map), open(matmap, "w")
-    )
-
-    yaml = YAML()
-    yaml.dump(
-        blade["materials"],
-        open(os.path.join(blade["general"]["workdir"], "drape", "__matdb.yml"), "w"),
-    )
-    # yaml.safe_dump(
-    #     blade["materials"],
-    #     open(os.path.join(blade["general"]["workdir"], "drape", "__matdb.yml"), "w"),
-    #     default_flow_style=False,
-    # )
-
-    # yaml.YAML().dump(
-    #     blade["materials"],
-    #     open(os.path.join(blade["general"]["workdir"], "drape", mdbname), "w"),
-    # )
+    with open(matmap, "w") as f:
+        json.dump({"matdb": blade["materials"], "map": material_map}, f)
 
     logger.info(f"written material map to {matmap}")
 
@@ -339,9 +296,7 @@ def export_plybook(stacks, outputfile):
 
 
 def lamplan2plies(blade, outputfile="__plybook.pck"):
-    """Convert a lamplan to a list of plies.
-
-    params: blade (dict): blade dictionary"""
+    """Convert a lamplan to a list of plies."""
     root_radius = blade["planform"]["z"][0][1]
 
     tip_radius = blade["planform"]["z"][-1][1]

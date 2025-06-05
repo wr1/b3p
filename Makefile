@@ -34,7 +34,8 @@ test-verbose:
 
 # Run tests with coverage report
 test-coverage:
-	poetry run pytest --cov=b3p --cov-report=term --cov-report=html
+	pip install -e . 
+	pytest -n auto --cov=b3p --cov-report=term --cov-report=html
 
 
 # Clean up generated files

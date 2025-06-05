@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import os
 import pickle
-from b3p import yml_portable
+from . import yml_portable
 from b3p.geometry import build_blade_geometry
 from b3p.mesh import (
     add_load_to_mesh,
@@ -23,9 +23,7 @@ class BuildApp:
     def geometry(self):
         prefix = self.state.get_prefix("mesh")
         build_blade_geometry.build_blade_geometry(self.dct, prefix)
-        prefix = os.path.join(
-            self.dct["general"]["workdir"], self.dct["general"]["prefix"]
-        )
+        prefix = self.state.get_prefix()
         yml_portable.save_yaml(f"{prefix}_portable.yml", self.dct)
 
     def mesh(self):
@@ -41,6 +39,7 @@ class BuildApp:
         build_plybook.lamplan2plies(self.dct, pbookpath)
         slb = self.dct["laminates"]["slabs"]
         used_grids = {slb[i]["grid"] for i in slb}
+
         if os.path.exists(pbookpath):
             plybook = pickle.load(open(pbookpath, "rb"))
             meshes = []
@@ -52,12 +51,13 @@ class BuildApp:
             combine_meshes.combine_meshes(meshes, f"{prefix}_joined.vtu")
             if bondline:
                 add_te_solids.add_bondline(self.dct, prefix)
+                logger.info("Bondline added to mesh")
         else:
             logger.error(f"Plybook not found at {pbookpath}")
             raise FileNotFoundError(f"Plybook not found at {pbookpath}")
 
     def mass(self):
-        wd = Path(self.dct["general"]["workdir"])
+        wd = self.state.get_workdir()
         prefix = self.state.get_prefix("drape")
         if not wd.is_dir():
             logger.warning("No workdir found, building new")
