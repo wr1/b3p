@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import pyvista as pv
 
@@ -21,10 +22,7 @@ def failure_calc(
     E11,
     E11f,
 ):
-    """
-    Vectorized Puck failure criterion for multiple stress states and fracture plane angles.
-    (Copied from previous response for completeness.)
-    """
+    """Vectorized Puck failure criterion for multiple stress states and fracture plane angles."""
     STRESS = np.atleast_2d(STRESS)
     n = STRESS.shape[0]
     e = np.zeros((n, 2))  # [FF_index, IFF_index]
@@ -84,10 +82,7 @@ def failure_calc(
 
 
 def build_stiffness_matrix(E11, E22, E33, G12, G13, G23, nu12, nu13, nu23):
-    """
-    Build 6x6 stiffness matrix [C] for an orthotropic material in material coordinates.
-    """
-    # Compliance matrix components
+    """Build 6x6 stiffness matrix [C] for an orthotropic material in material coordinates."""
     S11 = 1 / E11
     S22 = 1 / E22
     S33 = 1 / E33
@@ -98,7 +93,6 @@ def build_stiffness_matrix(E11, E22, E33, G12, G13, G23, nu12, nu13, nu23):
     S55 = 1 / G13
     S66 = 1 / G12
 
-    # Compliance matrix
     S = np.array(
         [
             [S11, S12, S13, 0, 0, 0],
@@ -110,36 +104,26 @@ def build_stiffness_matrix(E11, E22, E33, G12, G13, G23, nu12, nu13, nu23):
         ]
     )
 
-    # Stiffness matrix: C = S^-1
     C = np.linalg.inv(S)
     return C
 
 
 def strain_to_stress(strain, C):
-    """
-    Convert strain vector [εxx, εyy, εzz, εxy, εyz, εxz] to stress [σxx, σyy, σzz, σxy, σyz, σxz].
-    """
-    # Strain in Voigt notation: [εxx, εyy, εzz, γxy, γyz, γxz]
-    # γij = 2εij for shear components
+    """Convert strain vector [εxx, εyy, εzz, εxy, εyz, εxz] to stress [σxx, σyy, σzz, σxy, σyz, σxz]."""
     strain_voigt = strain.copy()
-    strain_voigt[:, 3:] *= 2  # Convert εxy, εyz, εxz to γxy, γyz, γxz
-    # Stress = C * strain
-    stress = strain_voigt @ C.T  # Shape (n, 6)
+    strain_voigt[:, 3:] *= 2
+    stress = strain_voigt @ C.T
     return stress
 
 
 def transform_stress_to_material(stress, theta):
-    """
-    Transform stress [σxx, σyy, σzz, σxy, σyz, σxz] to material coordinates (1,2,3)
-    where 1-direction is at angle theta (degrees) to x-axis in x-y plane.
-    """
+    """Transform stress [σxx, σyy, σzz, σxy, σyz, σxz] to material coordinates at angle theta (degrees)."""
     c = np.cos(np.radians(theta))
     s = np.sin(np.radians(theta))
     c2 = c**2
     s2 = s**2
     cs = c * s
 
-    # Transformation matrix for stress (Voigt notation)
     T = np.array(
         [
             [c2, s2, 0, 2 * cs, 0, 0],
@@ -151,139 +135,16 @@ def transform_stress_to_material(stress, theta):
         ]
     )
 
-    # Transform stress: σ_material = T * σ_global
-    stress_material = stress @ T.T  # Shape (n, 6)
+    stress_material = stress @ T.T
     return stress_material
 
 
-def compute_laminate_failure(vtp_file, ply_stack, output_vtp="output_failure.vtp"):
-    """
-    Compute Puck failure indices for a 3D mesh with strains and a stack of plies.
-
-    Parameters:
-    - vtp_file: Path to input VTP file with strain data [εxx, εyy, εzz, εxy, εyz, εxz]
-    - ply_stack: List of dicts, each with 'theta' (degrees), 'material' (dict of properties)
-    - output_vtp: Path to save output VTP file with failure indices
-    """
-    # Read VTP file
-    mesh = pv.read(vtp_file)
-    strainid = "TOSTRAIN_1.000"
-    if strainid not in mesh.point_data:
-        raise ValueError(
-            f"VTP file must contain point data array '{strainid}' with 6 components"
-        )
-    strains = mesh.point_data[strainid]  # Shape (n_points, 6)
-    n_points = strains.shape[0]
-
-    # Initialize output arrays
-    failure_data = {}
-
-    # Process each ply
-    for ply_idx, ply in enumerate(ply_stack):
-        theta = ply["theta"]
-        mat = ply["material"]
-
-        # Material properties
-        E11, E22, E33 = mat["E11"], mat["E22"], mat["E33"]
-        G12, G13, G23 = mat["G12"], mat["G13"], mat["G23"]
-        nu12, nu13, nu23 = mat["nu12"], mat["nu13"], mat["nu23"]
-        Xt, Xc = mat["Xt"], mat["Xc"]
-        Yt, Yc = mat["Yt"], mat["Yc"]
-        Zt, Zc = mat["Zt"], mat["Zc"]
-        S12, S13, S23 = mat["S12"], mat["S13"], mat["S23"]
-        THETAF = mat["THETAF"]
-        MGF = mat["MGF"]
-        ANU12, ANU12f = mat["ANU12"], mat["ANU12f"]
-        E11_puck, E11f = mat["E11_puck"], mat["E11f"]
-
-        # Build stiffness matrix
-        C = build_stiffness_matrix(E11, E22, E33, G12, G13, G23, nu12, nu13, nu23)
-
-        # Convert strains to stresses in global coordinates
-        stress_global = strain_to_stress(strains, C)
-
-        # Transform stresses to material coordinates
-        stress_material = transform_stress_to_material(stress_global, theta)
-
-        # Compute Puck failure indices
-        UPSTRAN = np.zeros_like(stress_material)  # Placeholder (unused)
-        e, THETAMAX = failure_calc(
-            stress_material,
-            UPSTRAN,
-            Xt,
-            Xc,
-            Yt,
-            Yc,
-            Zt,
-            Zc,
-            S12,
-            S13,
-            S23,
-            THETAF,
-            MGF,
-            ANU12,
-            ANU12f,
-            E11_puck,
-            E11f,
-        )
-
-        # Store results
-        failure_data[f"FF_ply{ply_idx + 1}"] = e[:, 0]
-        failure_data[f"IFF_ply{ply_idx + 1}"] = e[:, 1]
-        failure_data[f"THETAMAX_ply{ply_idx + 1}"] = THETAMAX
-
-        # Print summary
-        print(f"Ply {ply_idx + 1} (θ={theta}°):")
-        print(f"  Max FF Index: {np.max(e[:, 0]):.3f}")
-        print(f"  Max IFF Index: {np.max(e[:, 1]):.3f}")
-        print(f"  Failure Points: {np.sum(np.any(e >= 1.0, axis=1))}/{n_points}")
-
-    # Save results to VTP file
-    for key, data in failure_data.items():
-        mesh.point_data[key] = data
-    mesh.save(output_vtp)
-    print(f"Results saved to {output_vtp}")
-
-
-# Example usage
-if __name__ == "__main__":
-    # Example ply stack: 3 plies with different angles and materials
-    ply_stack = [
+def get_ply_stack():
+    """Return default ply stack configuration with angles relative to local_x."""
+    return [
         {
-            "theta": 0.0,  # Fiber angle (degrees)
+            "theta": 0.0,  # 0° relative to local_x
             "material": {
-                # Stiffness properties
-                "E11": 150000.0,
-                "E22": 10000.0,
-                "E33": 10000.0,  # MPa
-                "G12": 5000.0,
-                "G13": 5000.0,
-                "G23": 4000.0,  # MPa
-                "nu12": 0.3,
-                "nu13": 0.3,
-                "nu23": 0.4,
-                # Strength properties
-                "Xt": 2000.0,
-                "Xc": 1500.0,  # MPa
-                "Yt": 50.0,
-                "Yc": 200.0,
-                "Zt": 50.0,
-                "Zc": 200.0,
-                "S12": 80.0,
-                "S13": 80.0,
-                "S23": 80.0,
-                # Puck parameters
-                "THETAF": 53.0,  # degrees
-                "MGF": 0.5,
-                "ANU12": 0.3,
-                "ANU12f": 0.25,
-                "E11_puck": 150000.0,
-                "E11f": 200000.0,
-            },
-        },
-        {
-            "theta": 45.0,
-            "material": {  # Same material for simplicity
                 "E11": 150000.0,
                 "E22": 10000.0,
                 "E33": 10000.0,
@@ -311,8 +172,37 @@ if __name__ == "__main__":
             },
         },
         {
-            "theta": 90.0,
-            "material": {  # Different material
+            "theta": 45.0,  # 45° relative to local_x
+            "material": {
+                "E11": 150000.0,
+                "E22": 10000.0,
+                "E33": 10000.0,
+                "G12": 5000.0,
+                "G13": 5000.0,
+                "G23": 4000.0,
+                "nu12": 0.3,
+                "nu13": 0.3,
+                "nu23": 0.4,
+                "Xt": 2000.0,
+                "Xc": 1500.0,
+                "Yt": 50.0,
+                "Yc": 200.0,
+                "Zt": 50.0,
+                "Zc": 200.0,
+                "S12": 80.0,
+                "S13": 80.0,
+                "S23": 80.0,
+                "THETAF": 53.0,
+                "MGF": 0.5,
+                "ANU12": 0.3,
+                "ANU12f": 0.25,
+                "E11_puck": 150000.0,
+                "E11f": 200000.0,
+            },
+        },
+        {
+            "theta": 90.0,  # 90° relative to local_x
+            "material": {
                 "E11": 120000.0,
                 "E22": 8000.0,
                 "E33": 8000.0,
@@ -341,8 +231,158 @@ if __name__ == "__main__":
         },
     ]
 
-    # Input VTP file (replace with your file path)
-    vtp_file = "__temp.vtp"
+
+def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
+    """Compute Puck failure indices for a surface mesh with cell-based strains and local ply angles."""
+    # Ensure cell normals and strains
+    mesh = mesh.compute_normals(point_normals=False, cell_normals=True)
+    strainid = "TOSTRAIN_1.000"
+    if strainid not in mesh.point_data:
+        raise ValueError(
+            f"Mesh must contain point data array '{strainid}' with 6 components"
+        )
+
+    # Interpolate nodal strains to cell centers
+    mesh = mesh.point_data_to_cell_data()
+    strains = mesh.cell_data[strainid]
+    n_cells = strains.shape[0]
+
+    # Compute local x and y vectors
+    normals = mesh.cell_data["Normals"]
+    global_z = np.array([0, 0, 1])
+    dot_z_n = np.sum(normals * global_z, axis=1, keepdims=True)
+    local_x = global_z - dot_z_n * normals
+    local_x_norm = np.linalg.norm(local_x, axis=1, keepdims=True)
+    local_x = np.where(local_x_norm > 1e-10, local_x / local_x_norm, 0)
+    local_y = np.cross(normals, local_x)
+    local_y_norm = np.linalg.norm(local_y, axis=1, keepdims=True)
+    local_y = np.where(local_y_norm > 1e-10, local_y / local_y_norm, 0)
+
+    # Filter cells by alignment of local_x with global z
+    dot_products = np.sum(local_x * global_z, axis=1)
+    keep_mask = dot_products <= alignment_threshold
+
+    if not np.any(keep_mask):
+        print("No cells meet the alignment threshold. Output file not created.")
+        return None
+
+    indices_to_keep = np.where(keep_mask)[0]
+    new_mesh = mesh.extract_cells(indices_to_keep)
+    new_strains = new_mesh.cell_data[strainid]
+    new_local_x = local_x[keep_mask]
+    new_local_y = local_y[keep_mask]
+    n_cells = new_strains.shape[0]
+
+    failure_data = {}
+
+    for ply_idx, ply in enumerate(ply_stack):
+        theta_global = np.zeros(n_cells)
+        for i in range(n_cells):
+            # Define ply angle relative to local_x
+            local_x_i = new_local_x[i]
+            local_y_i = new_local_y[i]
+            # Fiber direction: rotate local_x by theta degrees in local x-y plane
+            theta_rad = np.radians(ply["theta"])
+            fiber_dir = np.cos(theta_rad) * local_x_i + np.sin(theta_rad) * local_y_i
+            # Compute global angle of fiber direction relative to global x-axis
+            theta_global[i] = np.degrees(np.arctan2(fiber_dir[1], fiber_dir[0]))
+
+        mat = ply["material"]
+        E11, E22, E33 = mat["E11"], mat["E22"], mat["E33"]
+        G12, G13, G23 = mat["G12"], mat["G13"], mat["G23"]
+        nu12, nu13, nu23 = mat["nu12"], mat["nu13"], mat["nu23"]
+        Xt, Xc = mat["Xt"], mat["Xc"]
+        Yt, Yc = mat["Yt"], mat["Yc"]
+        Zt, Zc = mat["Zt"], mat["Zc"]
+        S12, S13, S23 = mat["S12"], mat["S13"], mat["S23"]
+        THETAF = mat["THETAF"]
+        MGF = mat["MGF"]
+        ANU12, ANU12f = mat["ANU12"], mat["ANU12f"]
+        E11_puck, E11f = mat["E11_puck"], mat["E11f"]
+
+        # Compute stresses for each cell
+        stresses_material = np.zeros((n_cells, 6))
+        for i in range(n_cells):
+            C = build_stiffness_matrix(E11, E22, E33, G12, G13, G23, nu12, nu13, nu23)
+            stress_global = strain_to_stress(new_strains[i : i + 1], C)
+            stresses_material[i] = transform_stress_to_material(
+                stress_global, theta_global[i]
+            )
+
+        UPSTRAN = np.zeros_like(stresses_material)
+        e, THETAMAX = failure_calc(
+            stresses_material,
+            UPSTRAN,
+            Xt,
+            Xc,
+            Yt,
+            Yc,
+            Zt,
+            Zc,
+            S12,
+            S13,
+            S23,
+            THETAF,
+            MGF,
+            ANU12,
+            ANU12f,
+            E11_puck,
+            E11f,
+        )
+
+        failure_data[f"FF_ply{ply_idx + 1}"] = e[:, 0]
+        failure_data[f"IFF_ply{ply_idx + 1}"] = e[:, 1]
+        failure_data[f"THETAMAX_ply{ply_idx + 1}"] = THETAMAX
+
+        print(f"Ply {ply_idx + 1} (θ={ply['theta']}° relative to local_x):")
+        print(f"  Max FF Index: {np.max(e[:, 0]):.3f}")
+        print(f"  Max IFF Index: {np.max(e[:, 1]):.3f}")
+        print(f"  Failure Cells: {np.sum(np.any(e >= 1.0, axis=1))}/{n_cells}")
+
+    # Add local vectors to mesh
+    new_mesh.cell_data["Local_X"] = new_local_x
+    new_mesh.cell_data["Local_Y"] = new_local_y
+
+    return new_mesh, failure_data
+
+
+def main():
+    """CLI to compute cell-based Puck failure indices with local ply angles."""
+    parser = argparse.ArgumentParser(
+        description="Compute cell-based Puck failure indices for a VTU mesh surface with local ply angles."
+    )
+    parser.add_argument("input_vtu", help="Path to input VTU file")
+    parser.add_argument(
+        "--output-vtu",
+        default="surface_failure.vtu",
+        help="Path to output VTP file (default: surface_failure.vtp)",
+    )
+    parser.add_argument(
+        "--alignment-threshold",
+        type=float,
+        default=0.9,
+        help="Threshold for alignment of local_x with global z (default: 0.9)",
+    )
+    args = parser.parse_args()
+
+    # Read VTU file and extract surface
+    mesh = pv.read(args.input_vtu).extract_surface()
 
     # Compute failure indices
-    compute_laminate_failure(vtp_file, ply_stack, output_vtp="output_failure.vtp")
+    ply_stack = get_ply_stack()
+    result = compute_laminate_failure(mesh, ply_stack, args.alignment_threshold)
+
+    if result is None:
+        return
+
+    new_mesh, failure_data = result
+
+    # Save results to VTP file
+    for key, data in failure_data.items():
+        new_mesh.cell_data[key] = data
+    new_mesh.save(args.output_vtu)
+    print(f"Surface results saved to {args.output_vtu}")
+
+
+if __name__ == "__main__":
+    main()
