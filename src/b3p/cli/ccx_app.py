@@ -7,6 +7,9 @@ import multiprocessing
 import subprocess
 from tqdm.auto import tqdm
 from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
+from b3p.ccx.failcrit_mesh import compute_failure_for_meshes
+import pyvista as pv
+
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +130,13 @@ class CcxApp:
         ccxpost = ccx2vtu.ccx2vtu(prefix, wildcard=wildcard)
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
+        
+        vtus = prefix.parent.glob('*ccx*vtu')
+        compute_failure_for_meshes(vtus)  
+        # for vtu in vtus:
+        #     compute_laminate_failure(pv.read(vtu).extract_surface(),get_ply_stack())
+        #
+        print(prefix)
 
     def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
         dct = self.state.load_yaml(self.yml)
