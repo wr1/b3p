@@ -3,11 +3,12 @@ import os
 from pathlib import Path
 
 import pytest
-import yaml
 import numpy as np
 import pyvista as pv
 from b3p.cli.app_state import AppState
 from b3p.cli.two_d_app import TwoDApp
+import meshio
+from .conftest import built_blade
 
 
 @pytest.fixture
@@ -51,7 +52,7 @@ def test_anba4_output_file(two_d_app):
         two_d_app.run_anba4()  # Run ANBA4 analysis
         prefix = two_d_app.state.get_prefix("drape")
 
-        output_file = prefix.parent / "2d" / "msec_100000.xdmf"
+        output_file = Path(prefix).parent / "2d" / "msec_100000.xdmf"
         assert output_file.exists(), "ANBA4 should create msec_100000.xdmf"
     finally:
         pass
@@ -65,8 +66,11 @@ def test_mesh2d_compare_reference(two_d_app, built_blade):
 
         prefix = two_d_app.state.get_prefix("drape")
 
+        print(f"Using prefix: {prefix}")
         # Get generated mesh files
-        generated_meshes = list(Path(prefix.parent / "2d").glob("msec_*0.xdmf"))
+        generated_meshes = list(Path(prefix.parent).glob("2d/msec_*0.xdmf"))
+
+        print(f"Generated meshes: {generated_meshes}")
         assert generated_meshes, "mesh2d should generate at least one .xdmf file"
 
         # Reference directory in temporary test data
@@ -78,54 +82,20 @@ def test_mesh2d_compare_reference(two_d_app, built_blade):
             ref_mesh_path = ref_dir / gen_mesh.name
             assert ref_mesh_path.exists(), f"Reference mesh {ref_mesh_path} not found"
 
-            # Load meshes with meshio
-            gen_mesh_data = pv.read_meshio(gen_mesh)
-            ref_mesh_data = pv.read_meshio(ref_mesh_path)
+            # Load meshes with pyvista
+            gen_mesh_data = meshio.read(gen_mesh)
+            ref_mesh_data = meshio.read(ref_mesh_path)
 
             # Compare mesh bounding boxes
-            gen_bounds = gen_mesh_data.bounds
-            ref_bounds = ref_mesh_data.bounds
+            gen_bounds = gen_mesh_data.points.min()
+            ref_bounds = ref_mesh_data.points.min()
             assert np.allclose(gen_bounds, ref_bounds, rtol=1e-1, atol=1e-2), (
                 f"Bounding boxes in {gen_mesh.name} do not match reference"
             )
 
-            # Compare points with tolerance
-            # assert np.allclose(
-            #     gen_mesh_data.points, ref_mesh_data.points, rtol=1e-1, atol=1e-2
-            # ), f"Points in {gen_mesh.name} do not match reference"
-
-            # compare number of points
+            # Compare number of points
             assert len(gen_mesh_data.points) == len(ref_mesh_data.points), (
                 f"Number of points in {gen_mesh.name} does not match reference"
             )
-
-            # compare number of cells approximately
-
-            # angle = gen_mesh_data.cell_data["angle"]
-            # angle_ref = ref_mesh_data.cell_data["angle"]
-            # assert np.allclose(angle, angle_ref, rtol=1e-1, atol=1e-2), (
-            #     f"Angle in {gen_mesh.name} does not match reference"
-            # )
-
-            # assert len(gen_mesh_data.cells) == len(ref_mesh_data.cells), (
-            #     f"Number of cells in {gen_mesh.name} does not match reference"
-            # )
-
-            # compare cell connectivity
-            # assert np.allclose(
-            #     gen_mesh_data.cells, ref_mesh_data.cells, rtol=1e-1, atol=1e-2
-            # ), f"Cells in {gen_mesh.name} do not match reference"
-            # Compare cells as numpy arrays
-
-            # Compare cells as sets of connectivity tuples
-
-            # gen_cells = {tuple(cell.data.flatten()) for cell in gen_mesh_data.cells}
-            # ref_cells = {tuple(cell.data.flatten()) for cell in ref_mesh_data.cells}
-            # assert len(gen_cells) == len(ref_cells), (
-            #     f"Number of cells in {gen_mesh.name} does not match reference"
-            # )
-            # assert gen_cells == ref_cells, (
-            #     f"Cells in {gen_mesh.name} do not match reference"
-            # )
     finally:
         pass

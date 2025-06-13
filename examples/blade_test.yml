@@ -14,17 +14,18 @@ planform:
     [0.5599999999999999, 0.4981144528302349], [0.6900000000000001, 0.43552499282773205],
     [0.8199999999999998, 0.32879129475154056], [0.95, 0.3334681541732368]]
   z: [[0, 3], [1, 126]]
-  chord: [[0.0, 5], [0.03, 5.06], [0.2, 6.5], [.4, 4.4], [.6, 2.8], [.75, 2.0], [
-      0.94, 1.4], [.985, .8], [1, .1]]
-  thickness: [[0.0, 1.0], [.05, .97], [0.2, 0.53], [0.31, 0.39], [1.0, 0.17]]
-  twist: [[0.0, 10], [.2, 2], [.4, 1], [0.6, 0], [.8, -.5], [.9, -1], [1., 0]]
+  chord: [[0.0, 5], [0.03, 5.06], [0.2, 6.5], [0.4, 4.4], [0.6, 2.8], [0.75, 2.0], [
+      0.94, 1.4], [0.985, 0.8], [1, 0.1]]
+  thickness: [[0.0, 1.0], [0.05, 0.97], [0.2, 0.53], [0.31, 0.39], [1.0, 0.17]]
+  twist: [[0.0, 10], [0.2, 2], [0.4, 1], [0.6, 0], [0.8, -0.5], [0.9, -1], [1.0, 0]]
 
 aero:
   airfoils: {1.0: airfoils/circ_m32.dat, 0.25: airfoils/du_91_w2_250_smoothed_dero_0.250.dat,
     0.21: airfoils/DU93-W-210_smoothed_dero_0.210.dat, 0.179928: airfoils/naca633418_te.dat,
     0.17: airfoils/naca0017.dat}
   bem:
-    rated_power : 1.0e7
+    rated_power : 10000000
+
     polars: {1.0: polars/Cylinder1.dat, 0.21: polars/DU21_A17.dat, 0.25: polars/DU25_A17.dat,
       0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
       0.17: polars/NACA64_A17.dat}
@@ -34,31 +35,31 @@ mesh:
   webs:
     w0:
       origin: [0, 0., 0]
-      orientation: [.02, 1, 0]
+      orientation: [0.02, 1, 0]
       z_start: 0
       z_follow_blade: 100
       z_end: 105
     w1:
       origin: [0, 0.5, 0]
-      orientation: [.02, 1, 0]
+      orientation: [0.02, 1, 0]
       z_start: 0
       z_follow_blade: 100
       z_end: 105
     w2:
       origin: [0, -0.5, 0]
-      orientation: [.02, 1, 0]
+      orientation: [0.02, 1, 0]
       z_start: 0
       z_follow_blade: 100
       z_end: 105
     w3:
       origin: [0, -0.3, 0]
-      orientation: [.02, 1, 0]
+      orientation: [0.02, 1, 0]
       z_start: 0
       z_follow_blade: 100
       z_end: 105
     w4:
       origin: [0, 0.3, 0]
-      orientation: [.02, 1, 0]
+      orientation: [0.02, 1, 0]
       z_start: 0
       z_follow_blade: 100
       z_end: 105
@@ -70,7 +71,7 @@ mesh:
   coordinates:
     d_te_offset:
       base: d_te
-      points: [[0, -0.1], [0.30, -0.2], [0.7, -.3]]
+      points: [[0, -0.1], [0.30, -0.2], [0.7, -0.3]]
     d_te_offset1:
       base: d_te_offset
       points: [[0, -0.1], [0.30, -0.2], [0.7, -0.1]]
@@ -81,8 +82,8 @@ mesh:
     material: epoxy_adhesive 
 
 mesh2d:
-  sections: [.1, .5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
-  
+  sections: [0.1, 0.5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
+
 materials: materials_iso.yml
 
 laminates: laminates_v0.yml

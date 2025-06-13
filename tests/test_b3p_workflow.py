@@ -25,7 +25,6 @@ def temp_workdir(tmp_path):
         Path("examples/loads_v0.yml"),
         Path("examples/laminates_v0.yml"),
     ]
-    # src_yml = Path("examples/blade_test.yml")
     airfoils = Path("examples/airfoils")
 
     for src in files:
@@ -33,16 +32,12 @@ def temp_workdir(tmp_path):
             pytest.skip(f"{src} not found in examples/")
         dest = tmp_path / src.name
         shutil.copy(src, dest)
-    # if not src_yml.exists():
-    #     pytest.skip("blade_test.yml not found in examples/")
-    dest_yml = tmp_path / "blade_test.yml"
-    # shutil.copy(src_yml, dest_yml)
     shutil.copytree(airfoils, tmp_path / "airfoils", dirs_exist_ok=True)
 
     # Set CWD to tmp_path
     os.chdir(tmp_path)
 
-    yield tmp_path, dest_yml
+    yield tmp_path, Path("blade_test.yml")
     # Cleanup
     state = AppState.get_instance()
     state.reset()
@@ -62,7 +57,7 @@ def test_clean(temp_workdir, app_state, caplog):
     caplog.set_level(logging.INFO)
 
     # Create a dummy workdir
-    workdir = tmp_path / "temp_blade_portable"
+    workdir = tmp_path / "temp_blade"
     workdir.mkdir()
     (workdir / "dummy.txt").write_text("test")
 
@@ -81,7 +76,7 @@ def test_build(temp_workdir, app_state, caplog):
     build_app = BuildApp(app_state, yml_path)
 
     # Check if key outputs already exist
-    prefix = app_state.load_yaml(yml_path)["general"]["prefix"]
+    prefix = app_state.load_yaml(yml_path)["general"].get("prefix", "b3p")
     workdir = app_state.get_workdir()
     expected_files = [
         workdir / "drape" / f"{prefix}_joined.vtu",
@@ -109,7 +104,7 @@ def test_2d_analysis(temp_workdir, app_state, caplog):
 
     # Ensure build outputs exist
     build_app = BuildApp(app_state, yml_path)
-    prefix = app_state.load_yaml(yml_path)["general"]["prefix"]
+    prefix = app_state.load_yaml(yml_path)["general"].get("prefix", "b3p")
     workdir = app_state.get_workdir()
     joined_vtu = workdir / "drape" / f"{prefix}_joined.vtu"
 
@@ -123,8 +118,8 @@ def test_2d_analysis(temp_workdir, app_state, caplog):
         two_d_app.run_anba4(anba_env="anba4-env")
 
     expected_files = [
-        workdir / "drape" / "2d" / "msec_1000.xdmf",
-        workdir / "drape" / "2d" / "msec_80000.xdmf",
+        workdir / "2d" / "msec_1000.xdmf",
+        workdir / "2d" / "msec_80000.xdmf",
     ]
     for f in expected_files:
         assert f.exists(), f"Expected file {f} not found"
@@ -140,7 +135,7 @@ def test_ccx_analysis(temp_workdir, app_state, caplog):
 
     # Ensure build outputs exist
     build_app = BuildApp(app_state, yml_path)
-    prefix = app_state.load_yaml(yml_path)["general"]["prefix"]
+    prefix = app_state.load_yaml(yml_path)["general"].get("prefix", "b3p")
     workdir = app_state.get_workdir()
     joined_vtu = workdir / "drape" / f"{prefix}_joined.vtu"
 
@@ -154,11 +149,10 @@ def test_ccx_analysis(temp_workdir, app_state, caplog):
 
     expected_files = [
         workdir / "fea" / f"{prefix}_ccx_lc_forward_flap.inp",
-        # workdir / "fea" / f"{prefix}_ccx_lc_forward_edge.vtu",
     ]
     for f in expected_files:
         assert f.exists(), f"Expected file {f} not found"
-    assert "Written: temp_blade_portable/fea" in caplog.text
+    assert f"Written: {workdir}/fea" in caplog.text
 
 
 def test_full_workflow(temp_workdir, app_state, caplog):
@@ -172,7 +166,7 @@ def test_full_workflow(temp_workdir, app_state, caplog):
 
     # Build
     build_app = BuildApp(app_state, yml_path)
-    prefix = app_state.load_yaml(yml_path)["general"]["prefix"]
+    prefix = app_state.load_yaml(yml_path)["general"].get("prefix", "b3p")
     workdir = app_state.get_workdir()
     build_app.build(bondline=True)
 
@@ -192,12 +186,8 @@ def test_full_workflow(temp_workdir, app_state, caplog):
     # Verify key outputs
     expected_files = [
         workdir / "drape" / f"{prefix}_joined.vtu",
-        workdir / "drape" / "2d" / "msec_1000.xdmf",
+        workdir / "2d" / "msec_1000.xdmf",
         workdir / "fea" / f"{prefix}_ccx_lc_forward_flap.inp",
     ]
     for f in expected_files:
         assert f.exists(), f"Expected file {f} not found"
-    # assert "Removed workdir" in caplog.text
-    # assert "Mass table per material" in caplog.text
-    # assert "ANBA4 script completed successfully" in caplog.text
-    # assert "Written: temp_blade_portable/fea" in caplog.text

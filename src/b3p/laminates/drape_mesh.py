@@ -13,20 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_slab_cover(inp):
-    """Get the cover of the ply
-
-    Parameters
-    ----------
-    inp : tuple
-        name, cover, numbering, rr, stack, df
-
-        Returns
-        -------
-        names : list
-            list of ply names
-            data : np.ndarray
-            array representing the material id, thickness and orientation of the ply
-    """
+    """Get the cover of the ply"""
 
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
@@ -79,19 +66,7 @@ def get_slab_cover(inp):
 
 
 def drape_mesh(vtp, stack, key, output_file):
-    """drape a stack of plies onto a mesh
-
-    Parameters
-    ----------
-    vtp : str
-        path to the vtp file
-        stack : list
-        list of dictionaries containing the ply stack
-        key : str
-        key to identify the mesh on which to drape the plies
-        output_file : str
-        path to the output file
-    """
+    """drape a stack of plies onto a mesh"""
     x = pyvista.read(vtp)
 
     o = x.point_data_to_cell_data(pass_point_data=True)
@@ -117,18 +92,20 @@ def drape_mesh(vtp, stack, key, output_file):
     # Run get_slab_cover in parallel with progress bar
     logger.info("Processing slabs in parallel")
     with multiprocessing.Pool() as pool:
-        slab_data = list(tqdm(
-            pool.imap(get_slab_cover, slab_inputs),
-            total=len(slab_inputs),
-            desc="Computing ply coverage"
-        ))
+        slab_data = list(
+            tqdm(
+                pool.imap(get_slab_cover, slab_inputs),
+                total=len(slab_inputs),
+                desc="Computing ply coverage",
+            )
+        )
 
     # Combine results with slab names
     slab_data = [
         [i["name"], names, data]
         for i, (names, data) in zip(
             [s for s in stack if key.strip() == s["grid"] and s["stack"] != []],
-            slab_data
+            slab_data,
         )
     ]
 

@@ -4,39 +4,37 @@ description = "Command line tools for preprocessing of wind turbine blade models
 include = ["examples/*.yml", "examples/makefile"]
 license = "MIT"
 name = "b3p"
-packages = [{include = "b3p"}]
+packages = [{include = "b3p", from = "src"}]
 readme = "README.md"
-version = "0.1.2"
+version = "0.1.5"
 
 [tool.poetry.dependencies]
-# ccblade = {git = "https://github.com/wr1/CCBlade.git"}
-# ccblade = {path = "/home/wr1/projects/CCBlade"}
-frd2vtu = ">=0.1.3"
+frd2vtu = "0.1.6"
+# frd2vtu = {path = "../frd2vtu", develop = true}
 h5py = "^3.11.0"
 jinja2 = "^3.1.4"
 meshio = "^5.3.5"
 mkdocs-material = "^9.6.1"
-numpy = ">2.0.0"
+numpy = ">=2.2.6"
 pandas = "^2.2.3"
 pyarrow = ">18.*"
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
-python = ">=3.10,<4.0.0"
-pyvista = ">=0.43.5"
-pyyaml = "^6.0.2"
-ruamel-yaml = ">=0.18.6"
+python = ">=3.11,<4.0.0"
+pyvista = ">=0.44.2"
+"ruamel.yaml" = "0.18.11"
 scipy = "^1.13.0"
 sympy = "^1.13.3"
 tqdm = "^4.66.5"
-vtk = ">=9.3,<9.4"
+vtk = "9.3.1"
 
-# [tool.poetry.group.dev.dependencies]
-# meson = "^1.6.0"
-# ninja = "^1.11.1.1"
-# pytest-mock = "^3.10.0"
+# [[tool.poetry.source]]
+# name = "pypi"
+# url = "https://pypi.org/simple/"
+# priority = "primary"
 
-# [tool.poetry.extras]
-# ccblade = ["ccblade"]
+[tool.poetry.group.dev.dependencies]
+pytest-xdist = "^3.7.0"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"

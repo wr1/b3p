@@ -54,9 +54,8 @@ class CcxApp:
         base_prefix = self.state.get_prefix("drape")
         prefix = self.state.get_prefix(self.dir)
         available_meshes = glob.glob(f"{base_prefix}_joined.vtu")
-        logger.debug(f"Available meshes: {prefix}")
         if bondline:
-            bondline_meshes = glob.glob(f"{prefix}*_bondline.vtu")
+            bondline_meshes = glob.glob(f"{base_prefix}*_bondline.vtu")
             if bondline_meshes:
                 available_meshes = bondline_meshes
 
@@ -67,7 +66,7 @@ class CcxApp:
 
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],
-            matmap=os.path.join(os.path.dirname(base_prefix), "material_map.json"),
+            matmap=str(Path(base_prefix).parent / "material_map.json"),
             out=f"{prefix}_ccx.inp",
             bondline=bondline,
             **{k: v for k, v in kwargs.items() if k != "bondline"},
@@ -131,7 +130,7 @@ class CcxApp:
 
     def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
         dct = self.state.load_yaml(self.yml)
-        plotter = ccxpost.plot_ccx(dct["general"]["workdir"], wildcard=wildcard)
+        plotter = ccxpost.plot_ccx(self.state.get_workdir(), wildcard=wildcard)
         if plot3d:
             plotter.plot3d()
         if plot2d:

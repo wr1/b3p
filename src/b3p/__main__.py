@@ -160,6 +160,9 @@ def main():
     twod_parser.add_argument(
         "--anba-env", default="anba4-env", help="Conda environment for ANBA4"
     )
+    twod_parser.add_argument(
+        "--output-dir", type=Path, help="Output directory for VTU files", default=None
+    )
     twod_subparsers = twod_parser.add_subparsers(dest="subcommand", required=False)
 
     twod_mesh2d_parser = twod_subparsers.add_parser("mesh2d", help="Create 2D meshes")

@@ -6,7 +6,9 @@ import vtk
 import time
 import json
 import os
-import yaml
+
+# import yaml
+from ruamel.yaml import YAML
 import pandas as pd
 import logging
 
@@ -50,21 +52,11 @@ def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=
 
 def material_db_to_ccx(materials, matmap=None, force_iso=False):
     """find the material db and write properties to a ccx block"""
-    # 2 files are relevant, a material map that maps the material ID (integer)
-    # in the VTK file to a key (string) in the material database and the material
-    # database itself
     mat_db = None
     if os.path.isfile(matmap):  # check if the material map file is there
-        gdir = os.path.dirname(matmap)
-        mm = json.load(open(matmap, "r"))
-        if "matdb" in mm:  # check if the material map file points to a material db
-            mat_db = yaml.load(
-                open(os.path.join(gdir, mm["matdb"])), Loader=yaml.CLoader
-            )
-        else:
-            exit(
-                "material map available, but no link to material db, need matdb definition to do FEA"
-            )
+        mm1 = json.load(open(matmap, "r"))
+        mm = mm1["map"]
+        mat_db = mm1["matdb"]
     else:
         exit("no material map defined")
 

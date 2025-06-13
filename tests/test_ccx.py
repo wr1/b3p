@@ -6,35 +6,40 @@ from b3p.cli.app_state import AppState
 from b3p.cli.ccx_app import CcxApp
 from b3p.cli.build_app import BuildApp
 import filecmp
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
 def run_ccx(temp_example_dir):
     """Fixture to run the CCX process after a build."""
-    original_dir = os.getcwd()
-    os.chdir(temp_example_dir)
+    # original_dir = os.getcwd()
+    # os.chdir(temp_example_dir)
     try:
         state = AppState()
-        yml_path = Path("blade_test.yml")
+        yml_path = Path(temp_example_dir / "blade_test.yml")
 
         build_app = BuildApp(state, yml_path)
         ccx_app = CcxApp(state, yml_path)
-        # yml_path = Path("blade_test.yml")
-        build_app.build()  # Build the project first
-        ccx_app.prep(bondline=False)  # Test with bondline option
+        build_app.build()
+        ccx_app.prep(bondline=False)
         yield {
-            "workdir": temp_example_dir / "temp_blade_portable",
+            "workdir": temp_example_dir / "temp_blade",
             "yml_path": yml_path,
             "ccx_app": ccx_app,
-            "temp_dir": temp_example_dir.parent,  # Expose parent temp dir for data access
+            "temp_dir": temp_example_dir.parent,
         }
     finally:
-        os.chdir(original_dir)
+        pass
+        # os.chdir(original_dir)
 
 
 def test_ccx_prep(run_ccx):
     """Test if CCX preparation generates the expected input file."""
     workdir = run_ccx["workdir"]
+
+    logger.info(f"Checking CCX prep in workdir: {workdir}")
     inp_files = glob.glob(f"{workdir}/fea/*_ccx_*.inp")
     assert inp_files, "CCX prep should generate at least one .inp file"
     assert os.path.exists(inp_files[0]), (
@@ -70,27 +75,18 @@ def test_ccx_forward_edge_content(run_ccx):
     """Test if the generated forward edge .inp file matches the reference file."""
     workdir = run_ccx["workdir"]
     temp_dir = run_ccx["temp_dir"]
-    generated_files = glob.glob(f"{workdir}/fea/*_ccx_lc_forward_edge.inp")
-    assert generated_files, (
+    edgewise_loadcase = workdir / "fea" / "test_blade_ccx_lc_forward_edge.inp"
+    assert edgewise_loadcase.exists(), (
         "CCX prep should generate a forward edge input file named *_ccx_lc_forward_edge.inp"
     )
-    generated_file = generated_files[0]
+    # generated_file = generated_files[0]
 
-    # Reference file from tests/data/, copied to temp_dir/data/
     reference_file = temp_dir / "data" / "test_blade_ccx_lc_forward_edge.inp"
     assert reference_file.exists(), (
         f"Reference file {reference_file} not found in temp data directory"
     )
-    # Compare the generated file with the reference file
-    # Use filecmp to compare the files
-    cmp = filecmp.cmp(generated_file, reference_file, shallow=False)
-    assert cmp, (
-        f"Generated file {generated_file} does not match reference file {reference_file}"
-    )
 
-    # with open(generated_file, "r") as gen_f, open(reference_file, "r") as ref_f:
-    #     generated_content = gen_f.read()
-    #     reference_content = ref_f.read()
-    #     assert generated_content == reference_content, (
-    #         "Generated CCX forward edge .inp file content does not match reference file"
-    #     )
+    cmp = filecmp.cmp(edgewise_loadcase, reference_file, shallow=False)
+    assert cmp, (
+        f"Generated file {edgewise_loadcase} does not match reference file {reference_file}"
+    )

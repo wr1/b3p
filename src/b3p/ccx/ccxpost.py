@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from cycler import cycler
 import os
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,9 @@ def get_quadrant(vector):
 
 
 class plot_ccx:
-    def __init__(self, wdir, wildcard=""):
+    def __init__(self, wdir: Path, wildcard=""):
         self.wdir = wdir
-        self.meshes = glob.glob(wdir + f"/*ccx*{wildcard}*.vtu")
+        self.meshes = glob.glob(str(wdir) + f"/*ccx*{wildcard}*.vtu")
         # logger.info(self.meshes)
 
     def plot3d(self):
