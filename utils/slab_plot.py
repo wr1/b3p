@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 import pyvista as pv
 import sys
-import numpy as np
 
 if pv.OFF_SCREEN:
     pv.start_xvfb()

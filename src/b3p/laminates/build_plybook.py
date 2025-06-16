@@ -8,9 +8,7 @@ import os
 from itertools import chain, zip_longest
 import pickle
 import json
-from numpy import array
 import copy as cp
-from pathlib import Path
 from sympy import symbols, sympify
 import logging
 
@@ -166,7 +164,7 @@ def coreblock(r, t, subdivisions=200, material=11):
     assert len(r) == len(t)
     lr = len(r)
     x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
-    y = np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
+    np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
 
     stack = []
     for i in range(lr - 1):
@@ -202,8 +200,7 @@ def number_stack(stack, splitstack, key, increment):
     return [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
 
 
-from sympy import symbols, sympify, lambdify
-import numpy as np
+from sympy import lambdify
 
 
 def get_coverage(slab, datums, rr):
@@ -378,5 +375,5 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
 
 def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
     blade = yaml.safe_load(open(yamlfile, "r"))
-    allstacks = lamplan2plies(blade, outputfile)
+    lamplan2plies(blade, outputfile)
     logger.info(f"written plydrape to {outputfile}")

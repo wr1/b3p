@@ -9,25 +9,21 @@ from b3p.cli.clean_app import CleanApp
 import logging
 import sys
 
-# Configure logging with a formatter to include log level prefix
+from rich.logging import RichHandler  # Add rich log formatting
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Clear existing handlers to prevent duplicates
-logger.handlers.clear()
-
-# Create formatter with log level prefix
-formatter = logging.Formatter('%(levelname)s: %(message)s')
-
-# Stream handler for console output
-stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+# Add RichHandler for console output with formatting
+rich_handler = RichHandler(rich_tracebacks=True)
+# rich_handler.setFormatter(logging.Formatter("%(message)s"))
+logger.addHandler(rich_handler)
 
 # File handler for output.log
 file_handler = logging.FileHandler("output.log")
-file_handler.setFormatter(formatter)
+file_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
 logger.addHandler(file_handler)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Blade Design CLI")
@@ -37,7 +33,11 @@ def main():
     build_parser = subparsers.add_parser("build", help="Build the full blade model")
     build_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     build_parser.add_argument(
-        "--no-bondline", action="store_false", dest="bondline", help="Exclude bondline"
+        "-n",
+        "--no-bondline",
+        action="store_false",
+        dest="bondline",
+        help="Exclude bondline",
     )
     build_subparsers = build_parser.add_subparsers(dest="subcommand", required=False)
 
@@ -60,7 +60,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     build_drape_parser.add_argument(
-        "--bondline", action="store_true", help="Add bondline to mesh"
+        "-b", "--bondline", action="store_true", help="Add bondline to mesh"
     )
 
     build_mass_parser = build_subparsers.add_parser("mass", help="Calculate blade mass")
@@ -79,8 +79,8 @@ def main():
     ccx_parser = subparsers.add_parser("ccx", help="Run Calculix operations")
     ccx_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     ccx_parser.add_argument(
-        "--bondline", action="store_true", help="Use bondline meshes"
-    )
+        "-b", "--bondline", action="store_true", help="Use bondline meshes"
+    )  # Note: Using -b, assuming no conflict; adjust if needed
     ccx_subparsers = ccx_parser.add_subparsers(dest="subcommand", required=False)
 
     ccx_ccx_parser = ccx_subparsers.add_parser("ccx", help="Run full Calculix process")
@@ -88,6 +88,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_ccx_parser.add_argument(
+        "-B",
         "--bondline_sub",
         action="store_true",
         dest="bondline",
@@ -99,6 +100,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_prep_parser.add_argument(
+        "-B",
         "--bondline_sub",
         action="store_true",
         dest="bondline",
@@ -110,14 +112,16 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_solve_parser.add_argument(
-        "--wildcard", default="", help="Wildcard pattern for input files"
+        "-w", "--wildcard", default="", help="Wildcard pattern for input files"
     )
     ccx_solve_parser.add_argument(
-        "--nproc", type=int, default=2, help="Number of processes"
+        "-p", "--nproc", type=int, default=2, help="Number of processes"
     )
-    ccx_solve_parser.add_argument("--ccxexe", default="ccx", help="Calculix executable")
     ccx_solve_parser.add_argument(
-        "--merged-plies", action="store_true", help="Only process merged plies"
+        "-c", "--ccxexe", default="ccx", help="Calculix executable"
+    )
+    ccx_solve_parser.add_argument(
+        "-m", "--merged-plies", action="store_true", help="Only process merged plies"
     )
 
     ccx_post_parser = ccx_subparsers.add_parser("post", help="Postprocess CCX results")
@@ -125,10 +129,10 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_post_parser.add_argument(
-        "--wildcard", default="", help="Wildcard pattern for results"
+        "-w", "--wildcard", default="", help="Wildcard pattern for results"
     )
     ccx_post_parser.add_argument(
-        "--nbins", type=int, default=60, help="Number of bins for tabulation"
+        "-n", "--nbins", type=int, default=60, help="Number of bins for tabulation"
     )
 
     ccx_plot_parser = ccx_subparsers.add_parser("plot", help="Plot CCX results")
@@ -136,32 +140,45 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     ccx_plot_parser.add_argument(
-        "--wildcard", default="", help="Wildcard pattern for results"
+        "-w", "--wildcard", default="", help="Wildcard pattern for results"
     )
     ccx_plot_parser.add_argument(
-        "--no-plot3d", action="store_false", dest="plot3d", help="Disable 3D plots"
+        "-3",
+        "--no-plot3d",
+        action="store_false",
+        dest="plot3d",
+        help="Disable 3D plots",
     )
     ccx_plot_parser.add_argument(
-        "--no-plot2d", action="store_false", dest="plot2d", help="Disable 2D plots"
+        "-2",
+        "--no-plot2d",
+        action="store_false",
+        dest="plot2d",
+        help="Disable 2D plots",
     )
 
     # 2D subcommands
     twod_parser = subparsers.add_parser("2d", help="2D mesh and ANBA4 operations")
     twod_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     twod_parser.add_argument(
-        "--rotz", type=float, default=0.0, help="Rotation around Z-axis (degrees)"
+        "-r", "--rotz", type=float, default=0.0, help="Rotation around Z-axis (degrees)"
     )
     twod_parser.add_argument(
+        "-P",
         "--no-parallel",
         action="store_false",
         dest="parallel",
         help="Disable parallel processing for mesh2d",
     )
     twod_parser.add_argument(
-        "--anba-env", default="anba4-env", help="Conda environment for ANBA4"
+        "-e", "--anba-env", default="anba4-env", help="Conda environment for ANBA4"
     )
     twod_parser.add_argument(
-        "--output-dir", type=Path, help="Output directory for VTU files", default=None
+        "-o",
+        "--output-dir",
+        type=Path,
+        help="Output directory for VTU files",
+        default=None,
     )
     twod_subparsers = twod_parser.add_subparsers(dest="subcommand", required=False)
 
@@ -170,6 +187,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     twod_mesh2d_parser.add_argument(
+        "-r",
         "--rotz_sub",
         type=float,
         default=0.0,
@@ -177,6 +195,7 @@ def main():
         help="Rotation around Z-axis (degrees)",
     )
     twod_mesh2d_parser.add_argument(
+        "-P",
         "--no-parallel-sub",
         action="store_false",
         dest="parallel",
@@ -190,6 +209,7 @@ def main():
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
     twod_run_anba4_parser.add_argument(
+        "-e",
         "--anba-env-sub",
         default="anba4-env",
         dest="anba_env",

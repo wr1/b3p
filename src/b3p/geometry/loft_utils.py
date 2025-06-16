@@ -45,7 +45,6 @@ def optspace(n_points, base=0.2):
     alternative to linspace for sampling that puts more points near the TE and
     LE of an airfoil
     """
-    lep = 0.5
     x = np.linspace(0, 4.0 * np.pi, n_points)
     sp = 1.0 + base - np.cos(x)
     x1 = np.array([sum(sp[:i]) for i in range(len(x))])

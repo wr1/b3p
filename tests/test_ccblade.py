@@ -51,19 +51,19 @@ def test_ccblade_output(run_ccblade):
 
     generated_file = workdir / "ccblade_output.csv"
     logger.info("Checking for generated CCBlade output: %s", generated_file)
-    assert generated_file.exists(), (
-        f"CCBlade should generate {generated_file} in the working directory"
-    )
+    assert (
+        generated_file.exists()
+    ), f"CCBlade should generate {generated_file} in the working directory"
 
     reference_file = temp_dir / "data" / "ccblade_output.csv"
     logger.info("Reference CCBlade output: %s", reference_file)
-    assert reference_file.exists(), (
-        f"Reference file {reference_file} not found in temp data directory"
-    )
+    assert (
+        reference_file.exists()
+    ), f"Reference file {reference_file} not found in temp data directory"
 
     generated_df = pd.read_csv(generated_file)
     reference_df = pd.read_csv(reference_file)
 
-    assert generated_df.equals(reference_df), (
-        "Generated CCBlade output does not match reference file"
-    )
+    assert generated_df.equals(
+        reference_df
+    ), "Generated CCBlade output does not match reference file"

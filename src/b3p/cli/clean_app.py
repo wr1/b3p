@@ -5,6 +5,7 @@ import shutil
 
 logger = logging.getLogger(__name__)
 
+
 class CleanApp:
     def __init__(self, state, yml: Path):
         self.state = state

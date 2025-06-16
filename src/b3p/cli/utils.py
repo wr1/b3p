@@ -1,5 +1,4 @@
 import subprocess
-from pathlib import Path
 
 
 def wslpath_convert(path: str, to_windows: bool = False) -> str:

@@ -1,5 +1,4 @@
 import pyvista as pv
-from .test_build import built_blade
 
 
 def test_bondline_model(built_blade):

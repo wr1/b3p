@@ -1,10 +1,10 @@
-import argparse
 import numpy as np
 import pyvista as pv
 import logging
-import os 
+import os
 
 logger = logging.getLogger(__name__)
+
 
 def failure_calc(
     STRESS,
@@ -348,6 +348,7 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
 
     return new_mesh, failure_data
 
+
 def compute_failure_for_meshes(mesh_files):
     """Process multiple mesh files and compute failure indices for each."""
     for mesh_file in mesh_files:
@@ -355,11 +356,11 @@ def compute_failure_for_meshes(mesh_files):
             mesh = pv.read(mesh_file).extract_surface()
             ply_stack = get_ply_stack()
             result = compute_laminate_failure(mesh, ply_stack, 0.9)
-            
+
             if result is None:
                 logger.info(f"No valid cells for mesh {mesh_file}; skipping.")
                 continue
-            
+
             new_mesh, failure_data = result
             for key, data in failure_data.items():
                 new_mesh.cell_data[key] = data
@@ -368,6 +369,3 @@ def compute_failure_for_meshes(mesh_files):
             logger.info(f"Written output to {output_file}")
         except Exception as e:
             logger.error(f"Error processing {mesh_file}: {e}")
-
-
-

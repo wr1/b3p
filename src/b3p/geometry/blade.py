@@ -13,6 +13,7 @@ from b3p.geometry import blade_section
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 class blade:
     def __init__(
         self,

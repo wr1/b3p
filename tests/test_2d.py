@@ -1,14 +1,11 @@
 import json
-import os
 from pathlib import Path
 
 import pytest
 import numpy as np
-import pyvista as pv
 from b3p.cli.app_state import AppState
 from b3p.cli.two_d_app import TwoDApp
 import meshio
-from .conftest import built_blade
 
 
 @pytest.fixture
@@ -89,13 +86,13 @@ def test_mesh2d_compare_reference(two_d_app, built_blade):
             # Compare mesh bounding boxes
             gen_bounds = gen_mesh_data.points.min()
             ref_bounds = ref_mesh_data.points.min()
-            assert np.allclose(gen_bounds, ref_bounds, rtol=1e-1, atol=1e-2), (
-                f"Bounding boxes in {gen_mesh.name} do not match reference"
-            )
+            assert np.allclose(
+                gen_bounds, ref_bounds, rtol=1e-1, atol=1e-2
+            ), f"Bounding boxes in {gen_mesh.name} do not match reference"
 
             # Compare number of points
-            assert len(gen_mesh_data.points) == len(ref_mesh_data.points), (
-                f"Number of points in {gen_mesh.name} does not match reference"
-            )
+            assert len(gen_mesh_data.points) == len(
+                ref_mesh_data.points
+            ), f"Number of points in {gen_mesh.name} does not match reference"
     finally:
         pass

@@ -5,13 +5,16 @@ import os
 import glob
 import multiprocessing
 import subprocess
-from tqdm.auto import tqdm
+from rich.progress import Progress  # Replace tqdm with rich progress
+from rich.logging import RichHandler  # Add rich log formatting
 from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
 from b3p.ccx.failcrit_mesh import compute_failure_for_meshes
-import pyvista as pv
 
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO
+)  # Configure rich for logging
 
 
 def run_ccx(inp, ccxexe, logger):
@@ -53,7 +56,7 @@ class CcxApp:
         self.plot(**kwargs)
 
     def prep(self, bondline=False, **kwargs):
-        dct = self.state.load_yaml(self.yml)
+        self.state.load_yaml(self.yml)
         base_prefix = self.state.get_prefix("drape")
         prefix = self.state.get_prefix(self.dir)
         available_meshes = glob.glob(f"{base_prefix}_joined.vtu")
@@ -86,7 +89,7 @@ class CcxApp:
         bondline=False,
         **kwargs,
     ):
-        dct = self.state.load_yaml(self.yml)
+        self.state.load_yaml(self.yml)
         prefix = self.state.get_prefix(self.dir)
         if inpfiles is None:
             inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
@@ -113,33 +116,31 @@ class CcxApp:
 
         if inps_to_run:
             with multiprocessing.Pool(nproc) as pool:
-                with tqdm(
-                    total=len(inps_to_run), desc="Running CCX", unit="file"
-                ) as pbar:
+                with Progress() as progress:  # Replace tqdm with rich Progress
+                    task = progress.add_task("Running CCX", total=len(inps_to_run))
                     for inp, success, error_msg in pool.imap_unordered(
                         partial(run_ccx, ccxexe=ccxexe, logger=logger), inps_to_run
                     ):
-                        pbar.set_postfix(file=os.path.basename(inp))
-                        pbar.update(1)
+                        progress.update(task, advance=1)
                         if not success:
                             logger.error(error_msg)
 
     def post(self, wildcard="", nbins=60, bondline=False, **kwargs):
-        dct = self.state.load_yaml(self.yml)
+        self.state.load_yaml(self.yml)
         prefix = self.state.get_prefix(self.dir)
         ccxpost = ccx2vtu.ccx2vtu(prefix, wildcard=wildcard)
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
-        
-        vtus = prefix.parent.glob('*ccx*vtu')
-        compute_failure_for_meshes(vtus)  
+
+        vtus = prefix.parent.glob("*ccx*vtu")
+        compute_failure_for_meshes(vtus)
         # for vtu in vtus:
         #     compute_laminate_failure(pv.read(vtu).extract_surface(),get_ply_stack())
         #
         print(prefix)
 
     def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
-        dct = self.state.load_yaml(self.yml)
+        self.state.load_yaml(self.yml)
         plotter = ccxpost.plot_ccx(self.state.get_workdir(), wildcard=wildcard)
         if plot3d:
             plotter.plot3d()
