@@ -14,21 +14,12 @@ from b3p.ccx.failcrit_mesh import compute_failure_for_meshes
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO
-)  # Configure rich for logging
+)
+# Configure rich for logging
 
 
 def run_ccx(inp, ccxexe, logger):
-    """
-    Run CalculiX (ccx) on a given input file, capturing stdout/stderr.
-
-    Args:
-        inp (str): Path to the input file.
-        ccxexe (str): Path or name of the ccx executable.
-        logger (logging.Logger): Logger instance for logging messages.
-
-    Returns:
-        tuple: (input file path, success boolean, error message if failed)
-    """
+    """ Run CalculiX (ccx) on a given input file, capturing stdout/stderr. """
     cmd = [ccxexe, inp.replace(".inp", "")]
     logger.debug(f"Running command: {' '.join(cmd)}")
     try:
@@ -48,6 +39,7 @@ class CcxApp:
         self.state = state
         self.yml = yml
         self.dir = "fea"
+        self.state.load_yaml(self.yml)
 
     def ccx(self, **kwargs):
         self.prep(**kwargs)
@@ -56,10 +48,10 @@ class CcxApp:
         self.plot(**kwargs)
 
     def prep(self, bondline=False, **kwargs):
-        self.state.load_yaml(self.yml)
         base_prefix = self.state.get_prefix("drape")
         prefix = self.state.get_prefix(self.dir)
         available_meshes = glob.glob(f"{base_prefix}_joined.vtu")
+        logger.info(f" available meshes {available_meshes}")
         if bondline:
             bondline_meshes = glob.glob(f"{base_prefix}*_bondline.vtu")
             if bondline_meshes:
@@ -69,6 +61,7 @@ class CcxApp:
         if not available_meshes:
             logger.error("No meshes found, did you build the blade geometry?")
             return
+
 
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],
@@ -134,10 +127,6 @@ class CcxApp:
 
         vtus = prefix.parent.glob("*ccx*vtu")
         compute_failure_for_meshes(vtus)
-        # for vtu in vtus:
-        #     compute_laminate_failure(pv.read(vtu).extract_surface(),get_ply_stack())
-        #
-        print(prefix)
 
     def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
         self.state.load_yaml(self.yml)

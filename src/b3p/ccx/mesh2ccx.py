@@ -10,9 +10,11 @@ import os
 # import yaml
 import pandas as pd
 import logging
+# from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
-
+# logger.handlers.clear()
+# logger.addHandler(RichHandler(rich_tracebacks=True))
 
 def zero_midside_loads(mesh):
     if mesh.celltypes[0] == 23:
@@ -346,6 +348,7 @@ def mesh2ccx(
 
     toc = time.perf_counter()
     logger.info(f"time spent creating shell sections {toc - tic:f}")
+    logger.info(f"mesh {mesh}")
     comps = "".join(
         f"*shell section,composite,elset=e{n + 1},offset=-.5"
         + (f",orientation=or{n + 1}\n" if zeroangle else "\n")
@@ -359,6 +362,7 @@ def mesh2ccx(
 
     loadcases = get_loadcases(mesh, buckling=buckling)
 
+    logger.info(f"written loadcases {loadcases.keys()}")
     output_files = []
     if single_step:
         output = buf + "".join(loadcases.values())
