@@ -1,6 +1,6 @@
 [project]
 name = "b3p"
-version = "0.1.6rc1"
+version = "0.1.6"
 description = "Command line tools for preprocessing of wind turbine blade models"
 readme = "README.md"
 requires-python = ">=3.11,<4.0.0"
