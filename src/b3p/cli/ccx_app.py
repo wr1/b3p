@@ -129,6 +129,8 @@ class CcxApp:
         self.state.load_yaml(self.yml)
         prefix = self.state.get_prefix(self.dir)
         vtus = [i for i in prefix.parent.glob("*ccx*vtu") if str(i).find("fail") == -1]
+        logger.info(f"VTU files found for failure criteria: {vtus}")
+
         compute_failure_for_meshes(vtus)
 
     def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):

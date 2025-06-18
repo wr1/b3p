@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class AppState:
     """Singleton to manage application state."""
 
-    _state: Optional['AppState'] = None
+    _state: Optional["AppState"] = None
 
     def __init__(self):
         self.dct: Optional[Dict] = None
@@ -50,8 +50,13 @@ class AppState:
             self.workdir_path = default_workdir.resolve()
 
     def expand_chamfered_cores(self):
+        # ofile = Path(dctcopy["general"]["workdir"]) / (dctcopy["general"]["prefix"] + "_expanded.yml")
+
         if self.dct:
-            self.dct = build_plybook.expand_chamfered_cores(self.dct)
+            self.dct = build_plybook.expand_chamfered_cores(
+                self.dct,
+                self.workdir_path / (self.dct["general"]["prefix"] + "_expanded.yml"),
+            )
 
     def make_workdir(self):
         if self.dct is None:

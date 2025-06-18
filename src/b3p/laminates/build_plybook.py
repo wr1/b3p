@@ -11,6 +11,7 @@ import json
 import copy as cp
 from sympy import symbols, sympify
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ def expand_chamfered_core(core):
     return coordinates, added_cores
 
 
-def expand_chamfered_cores(bldict):
+def expand_chamfered_cores(bldict, outputfile: Path = None):
     """ "Expand chamfered cores into laminate strips and write out to a new YAML file."""
     dctcopy = cp.deepcopy(bldict)
     for i in bldict["laminates"]["slabs"]:
@@ -123,11 +124,14 @@ def expand_chamfered_cores(bldict):
                 for k in coordinates[j]:
                     dctcopy["mesh"]["coordinates"][k] = coordinates[j][k]
 
-    ofile = os.path.join(
-        dctcopy["general"]["workdir"], dctcopy["general"]["prefix"] + "_expanded.yml"
-    )
     yaml = YAML()
-    yaml.dump(dctcopy, open(ofile, "w"))
+    yaml.dump(dctcopy, outputfile.open("w"))
+    if outputfile:
+        logger.info(f"written expanded chamfered cores to {outputfile}")
+    else:
+        logger.warning(
+            "No output file specified, not writing expanded chamfered cores."
+        )
     return dctcopy
 
 
