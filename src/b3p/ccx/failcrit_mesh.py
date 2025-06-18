@@ -1,6 +1,9 @@
-import argparse
 import numpy as np
 import pyvista as pv
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 
 def failure_calc(
@@ -263,7 +266,7 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
     keep_mask = dot_products <= alignment_threshold
 
     if not np.any(keep_mask):
-        print("No cells meet the alignment threshold. Output file not created.")
+        logger.info("No cells meet the alignment threshold. Output file not created.")
         return None
 
     indices_to_keep = np.where(keep_mask)[0]
@@ -334,10 +337,10 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
         failure_data[f"IFF_ply{ply_idx + 1}"] = e[:, 1]
         failure_data[f"THETAMAX_ply{ply_idx + 1}"] = THETAMAX
 
-        print(f"Ply {ply_idx + 1} (θ={ply['theta']}° relative to local_x):")
-        print(f"  Max FF Index: {np.max(e[:, 0]):.3f}")
-        print(f"  Max IFF Index: {np.max(e[:, 1]):.3f}")
-        print(f"  Failure Cells: {np.sum(np.any(e >= 1.0, axis=1))}/{n_cells}")
+        logger.info(f"Ply {ply_idx + 1} (θ={ply['theta']}° relative to local_x):")
+        logger.info(f"  Max FF Index: {np.max(e[:, 0]):.3f}")
+        logger.info(f"  Max IFF Index: {np.max(e[:, 1]):.3f}")
+        logger.info(f"  Failure Cells: {np.sum(np.any(e >= 1.0, axis=1))}/{n_cells}")
 
     # Add local vectors to mesh
     new_mesh.cell_data["Local_X"] = new_local_x
@@ -346,43 +349,23 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
     return new_mesh, failure_data
 
 
-def main():
-    """CLI to compute cell-based Puck failure indices with local ply angles."""
-    parser = argparse.ArgumentParser(
-        description="Compute cell-based Puck failure indices for a VTU mesh surface with local ply angles."
-    )
-    parser.add_argument("input_vtu", help="Path to input VTU file")
-    parser.add_argument(
-        "--output-vtu",
-        default="surface_failure.vtu",
-        help="Path to output VTP file (default: surface_failure.vtp)",
-    )
-    parser.add_argument(
-        "--alignment-threshold",
-        type=float,
-        default=0.9,
-        help="Threshold for alignment of local_x with global z (default: 0.9)",
-    )
-    args = parser.parse_args()
+def compute_failure_for_meshes(mesh_files):
+    """Process multiple mesh files and compute failure indices for each."""
+    for mesh_file in mesh_files:
+        try:
+            mesh = pv.read(mesh_file).extract_surface()
+            ply_stack = get_ply_stack()
+            result = compute_laminate_failure(mesh, ply_stack, 0.9)
 
-    # Read VTU file and extract surface
-    mesh = pv.read(args.input_vtu).extract_surface()
+            if result is None:
+                logger.info(f"No valid cells for mesh {mesh_file}; skipping.")
+                continue
 
-    # Compute failure indices
-    ply_stack = get_ply_stack()
-    result = compute_laminate_failure(mesh, ply_stack, args.alignment_threshold)
-
-    if result is None:
-        return
-
-    new_mesh, failure_data = result
-
-    # Save results to VTP file
-    for key, data in failure_data.items():
-        new_mesh.cell_data[key] = data
-    new_mesh.save(args.output_vtu)
-    print(f"Surface results saved to {args.output_vtu}")
-
-
-if __name__ == "__main__":
-    main()
+            new_mesh, failure_data = result
+            for key, data in failure_data.items():
+                new_mesh.cell_data[key] = data
+            output_file = os.path.splitext(mesh_file)[0] + "_fail.vtu"
+            new_mesh.save(output_file)
+            logger.info(f"Written output to {output_file}")
+        except Exception as e:
+            logger.error(f"Error processing {mesh_file}: {e}")

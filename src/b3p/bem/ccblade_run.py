@@ -127,7 +127,7 @@ class RotorOptimizer:
 
     def evaluate(self, x, coefficients=False):
         """Evaluate rotor performance for given variables."""
-        if self.omega == None:
+        if self.omega is None:
             omega, pitch = x
         else:
             omega, pitch = self.omega, x[0]

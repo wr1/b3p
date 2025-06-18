@@ -63,7 +63,7 @@ class TwoDApp:
             return
 
         logger.info(f"Using Conda environment for running anba4 {anba_env}")
-        dct = self.state.load_yaml(yml)
+        self.state.load_yaml(yml)
         if not meshes:
             meshes = self.mesh2d()
 
@@ -101,13 +101,13 @@ class TwoDApp:
             logger.error(f"Stdout: {result.stdout}")
             logger.error(f"Stderr: {result.stderr}")
         else:
-            logger.info(f"ANBA4 script completed successfully")
+            logger.info("ANBA4 script completed successfully")
             logger.debug(f"Stdout: {result.stdout}")
         return result.returncode
 
     def clean(self):
         """Remove 2D working directory and its contents."""
-        dct = self.state.load_yaml(self.yml)
+        self.state.load_yaml(self.yml)
         workdir = Path(self.state.get_prefix("2d")).parent / "2d"
         if not workdir.exists():
             logger.info(f"Workdir {workdir} does not exist - nothing to clean")

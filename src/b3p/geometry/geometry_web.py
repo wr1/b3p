@@ -5,9 +5,11 @@ import pyvista as pv
 
 logger = logging.getLogger(__name__)
 
+
 def equals(v1, v2):
     tol = 1e-6
     return (v1 - v2) ** 2 < tol
+
 
 def mesh_line(pnt1, pnt2, n_cells, id):
     xyz = []
@@ -44,6 +46,7 @@ def mesh_line(pnt1, pnt2, n_cells, id):
     }
 
     return list(zip(*xyz)), arrays
+
 
 class web:
     def __init__(

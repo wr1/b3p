@@ -72,7 +72,6 @@ class ccx2vtu:
 
     def tabulate(self, n_bins=50):
         # Initialize an empty list to store the results
-        results = []
         if len(self.grids) == 0:
             logger.info(f"no grids found in {self.prefix}")
             return None

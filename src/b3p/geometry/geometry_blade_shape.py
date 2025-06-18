@@ -46,12 +46,7 @@ class blade_shape:
         self.n_points = n_points
 
     def build_interpolated_sections(self, radii, interpolation_type=1):
-        """
-        Create interpolated sections
-
-        args:
-            interpolation_type (int) : 1==cardinal spline, 2==linear, 3=kochanekspline
-        """
+        """Create interpolated sections"""
         r = [i.r for i in self.sections]
         # get the resplined sections
         pnts = [i.respline(self.n_points)[0] for i in self.sections]
@@ -80,14 +75,7 @@ class blade_shape:
         ]
 
     def mesh(self, n_points=100, close=True, panel_mesh_scale=None):
-        """
-        Mesh generation for blade
-
-        args:
-            n_points (int) : number of points around cross section
-
-            close (bool) : close two ends of mesh (i.e. TE)
-        """
+        """Mesh generation for blade"""
         if panel_mesh_scale is None:
             panel_mesh_scale = []
         self.poly = vtk.vtkPolyData()
@@ -135,12 +123,7 @@ class blade_shape:
             i.mesh(self.poly, self.web_resolution)
 
     def write_mesh(self, filename):
-        """
-        Export mesh in vtp format
-
-        args:
-            filename (str): vtp output filename
-        """
+        """Export mesh in vtp format"""
         try:
             writer = vtk.vtkXMLPolyDataWriter()
             writer.SetFileName(filename)
@@ -150,5 +133,4 @@ class blade_shape:
             logger.info("no valid mesh available")
 
         for i in self.webs:
-            logger.info(i.name)
             i.write_mesh(f"{i.name}{'.vtp'}")

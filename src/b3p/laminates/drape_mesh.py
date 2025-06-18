@@ -7,9 +7,13 @@ import numpy as np
 import pyvista
 import logging
 import multiprocessing
-from tqdm import tqdm
+from rich.progress import Progress  # Replace tqdm with rich progress
+from rich.logging import RichHandler  # Add rich log formatting
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO
+)  # Configure rich for logging
 
 
 def get_slab_cover(inp):
@@ -18,7 +22,6 @@ def get_slab_cover(inp):
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
 
-    # logger.info(name, cover)
     one = np.ones_like(rr)
 
     names = ["ply_%.8i_%s" % (i, name) for i in numbering]
@@ -92,13 +95,12 @@ def drape_mesh(vtp, stack, key, output_file):
     # Run get_slab_cover in parallel with progress bar
     logger.info("Processing slabs in parallel")
     with multiprocessing.Pool() as pool:
-        slab_data = list(
-            tqdm(
-                pool.imap(get_slab_cover, slab_inputs),
-                total=len(slab_inputs),
-                desc="Computing ply coverage",
-            )
-        )
+        with Progress() as progress:  # Replace tqdm with rich Progress
+            task = progress.add_task("Computing ply coverage", total=len(slab_inputs))
+            slab_data = list(
+                pool.imap(get_slab_cover, slab_inputs)
+            )  # Progress is handled via the context
+            progress.update(task, completed=len(slab_data))  # Ensure progress updates
 
     # Combine results with slab names
     slab_data = [

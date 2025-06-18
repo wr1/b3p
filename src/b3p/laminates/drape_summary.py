@@ -6,7 +6,6 @@ import json
 import os
 
 # import yaml
-from ruamel.yaml import YAML
 import pandas as pd
 import logging
 
@@ -28,7 +27,7 @@ def drape_summary(vtu, matmap=None):
     sl = [i for i in gr.cell_data.keys() if i.startswith("slab_thickness_")]
 
     mat = np.stack([gr.cell_data[i] for i in pl])
-    slab_thicknesses = np.stack([gr.cell_data[i] for i in sl])
+    np.stack([gr.cell_data[i] for i in sl])
 
     area = gr.cell_data["Area"]
     radius = gr.cell_data["radius"]
