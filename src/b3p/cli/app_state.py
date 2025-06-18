@@ -2,6 +2,9 @@ from pathlib import Path
 import os
 from b3p.cli import yml_portable
 from b3p.laminates import build_plybook
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AppState:
@@ -26,6 +29,9 @@ class AppState:
             self._set_workdir()
             self.make_workdir()
             self.expand_chamfered_cores()
+
+        logger.info(f"Loaded YAML data from {self.dct['general']['workdir']}")
+
         return self.dct
 
     def _set_workdir(self):
@@ -35,6 +41,7 @@ class AppState:
             # If workdir is relative, resolve it relative to yml_dir
             if not os.path.isabs(workdir):
                 workdir = self.yml_dir / workdir
+            logger.info(f"Setting workdir to {workdir}")
             self.dct["general"]["workdir"] = str(workdir)
         else:
             # Default to dir(ymlfile)/output/
@@ -67,6 +74,7 @@ class AppState:
     def get_workdir(self):
         if self.dct is None:
             return None
+
         return Path(self.dct["general"]["workdir"])
 
     def reset(self):

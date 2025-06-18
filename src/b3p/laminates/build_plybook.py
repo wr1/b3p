@@ -109,6 +109,7 @@ def expand_chamfered_core(core):
 
 
 def expand_chamfered_cores(bldict):
+    """ "Expand chamfered cores into laminate strips and write out to a new YAML file."""
     dctcopy = cp.deepcopy(bldict)
     for i in bldict["laminates"]["slabs"]:
         slab = dctcopy["laminates"]["slabs"][i]
@@ -126,10 +127,7 @@ def expand_chamfered_cores(bldict):
         dctcopy["general"]["workdir"], dctcopy["general"]["prefix"] + "_expanded.yml"
     )
     yaml = YAML()
-    yaml.dump(dctcopy, open(ofile, "w"))  # , default_flow_style=None)
-    # yaml.safe_dump(
-    #     dctcopy, open(ofile, "w"), default_flow_style=None
-    # )  # , default_flow_style=False)
+    yaml.dump(dctcopy, open(ofile, "w"))
     return dctcopy
 
 
