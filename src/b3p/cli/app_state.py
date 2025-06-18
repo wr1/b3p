@@ -50,8 +50,6 @@ class AppState:
             self.workdir_path = default_workdir.resolve()
 
     def expand_chamfered_cores(self):
-        # ofile = Path(dctcopy["general"]["workdir"]) / (dctcopy["general"]["prefix"] + "_expanded.yml")
-
         if self.dct:
             self.dct = build_plybook.expand_chamfered_cores(
                 self.dct,

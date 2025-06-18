@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # logger.handlers.clear()
 # logger.addHandler(RichHandler(rich_tracebacks=True))
 
+
 def zero_midside_loads(mesh):
     if mesh.celltypes[0] == 23:
         conn = mesh.cell_connectivity.reshape(
@@ -344,7 +345,7 @@ def mesh2ccx(
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
     logger.info(f"max number of plies: {nplmax}")
-    logger.info(f"associated stack \n{blx[npxid[0]][1]}")
+    # logger.info(f"associated stack \n{blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
     logger.info(f"time spent creating shell sections {toc - tic:f}")
