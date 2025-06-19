@@ -7,7 +7,7 @@ import os
 import traceback
 import numpy as np
 import pyvista as pv
-from dolfin import Mesh, XDMFFile, File, MeshFunction
+from dolfin import Mesh, XDMFFile, MeshFunction
 from anba4 import (
     material,
     anbax,
@@ -17,7 +17,6 @@ from anba4 import (
     ComputeTensionCenter,
     ComputeShearCenter,
 )
-import yaml
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")

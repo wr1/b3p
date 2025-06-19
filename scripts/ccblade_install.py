@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
 
+
 def build_ccblade_dependency():
     repo_name = "ccblade"
     build_dir = Path("build") / repo_name
@@ -10,6 +11,7 @@ def build_ccblade_dependency():
             check=True,
         )
     subprocess.run(["pip", "install", "."], cwd=build_dir, check=True)
+
 
 if __name__ == "__main__":
     build_ccblade_dependency()

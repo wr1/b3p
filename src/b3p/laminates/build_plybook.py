@@ -8,11 +8,10 @@ import os
 from itertools import chain, zip_longest
 import pickle
 import json
-from numpy import array
 import copy as cp
-from pathlib import Path
 from sympy import symbols, sympify
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +109,8 @@ def expand_chamfered_core(core):
     return coordinates, added_cores
 
 
-def expand_chamfered_cores(bldict):
+def expand_chamfered_cores(bldict, outputfile: Path = None):
+    """ "Expand chamfered cores into laminate strips and write out to a new YAML file."""
     dctcopy = cp.deepcopy(bldict)
     for i in bldict["laminates"]["slabs"]:
         slab = dctcopy["laminates"]["slabs"][i]
@@ -124,14 +124,14 @@ def expand_chamfered_cores(bldict):
                 for k in coordinates[j]:
                     dctcopy["mesh"]["coordinates"][k] = coordinates[j][k]
 
-    ofile = os.path.join(
-        dctcopy["general"]["workdir"], dctcopy["general"]["prefix"] + "_expanded.yml"
-    )
     yaml = YAML()
-    yaml.dump(dctcopy, open(ofile, "w"))  # , default_flow_style=None)
-    # yaml.safe_dump(
-    #     dctcopy, open(ofile, "w"), default_flow_style=None
-    # )  # , default_flow_style=False)
+    yaml.dump(dctcopy, outputfile.open("w"))
+    if outputfile:
+        logger.info(f"written expanded chamfered cores to {outputfile}")
+    else:
+        logger.warning(
+            "No output file specified, not writing expanded chamfered cores."
+        )
     return dctcopy
 
 
@@ -166,7 +166,7 @@ def coreblock(r, t, subdivisions=200, material=11):
     assert len(r) == len(t)
     lr = len(r)
     x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
-    y = np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
+    np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
 
     stack = []
     for i in range(lr - 1):
@@ -202,8 +202,7 @@ def number_stack(stack, splitstack, key, increment):
     return [i for i in chain.from_iterable(zip_longest(stt, sbt)) if i is not None]
 
 
-from sympy import symbols, sympify, lambdify
-import numpy as np
+from sympy import lambdify
 
 
 def get_coverage(slab, datums, rr):
@@ -378,5 +377,5 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
 
 def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
     blade = yaml.safe_load(open(yamlfile, "r"))
-    allstacks = lamplan2plies(blade, outputfile)
+    lamplan2plies(blade, outputfile)
     logger.info(f"written plydrape to {outputfile}")

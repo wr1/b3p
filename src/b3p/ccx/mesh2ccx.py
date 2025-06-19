@@ -8,11 +8,13 @@ import json
 import os
 
 # import yaml
-from ruamel.yaml import YAML
 import pandas as pd
 import logging
+# from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
+# logger.handlers.clear()
+# logger.addHandler(RichHandler(rich_tracebacks=True))
 
 
 def zero_midside_loads(mesh):
@@ -343,10 +345,11 @@ def mesh2ccx(
     nplmax = nplies.max()
     npxid = np.where(nplies == nplmax)[0]
     logger.info(f"max number of plies: {nplmax}")
-    logger.info(f"associated stack \n{blx[npxid[0]][1]}")
+    # logger.info(f"associated stack \n{blx[npxid[0]][1]}")
 
     toc = time.perf_counter()
     logger.info(f"time spent creating shell sections {toc - tic:f}")
+    logger.info(f"mesh {mesh}")
     comps = "".join(
         f"*shell section,composite,elset=e{n + 1},offset=-.5"
         + (f",orientation=or{n + 1}\n" if zeroangle else "\n")
@@ -360,6 +363,7 @@ def mesh2ccx(
 
     loadcases = get_loadcases(mesh, buckling=buckling)
 
+    logger.info(f"written loadcases {loadcases.keys()}")
     output_files = []
     if single_step:
         output = buf + "".join(loadcases.values())

@@ -11,7 +11,10 @@ from b3p.mesh import (
     combine_meshes,
 )
 from b3p.laminates import build_plybook, drape_mesh, drape_summary
+from rich.logging import RichHandler  # Add rich log formatting
 
+
+logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)  # Configure rich for logging
 logger = logging.getLogger(__name__)
 
 
