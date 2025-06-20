@@ -14,7 +14,8 @@ from b3p.laminates import build_plybook, drape_mesh, drape_summary
 from rich.logging import RichHandler  # Add rich log formatting
 
 
-logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)  # Configure rich for logging
+logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
+# Configure rich for logging
 logger = logging.getLogger(__name__)
 
 
@@ -35,9 +36,12 @@ class BuildApp:
 
     def drape(self, bondline: bool = True):
         plybookname = "_plybook.pck"
+        workdir = self.state.get_workdir()
         prefix = self.state.get_prefix("drape")
         mesh_prefix = self.state.get_prefix("mesh")
         pbookpath = str(prefix) + plybookname
+
+        logger.info(f"prefix and mesh prefix: {prefix}, {mesh_prefix}")
 
         build_plybook.lamplan2plies(self.dct, pbookpath)
         slb = self.dct["laminates"]["slabs"]
@@ -51,9 +55,16 @@ class BuildApp:
                 logger.info(f"Draping mesh for grid {grid} to {out}")
                 drape_mesh.drape_mesh(f"{mesh_prefix}_{grid}.vtp", plybook, grid, out)
                 meshes.append(out)
-            combine_meshes.combine_meshes(meshes, f"{prefix}_joined.vtu")
+            grid = f"{prefix}_joined.vtu"
+            combine_meshes.combine_meshes(meshes, grid)
+
+            logger.info(f" running with bondline: {bondline}")
             if bondline:
-                add_te_solids.add_bondline(self.dct, prefix)
+                add_te_solids.add_bondline(
+                    grid,
+                    workdir / "drape" / "material_map.json",
+                    bondline_config=self.dct["mesh"]["bondline"],
+                )
                 logger.info("Bondline added to mesh")
         else:
             logger.error(f"Plybook not found at {pbookpath}")

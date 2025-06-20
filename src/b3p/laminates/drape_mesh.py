@@ -8,12 +8,8 @@ import pyvista
 import logging
 import multiprocessing
 from rich.progress import Progress  # Replace tqdm with rich progress
-from rich.logging import RichHandler  # Add rich log formatting
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO
-)  # Configure rich for logging
 
 
 def get_slab_cover(inp):
@@ -21,9 +17,7 @@ def get_slab_cover(inp):
 
     # create a boolean array with n_cell rows and n_ply columns presenting true where the ply covers the cell in the chordwise direction
     name, cover, numbering, rr, stack, df = inp
-
     one = np.ones_like(rr)
-
     names = ["ply_%.8i_%s" % (i, name) for i in numbering]
 
     # get the min and max radius for each ply
@@ -70,12 +64,11 @@ def get_slab_cover(inp):
 
 def drape_mesh(vtp, stack, key, output_file):
     """drape a stack of plies onto a mesh"""
+    logger.info(f"reading {vtp}")
     x = pyvista.read(vtp)
 
     o = x.point_data_to_cell_data(pass_point_data=True)
-
     o = o.compute_cell_sizes(length=False, volume=False)
-
     o = o.compute_normals(cell_normals=False, flip_normals=True)
 
     # get all the coordinate systems in a dataframe

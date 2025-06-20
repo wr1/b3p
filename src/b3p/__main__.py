@@ -11,13 +11,16 @@ import sys
 
 from rich.logging import RichHandler  # Add rich log formatting
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+
+logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+# logger.setLevel(logging.INFO)
 
 # Add RichHandler for console output with formatting
-rich_handler = RichHandler(rich_tracebacks=True)
+# rich_handler = RichHandler(rich_tracebacks=True)
 # rich_handler.setFormatter(logging.Formatter("%(message)s"))
-logger.addHandler(rich_handler)
+# logger.addHandler(rich_handler)
 
 # File handler for output.log
 file_handler = logging.FileHandler("output.log")
