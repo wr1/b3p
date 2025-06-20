@@ -89,8 +89,10 @@ def split_glueline(fl):
 
 
 def add_bondline_to_vtu(
-    file_path, bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]], bondline_material_id=0
-):
+    file_path: Path,
+    bondline_width=[[0, 0], [0.5, 0.5], [1, 0.1]],
+    bondline_material_id=0,
+) -> Path:
     """Add bondline to a VTU file."""
     logger.info(f"Adding bondline to {file_path} {bondline_width}")
     # Load the VTU file
@@ -152,54 +154,52 @@ def add_bondline_to_vtu(
     of = file_path.replace(".vtu", "_bondline.vtu")
     out.save(of)
     logger.info(f"Saved {of}")
+    return Path(of)
 
 
-def get_bondline_material(d):
+def get_bondline_material(material_map: Path, bondline_config: dict) -> tuple:
     """
     Retrieve bondline material ID and width from the configuration.
     """
-    wd = d["general"]["workdir"]
-    mmap = Path(wd) / "drape" / "material_map.json"
-
-    logger.info(f"Looking for material map at {mmap}")
-    if mmap.is_file():
-        mm1 = json.load(open(mmap, "r"))
-        mm = mm1["map"]
-
-        if "bondline" in d["mesh"]:
-            bondline_width = d["mesh"]["bondline"]["width"]
-
-            bondline_material = d["mesh"]["bondline"]["material"]
-
-            bondline_material_id = mm.get(bondline_material, None)
-
-            if bondline_material_id is None:
-                warnings.warn(
-                    f"Bondline material '{bondline_material}' not found in material map."
-                )
-                return None, None
-
-            logger.info(
-                f"Bondline material ID: {bondline_material_id}, Width: {bondline_width}"
-            )
-
-            return bondline_material_id, bondline_width
-        else:
-            warnings.warn(
-                "No bondline configuration found in the mesh section. Proceeding without bondline."
-            )
-            return None, None
-    else:
-        warnings.warn("Material map file not found. Proceeding without bondline.")
+    if not material_map.exists():
+        warnings.warn(
+            f"Material map file {material_map} does not exist. Proceeding without bondline."
+        )
         return None, None
 
+    mm1 = json.load(material_map.open("r"))
+    mm = mm1["map"]
 
-def add_bondline(bladedict, prefix=None):
-    vtu = glob.glob(str(prefix) + "*joined.vtu")
-    bondline_material_id, bondline_width = get_bondline_material(bladedict)
+    bondline_width = bondline_config["width"]
+
+    bondline_material = bondline_config["material"]
+
+    bondline_material_id = mm.get(bondline_material, None)
+
+    if bondline_material_id is None:
+        warnings.warn(
+            f"Bondline material '{bondline_material}' not found in material map."
+        )
+        return None, None
+
+    logger.info(
+        f"Bondline material ID: {bondline_material_id}, Width: {bondline_width}"
+    )
+
+    return bondline_material_id, bondline_width
+
+
+def add_bondline(
+    vtu_mesh: Path, material_map: Path, bondline_config: dict
+):  # bladedict, prefix=None):
+    # vtu = glob.glob(str(prefix) + "*joined.vtu")
+
+    bondline_material_id, bondline_width = get_bondline_material(
+        material_map, bondline_config=bondline_config
+    )
     if bondline_material_id is not None:
         add_bondline_to_vtu(
-            vtu[0],
+            vtu_mesh,
             bondline_width=bondline_width,
             bondline_material_id=bondline_material_id,
         )

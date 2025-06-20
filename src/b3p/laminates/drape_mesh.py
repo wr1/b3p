@@ -8,12 +8,8 @@ import pyvista
 import logging
 import multiprocessing
 from rich.progress import Progress  # Replace tqdm with rich progress
-from rich.logging import RichHandler  # Add rich log formatting
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO
-)  # Configure rich for logging
 
 
 def get_slab_cover(inp):
@@ -68,7 +64,7 @@ def get_slab_cover(inp):
 
 def drape_mesh(vtp, stack, key, output_file):
     """drape a stack of plies onto a mesh"""
-    logger.info(f"reading {vtp}") 
+    logger.info(f"reading {vtp}")
     x = pyvista.read(vtp)
 
     o = x.point_data_to_cell_data(pass_point_data=True)
