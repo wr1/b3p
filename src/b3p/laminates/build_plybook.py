@@ -272,10 +272,12 @@ def add_bondline_material(matdb, material_map):
     return material_map
 
 
-def export_matdb(blade, material_map):
+def export_matdb(blade, material_map, material_map_file: Path = None):
     """Export material database to JSON."""
-    workdir = blade["general"]["workdir"]
-    matmap = os.path.join(workdir, "drape", "material_map.json")
+    # workdir = blade["general"]["workdir"]
+    # matmap = os.path.join(workdir, "drape", "material_map.json")
+    matmap = material_map_file 
+
 
     if "bondline" in blade["mesh"] and "material" in blade["mesh"]["bondline"]:
         maxid = max(v for v in material_map.values() if isinstance(v, int))
@@ -370,7 +372,7 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
                 "r": radius,
             }
         )
-    export_matdb(blade, material_map)
+    export_matdb(blade, material_map, material_map_file=Path(outputfile).parent / "material_map.json")
     export_plybook(allstacks, outputfile=outputfile)
     return allstacks
 
