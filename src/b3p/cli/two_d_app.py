@@ -18,7 +18,7 @@ class TwoDApp:
 
     def mesh2d(self, rotz=0.0, parallel=True):
         """Create 2D meshes from blade sections."""
-        dct = self.state.load_yaml(self.yml)
+        dct = self.state.load_yaml(Path(self.yml))
         if "mesh2d" not in dct:
             logger.error("No mesh2d section in yml file")
             return
@@ -29,7 +29,7 @@ class TwoDApp:
 
         drape_prefix = self.state.get_prefix("drape")
         mesh_prefix = self.state.get_prefix("mesh")
-
+        logger.info(f"drape and mesh prefixes: {drape_prefix}, {mesh_prefix}")
         section_meshes = mesh_2d.cut_blade_parallel(
             f"{drape_prefix}_joined.vtu",
             sections,
