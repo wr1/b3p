@@ -274,7 +274,6 @@ def main():
             ccx.post(wildcard=args.wildcard, nbins=args.nbins)
         elif args.subcommand == "plot":
             ccx.plot(
-                args.yml_sub or args.yml,
                 wildcard=args.wildcard,
                 plot3d=args.plot3d,
                 plot2d=args.plot2d,

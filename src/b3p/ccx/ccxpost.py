@@ -28,39 +28,50 @@ def get_quadrant(vector):
 
 
 class plot_ccx:
-    def __init__(self, wdir: Path, wildcard=""):
+    def __init__(self, wdir: Path, wildcard: str = ""):
         self.wdir = wdir
-        self.meshes = glob.glob(str(wdir) + f"/*ccx*{wildcard}*.vtu")
-        # logger.info(self.meshes)
+        self.meshes = [
+            i for i in wdir.glob((f"fea/*ccx_lc*{wildcard}*.vtu".replace("**", "*")))
+        ]
+        logger.info(self.meshes)
 
     def plot3d(self):
         for i in self.meshes:
             mesh = pv.read(i)
-            self.__plot3d(mesh, output_path=i.replace(".vtu", "_3d.png"))
+
+            self.__plot3d(mesh, output_path=str(i).replace(".vtu", "_3d.png"))
             del mesh
         return self
 
     def __plot3d(self, mesh, output_path):
-        ts = [i.split("_")[1] for i in mesh.point_data.keys() if i.startswith("disp")]
+        ts = [
+            i.split("_")[1]
+            for i in mesh.point_data.keys()
+            if i.lower().startswith("disp")
+        ]
+        DISPKEY = "DISP_" + ts[0] if ts else None
+        STRAINKEY = "STRAIN_" + ts[0] if ts else None
+
+        logger.info(f"Found time steps: {ts}")
 
         for i in ts:
             isdisp = i.startswith("0.00000")
             # Deform the mesh using the ChannelDisplacement filter
-            deform = mesh.point_data[f"disp_{ts[0]}"]
+            deform = mesh.point_data[f"DISP_{ts[0]}"]
             deformed_mesh = mesh.warp_by_vector(
-                f"disp_{ts[0]}",
+                f"DISP_{ts[0]}",
                 factor=1,  # if isdisp else None
             )
 
             if isdisp:  # f"strain_{i}" in mesh.point_data.keys():
                 # Color the mesh using the third component of point data strain
-                deformed_mesh.point_data["strain"] = mesh.point_data[f"strain_{i}"][
+                deformed_mesh.point_data["strain"] = mesh.point_data[f"STRAIN_{i}"][
                     :, 2
                 ]
                 deformed_mesh.set_active_scalars("strain")
             else:
                 # Color the mesh using the third component of point data strain
-                deformed_mesh.point_data["disp"] = mesh.point_data[f"disp_{i}"].sum(
+                deformed_mesh.point_data["disp"] = mesh.point_data[f"DISP_{i}"].sum(
                     axis=1
                 )
                 deformed_mesh.set_active_scalars("disp")
@@ -110,7 +121,9 @@ class plot_ccx:
         return ""
 
     def plot2d(self, wildcard=""):
-        pqs = glob.glob(os.path.join(self.wdir, f"*{wildcard}*eps2d.pq"))
+        pqs = glob.glob(os.path.join(self.wdir, "fea", f"*{wildcard}*eps2d.pq"))
+
+        logger.info(f"Found {len(pqs)} parquet files for 2D plotting: {pqs}")
 
         for pq in pqs:
             df = pd.read_parquet(pq)
@@ -129,7 +142,7 @@ class plot_ccx:
             ax.set_xlabel("z-coordinate")
             ax.set_ylabel("strain")
             ax.legend()
-            ax.set_ylim(-7e-3, 7e-3)
+            # ax.set_ylim(-7e-3, 7e-3)
             ax.grid(True)
             output_path = pq.replace(".pq", ".png")
             fig.savefig(output_path, dpi=300)  # , transparent=True)

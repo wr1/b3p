@@ -128,14 +128,18 @@ class CcxApp:
     def failure_criteria(self, **kwargs):
         self.state.load_yaml(self.yml)
         prefix = self.state.get_prefix(self.dir)
+        puck_config = self.state.dct.get("damage", {})
         vtus = [i for i in prefix.parent.glob("*ccx*vtu") if str(i).find("fail") == -1]
         logger.info(f"VTU files found for failure criteria: {vtus}")
 
-        compute_failure_for_meshes(vtus)
+        compute_failure_for_meshes(vtus, puck_config)
 
     def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
         self.state.load_yaml(self.yml)
+        logger.info(f"Plotting with wildcard: {wildcard}")
         plotter = ccxpost.plot_ccx(self.state.get_workdir(), wildcard=wildcard)
+
+        print(f"plotting 2d {plot2d} and 3d {plot3d}")
         if plot3d:
             plotter.plot3d()
         if plot2d:
