@@ -15,13 +15,6 @@ from rich.logging import RichHandler  # Add rich log formatting
 logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
-
-# Add RichHandler for console output with formatting
-# rich_handler = RichHandler(rich_tracebacks=True)
-# rich_handler.setFormatter(logging.Formatter("%(message)s"))
-# logger.addHandler(rich_handler)
-
 # File handler for output.log
 file_handler = logging.FileHandler("output.log")
 file_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
@@ -142,9 +135,9 @@ def main():
     ccx_plot_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
-    ccx_plot_parser.add_argument(
-        "-w", "--wildcard", default="", help="Wildcard pattern for results"
-    )
+    # # ccx_plot_parser.add_argument(
+    # #     "-w", "--wildcard", default="", help="Wildcard pattern for results"
+    # )
     ccx_plot_parser.add_argument(
         "-3",
         "--no-plot3d",
@@ -274,8 +267,6 @@ def main():
             ccx.post(wildcard=args.wildcard, nbins=args.nbins)
         elif args.subcommand == "plot":
             ccx.plot(
-                args.yml_sub or args.yml,
-                wildcard=args.wildcard,
                 plot3d=args.plot3d,
                 plot2d=args.plot2d,
             )
