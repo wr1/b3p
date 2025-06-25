@@ -87,7 +87,6 @@ class CcxApp:
         nproc=2,
         ccxexe="ccx",
         inpfiles=None,
-        merged_plies=False,
         bondline=False,
         **kwargs,
     ):
@@ -134,13 +133,12 @@ class CcxApp:
 
         compute_failure_for_meshes(vtus, puck_config)
 
-    def plot(self, wildcard="", plot3d=True, plot2d=True, bondline=False, **kwargs):
+    def plot(self, plot3d=True, plot2d=True, bondline=False, **kwargs):
         self.state.load_yaml(self.yml)
-        logger.info(f"Plotting with wildcard: {wildcard}")
-        plotter = ccxpost.plot_ccx(self.state.get_workdir(), wildcard=wildcard)
+        plotter = ccxpost.plot_ccx(self.state.get_workdir())
 
         print(f"plotting 2d {plot2d} and 3d {plot3d}")
         if plot3d:
             plotter.plot3d()
         if plot2d:
-            plotter.plot2d(wildcard=wildcard)
+            plotter.plot2d()
