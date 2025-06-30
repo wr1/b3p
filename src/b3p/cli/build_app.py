@@ -2,37 +2,35 @@ import logging
 from pathlib import Path
 import os
 import pickle
+from ..models.config import BladeConfig
 from . import yml_portable
-from b3p.geometry import build_blade_geometry
-from b3p.mesh import (
+from ..geometry import build_blade_geometry
+from ..mesh import (
     add_load_to_mesh,
     add_te_solids,
     build_blade_structure,
     combine_meshes,
 )
-from b3p.laminates import build_plybook, drape_mesh, drape_summary
-from rich.logging import RichHandler  # Add rich log formatting
-
+from ..laminates import build_plybook, drape_mesh, drape_summary
+from rich.logging import RichHandler
 
 logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
-# Configure rich for logging
 logger = logging.getLogger(__name__)
-
 
 class BuildApp:
     def __init__(self, state, yml: Path):
         self.state = state
-        self.dct = self.state.load_yaml(yml)
+        self.config: BladeConfig = self.state.load_yaml(yml)
 
     def geometry(self):
         prefix = self.state.get_prefix("mesh")
-        build_blade_geometry.build_blade_geometry(self.dct, prefix)
+        build_blade_geometry.build_blade_geometry(self.config.dict(), prefix)
         prefix = self.state.get_prefix()
-        yml_portable.save_yaml(f"{prefix}_portable.yml", self.dct)
+        yml_portable.save_yaml(f"{prefix}_portable.yml", self.config)
 
     def mesh(self):
         prefix = self.state.get_prefix("mesh")
-        build_blade_structure.build_blade_structure(self.dct, prefix)
+        build_blade_structure.build_blade_structure(self.config.dict(), prefix)
 
     def drape(self, bondline: bool = True):
         plybookname = "_plybook.pck"
@@ -42,9 +40,8 @@ class BuildApp:
         pbookpath = str(prefix) + plybookname
 
         logger.info(f"prefix and mesh prefix: {prefix}, {mesh_prefix}")
-
-        build_plybook.lamplan2plies(self.dct, pbookpath)
-        slb = self.dct["laminates"]["slabs"]
+        build_plybook.lamplan2plies(self.config.dict(), pbookpath)
+        slb = self.config.laminates.slabs
         used_grids = {slb[i]["grid"] for i in slb}
 
         if os.path.exists(pbookpath):
@@ -63,7 +60,7 @@ class BuildApp:
                 add_te_solids.add_bondline(
                     grid,
                     workdir / "drape" / "material_map.json",
-                    bondline_config=self.dct["mesh"]["bondline"],
+                    bondline_config=self.config.mesh.bondline,
                 )
                 logger.info("Bondline added to mesh")
         else:
@@ -87,7 +84,7 @@ class BuildApp:
     def apply_loads(self):
         prefix = self.state.get_prefix("drape")
         add_load_to_mesh.add_load_to_mesh(
-            self.dct,
+            self.config.dict(),
             f"{prefix}_joined.vtu",
             f"{prefix}_loads.png",
         )

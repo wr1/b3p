@@ -1,3 +1,4 @@
+from pydantic import BaseModel, Optional
 class IsotropicMaterial(BaseModel):
     """Model for isotropic materials."""
 
