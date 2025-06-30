@@ -120,11 +120,9 @@ class plot_ccx:
     def __str__(self):
         return ""
 
-    def plot2d(self, wildcard=""):
-        pqs = glob.glob(os.path.join(self.wdir, "fea", f"*{wildcard}*eps2d.pq"))
-
+    def plot2d(self):
+        pqs = glob.glob(os.path.join(self.wdir, "fea", f"*eps2d.pq"))
         logger.info(f"Found {len(pqs)} parquet files for 2D plotting: {pqs}")
-
         for pq in pqs:
             df = pd.read_parquet(pq)
             fig, ax = plt.subplots(figsize=(12, 8))
@@ -146,5 +144,5 @@ class plot_ccx:
             ax.grid(True)
             output_path = pq.replace(".pq", ".png")
             fig.savefig(output_path, dpi=300)  # , transparent=True)
-            logger.info(f"Saved {output_path}")
+            logger.info(f"Saved 2d plot to {output_path}")
             plt.close(fig)
