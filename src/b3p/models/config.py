@@ -6,11 +6,13 @@ from typing import Dict, List, Optional, Union, Any
 from ..materials.iso_material import IsotropicMaterial
 from ..materials.aniso_material import AnisotropicMaterial
 
+
 class GeneralConfig(BaseModel):
     """General configuration settings."""
 
     workdir: str = Field(default="output", description="Working directory path")
     prefix: str = Field(default="b3p", description="File prefix for outputs")
+
 
 class Airfoil(BaseModel):
     """Airfoil data, either as a path or embedded coordinates."""
@@ -27,18 +29,23 @@ class Airfoil(BaseModel):
                     raise ValueError("xy must be a list of [x, y] coordinates")
         return v
 
+
 class AeroConfig(BaseModel):
     """Aerodynamic configuration."""
 
     airfoils: Dict[float, Airfoil] = Field(default_factory=dict)  # Keys as floats
 
+
 class MeshConfig(BaseModel):
     """Mesh configuration."""
 
-    bondline: Dict[str, Union[str, float, List[List[float]]]] = Field(  # Updated to handle lists
-        default_factory=lambda: {"type": "default", "thickness": 0.01, "width": []},
-        description="Bondline settings",
+    bondline: Dict[str, Union[str, float, List[List[float]]]] = (
+        Field(  # Updated to handle lists
+            default_factory=lambda: {"type": "default", "thickness": 0.01, "width": []},
+            description="Bondline settings",
+        )
     )
+
 
 class Slab(BaseModel):
     """Definition of a slab in the laminate configuration."""
@@ -48,20 +55,23 @@ class Slab(BaseModel):
     slab: List[List[Union[float, int]]]  # e.g., [[0.03, 0], [0.10, 58]]
     ply_thickness: float
     key: List[Union[int, float]]  # e.g., [100, 2000]
-    increment: List[Union[int, float]]  # e.g., [1, -1]
+    increment: List[Union[int, int]] = [1, -1]  # e.g., [1, -1]
     grid: str  # e.g., "shell"
     splitstack: Optional[List[float]] = None  # e.g., [0.5, 0.5] if present
+
 
 class LaminateConfig(BaseModel):
     """Laminate configuration."""
 
     slabs: Dict[str, Slab] = Field(default_factory=dict, description="Slab definitions")
 
+
 class MaterialConfig(BaseModel):
     """Material configuration."""
 
     path: Optional[str] = None
     materials: Optional[Dict[str, Union[IsotropicMaterial, AnisotropicMaterial]]] = None
+
 
 class BladeConfig(BaseModel):
     """Top-level blade configuration."""
