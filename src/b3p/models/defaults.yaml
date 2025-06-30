@@ -1,0 +1,13 @@
+general:
+  workdir: output
+  prefix: b3p
+aero:
+  airfoils: {}
+mesh:
+  bondline:
+    type: default
+    thickness: 0.01
+laminates:
+  slabs: {}
+materials:
+  path: materials_si.yml
