@@ -1,10 +1,53 @@
 """Pydantic models for blade configuration."""
 
-from pydantic import BaseModel, Field, validator
+import numpy as np  # For vectorization of arrays
+from pydantic import BaseModel, Field, validator, root_validator
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
-from ..materials.iso_material import IsotropicMaterial
-from ..materials.aniso_material import AnisotropicMaterial
+
+class IsotropicMaterial(BaseModel):
+    """Model for isotropic materials."""
+
+    E: float  # Young's modulus
+    nu: float  # Poisson's ratio
+    rho: float  # Density
+    G: Optional[float] = None  # Shear modulus (optional)
+    name: str = ""  # Material name
+
+
+class AnisotropicMaterial(BaseModel):
+    """Model for anisotropic materials."""
+
+    Ex: float  # Young's modulus in x-direction
+    Ey: Optional[float] = None  # Young's modulus in y-direction
+    Ez: Optional[float] = None  # Young's modulus in z-direction
+    Gxy: Optional[float] = None  # Shear modulus xy
+    Gxz: Optional[float] = None  # Shear modulus xz
+    Gyz: Optional[float] = None  # Shear modulus yz
+    nu12: Optional[float] = None  # Poisson's ratio xy
+    nu13: Optional[float] = None  # Poisson's ratio xz
+    nu23: Optional[float] = None  # Poisson's ratio yz
+    rho: float  # Density
+    name: str = ""  # Material name
+
+
+class PuckMaterial(AnisotropicMaterial):
+    # Suggested Puck properties for failure criteria (add as needed):
+    Xt: Optional[float] = None  # Tensile strength in x-direction
+    Xc: Optional[float] = None  # Compressive strength in x-direction
+    Yt: Optional[float] = None  # Tensile strength in y-direction
+    Yc: Optional[float] = None  # Compressive strength in y-direction
+    Zt: Optional[float] = None  # Tensile strength in z-direction
+    Zc: Optional[float] = None  # Compressive strength in z-direction
+    S12: Optional[float] = None  # Shear strength in 12 plane
+    S13: Optional[float] = None  # Shear strength in 13 plane
+    S23: Optional[float] = None  # Shear strength in 23 plane
+    THETAF: Optional[float] = None  # Friction angle or similar
+    MGF: Optional[float] = None  # Material growth factor
+    ANU12: Optional[float] = None  # Additional Poisson's ratio
+    ANU12f: Optional[float] = None  # Fiber-related Poisson's ratio
+    E11_puck: Optional[float] = None  # Puck-specific modulus
+    E11f: Optional[float] = None  # Fiber modulus for Puck
 
 
 class GeneralConfig(BaseModel):
@@ -70,7 +113,17 @@ class MaterialConfig(BaseModel):
     """Material configuration."""
 
     path: Optional[str] = None
-    materials: Optional[Dict[str, Union[IsotropicMaterial, AnisotropicMaterial]]] = None
+    materials: Optional[Dict[str, Dict]] = None
+
+    @root_validator(skip_on_failure=True)
+    def check_materials(cls, values):
+        """Ensure either path or materials is provided; treat input dict as materials if needed."""
+        if 'path' not in values and 'materials' not in values:
+            if len(values) > 0:
+                values['materials'] = values  # Assign input dict to materials
+            else:
+                raise ValueError("Either materials.path or materials.materials must be provided")
+        return values
 
 
 class BladeConfig(BaseModel):
@@ -89,8 +142,4 @@ class BladeConfig(BaseModel):
 
     @validator("materials")
     def validate_materials(cls, v):
-        if v.path is None and v.materials is None:
-            raise ValueError(
-                "Either materials.path or materials.materials must be provided"
-            )
-        return v
+        return v  # Root validator in MaterialConfig handles the check
