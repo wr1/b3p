@@ -1,3 +1,5 @@
+"""Main entry point for the B3P CLI application."""
+
 import argparse
 from pathlib import Path
 from b3p.cli.app_state import AppState
@@ -6,6 +8,7 @@ from b3p.cli.ccx_app import CcxApp
 from b3p.cli.two_d_app import TwoDApp
 from b3p.cli.ccblade_app import CCBladeApp
 from b3p.cli.clean_app import CleanApp
+from b3p.cli.validate_app import ValidateApp  # Import for validate subcommand
 import logging
 import sys
 
@@ -135,9 +138,6 @@ def main():
     ccx_plot_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
-    # # ccx_plot_parser.add_argument(
-    # #     "-w", "--wildcard", default="", help="Wildcard pattern for results"
-    # )
     ccx_plot_parser.add_argument(
         "-3",
         "--no-plot3d",
@@ -225,6 +225,10 @@ def main():
     clean_parser = subparsers.add_parser("clean", help="Clean working directory")
     clean_parser.add_argument("yml", type=Path, help="Path to YAML config file")
 
+    # Validate subcommand
+    validate_parser = subparsers.add_parser("validate", help="Validate YAML configuration")
+    validate_parser.add_argument("yml", type=Path, help="Path to YAML config file")
+
     args = parser.parse_args()
 
     state = AppState.get_instance()
@@ -284,6 +288,9 @@ def main():
         ccb.ccblade()
     elif args.command == "clean":
         clean.clean()
+    elif args.command == "validate":  # Handle validate subcommand
+        validate_app = ValidateApp(args.yml)
+        validate_app.validate()
 
 
 if __name__ == "__main__":

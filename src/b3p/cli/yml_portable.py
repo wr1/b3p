@@ -7,7 +7,11 @@ import numpy as np
 import re
 import os
 
+from typing import Optional
+
+
 logger = logging.getLogger(__name__)
+
 
 def load_airfoil(af: str, prefix: str = "") -> tuple[Optional[str], Optional[list]]:
     """Load an airfoil from an xfoil formatted text file."""
@@ -28,6 +32,7 @@ def load_airfoil(af: str, prefix: str = "") -> tuple[Optional[str], Optional[lis
             offset = 1
     return name, np.loadtxt(af_path, skiprows=offset).tolist()
 
+
 def load_airfoils(afs: dict, prefix: str = "") -> dict:
     """Load a list of airfoils from a dictionary."""
     dct = {}
@@ -42,6 +47,7 @@ def load_airfoils(afs: dict, prefix: str = "") -> dict:
                 dct[key] = {"xy": xy, "name": name, "path": value}
                 logger.info(f"Imported airfoil {name} at thickness {key}")
     return dct
+
 
 def yaml_make_portable(yaml_file: Path) -> BladeConfig:
     """Load and validate a YAML file, merging with defaults."""
@@ -66,12 +72,18 @@ def yaml_make_portable(yaml_file: Path) -> BladeConfig:
 
     # Process airfoils
     if "aero" in merged_data and "airfoils" in merged_data["aero"]:
-        merged_data["aero"]["airfoils"] = load_airfoils(merged_data["aero"]["airfoils"], prefix)
+        merged_data["aero"]["airfoils"] = load_airfoils(
+            merged_data["aero"]["airfoils"], prefix
+        )
 
     # Process subsection files (materials, loads, laminates)
     subsections = ["materials", "loads", "laminates"]
     for s in subsections:
-        if s in merged_data and isinstance(merged_data[s], str) and merged_data[s].endswith(".yml"):
+        if (
+            s in merged_data
+            and isinstance(merged_data[s], str)
+            and merged_data[s].endswith(".yml")
+        ):
             sub_path = os.path.join(prefix, merged_data[s])
             if os.path.exists(sub_path):
                 logger.info(f"Loading {s} from: {sub_path}")
@@ -89,6 +101,7 @@ def yaml_make_portable(yaml_file: Path) -> BladeConfig:
 
     logger.info(f"Loaded and validated YAML from {yaml_file}")
     return config
+
 
 def save_yaml(of: str, config: BladeConfig):
     """Save BladeConfig to YAML file."""
