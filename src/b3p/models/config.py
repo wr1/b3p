@@ -49,11 +49,81 @@ class Airfoil(BaseModel):
     #     return v
 
 
+class BemConfig(BaseModel):
+    polars: Dict[float, str] = Field(
+        default_factory=dict,
+        description="Dictionary of polars with float keys and file paths as values",
+    )
+    rated_power: float = Field(
+        default=10e6,
+        description="Rated power of the turbine in watts",
+    )
+    B: int = Field(
+        default=3,
+        description="Number of blades",
+    )
+    rho: float = Field(
+        default=1.225,
+        description="Air density in kg/m^3",
+    )
+    tilt: float = Field(
+        default=5.0,
+        description="Tilt angle in degrees",
+    )
+    precone: float = Field(
+        default=3.0,
+        description="Precone angle in degrees",
+    )
+    shearExp: float = Field(
+        default=0.1,
+        description="Shear exponent for wind profile",
+    )
+    hubHt: float = Field(
+        default=140.0,
+        description="Hub height in meters",
+    )
+    mu: float = Field(
+        default=1.81206e-5,
+        description="Dynamic viscosity of air in kg/(m·s)",
+    )
+    yaw: float = Field(
+        default=0.0,
+        description="Yaw angle in degrees",
+    )
+    max_tipspeed: float = Field(
+        default=95.0,
+        description="Maximum tip speed in m/s",
+    )
+    uinf: List[float] = Field(
+        default_factory=lambda: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 20],
+        description="List of inflow velocities in m/s",
+    )
+
+    # polars: {1.0: polars/Cylinder1.dat, 0.21: polars/DU21_A17.dat, 0.25: polars/DU25_A17.dat,
+    #   0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
+    #   0.17: polars/NACA64_A17.dat}
+    # # This is the default configuration for the BEM solver.
+    # rated_power: 10e6
+    # B: 3
+    # rho: 1.225
+    # tilt: 5
+    # precone: 3
+    # shearExp: 0.1
+    # hubHt: 140.0
+    # mu: 1.81206e-5
+    # yaw: 0
+    # max_tipspeed: 95.0
+    # uinf: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 20]
+
+
 class AeroConfig(BaseModel):
     """Aerodynamic configuration."""
 
     airfoils: Dict[float, Airfoil] = Field(default_factory=dict)  # Keys as floats
-    bem: Dict[str, Any] = None
+    bem: BemConfig = Field(
+        default_factory=BemConfig,
+        description="BEM solver configuration",
+    )
 
 
 class MeshConfig(BaseModel):

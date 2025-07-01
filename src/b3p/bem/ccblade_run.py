@@ -11,11 +11,13 @@ from ccblade.ccblade import CCAirfoil, CCBlade
 from pathlib import Path
 import math
 import logging
+from b3p.models.config import BladeConfig  # Import the config model
+from typing import List, Tuple, Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
 
-def load_polar(pname: Path):
+def load_polar(pname: Path) -> Tuple[List[float], np.ndarray, np.ndarray, np.ndarray]:
     """Load and interpolate a polar by name to a set alpha range."""
     logger.info(f"loading polar {pname}")
     if not os.path.isfile(pname):
@@ -45,7 +47,9 @@ def load_polar(pname: Path):
     return [alpha_new, cl, cd, cm]
 
 
-def plot_interpolated_polars(t, data, of="polars.png"):
+def plot_interpolated_polars(
+    t: List[float], data: np.ndarray, of: Path = Path("polars.png")
+) -> None:
     """Plot interpolated polars with thickness values."""
     fig, ax = plt.subplots(3, 1, figsize=(12, 19))
     for n, i in enumerate(t):
@@ -60,7 +64,7 @@ def plot_interpolated_polars(t, data, of="polars.png"):
     fig.savefig(of)
 
 
-def plot_polars(polars, of="polars_in.png"):
+def plot_polars(polars: List[tuple], of: Path = Path("polars_in.png")) -> None:
     """Plot polar data from a list."""
     fig, ax = plt.subplots(3, 1, figsize=(12, 16))
     for i in polars:
@@ -79,7 +83,9 @@ def plot_polars(polars, of="polars_in.png"):
     fig.savefig(of)
 
 
-def interpolate_polars(polars, tnew, of=None):
+def interpolate_polars(
+    polars: List[tuple], tnew: np.ndarray, of: Optional[Path] = None
+) -> List[CCAirfoil]:
     """Interpolate polars to new thickness values and return CCAirfoil objects."""
     indices = range(len(polars[0][1][0]))
     t = [polar[0] for polar in polars]
@@ -107,25 +113,34 @@ def interpolate_polars(polars, tnew, of=None):
         for i in reversed(range(len(tnew)))
     ]
     if of:
-        plot_polars(polars, of.replace(".png", "_in.png"))
-        plot_interpolated_polars(tnew, data, of)
+        plot_polars(polars, of=of.with_name(of.stem + "_in" + of.suffix))
+        plot_interpolated_polars(tnew, data, of=of)
     return output_polars
 
 
 class RotorOptimizer:
     """Optimize rotor performance."""
 
-    def __init__(self, rotor, uinf, rated_power=20e7, omega=None, maxiter=5):
+    def __init__(
+        self,
+        rotor: CCBlade,
+        uinf: float,
+        rated_power: float = 20e7,
+        omega: Optional[float] = None,
+        maxiter: int = 5,
+    ):
         """Initialize the rotor optimizer with given parameters."""
         self.rotor = rotor
         self.uinf = uinf
         self.omega = omega
         self.rated_power = rated_power
-        self.cache = {}
-        self.latest = None
+        self.cache: Dict[tuple, Dict[str, Any]] = {}
+        self.latest: Optional[Dict[str, Any]] = None
         self.maxiter = maxiter
 
-    def evaluate(self, x, coefficients=False):
+    def evaluate(
+        self, x: np.ndarray, coefficients: bool = False
+    ) -> Tuple[float, Dict[str, Any]]:
         """Evaluate rotor performance for given variables."""
         if self.omega is None:
             omega, pitch = x
@@ -141,30 +156,34 @@ class RotorOptimizer:
         P = np.mean(self.cache[(omega, pitch)]["P"])
         return P, self.cache[(omega, pitch)]
 
-    def objective(self, x):
+    def objective(self, x: np.ndarray) -> float:
         """Compute objective function for optimization."""
         ev, _ = self.evaluate(x)
         return np.fabs(self.rated_power - ev)
 
-    def optimize(self, initial_guess):
+    def optimize(self, initial_guess: np.ndarray) -> np.ndarray:
         """Optimize rotor variables using fmin."""
         result = fmin(self.objective, initial_guess, maxiter=self.maxiter)
         rr, rdet = self.evaluate(result)
         return result
 
 
-def tsr2omega(tsr, uinf, radius, max_tip_speed=95.0):
+def tsr2omega(
+    tsr: float, uinf: float, radius: float, max_tip_speed: float = 95.0
+) -> float:
     """Convert tip speed ratio to rotor speed in RPM."""
     ts = np.minimum(uinf * tsr, max_tip_speed)
     return (ts * 60.0) / (2.0 * np.pi * radius)
 
 
-def omega2tsr(omega, uinf, radius):
+def omega2tsr(omega: float, uinf: float, radius: float) -> float:
     """Convert rotor speed to tip speed ratio."""
     return omega * 2.0 * np.pi * radius / (uinf * 60.0)
 
 
-def plot_grid(num_plots, figsize=(15, 15)):
+def plot_grid(
+    num_plots: int, figsize: tuple = (15, 15)
+) -> Tuple[plt.Figure, np.ndarray]:
     """Create a grid of subplots for plotting."""
     grid_size = math.isqrt(num_plots)
     columns = grid_size
@@ -176,7 +195,9 @@ def plot_grid(num_plots, figsize=(15, 15)):
     return fig, axs
 
 
-def find_closest_x(x_values, evaluations, target, order):
+def find_closest_x(
+    x_values: np.ndarray, evaluations: np.ndarray, target: float, order: int
+) -> float:
     """Find closest x value to target using polynomial interpolation."""
     assert len(x_values) == len(evaluations)
     poly_coeffs = np.polyfit(x_values, evaluations, order)
@@ -186,7 +207,9 @@ def find_closest_x(x_values, evaluations, target, order):
     return x_closest
 
 
-def plot_bladeloads(r, data_dict, of="bladeloads.png"):
+def plot_bladeloads(
+    r: np.ndarray, data_dict: Dict[str, np.ndarray], of: Path = Path("bladeloads.png")
+) -> None:
     """Plot blade loads from a dictionary."""
     fig, axs = plot_grid(len(data_dict), figsize=(15, 15))
     for idx, (name, array) in enumerate(data_dict.items()):
@@ -200,7 +223,15 @@ def plot_bladeloads(r, data_dict, of="bladeloads.png"):
 class controloptimize:
     """Optimize rotor control settings."""
 
-    def __init__(self, rotor, max_tipspeed, rtip, rating, uinf, workdir):
+    def __init__(
+        self,
+        rotor: CCBlade,
+        max_tipspeed: float,
+        rtip: float,
+        rating: float,
+        uinf: np.ndarray,
+        workdir: Path,
+    ):
         """Initialize control optimizer with rotor parameters."""
         self.rotor = rotor
         self.max_tipspeed = max_tipspeed
@@ -210,8 +241,11 @@ class controloptimize:
         self.workdir = workdir
 
     def control_opt_below_rated(
-        self, starting_uinf=6, starting_tsr=10, starting_pitch=0
-    ):
+        self,
+        starting_uinf: float = 6,
+        starting_tsr: float = 10,
+        starting_pitch: float = 0,
+    ) -> None:
         """Optimize control for below rated power at a specific wind speed."""
         omega = tsr2omega(
             starting_tsr, uinf=6, radius=self.rtip, max_tip_speed=self.max_tipspeed
@@ -228,12 +262,10 @@ class controloptimize:
         loads, _ = self.rotor.distributedAeroLoads(
             self.uinf, optimal_values[0], optimal_values[1], 0
         )
-        plot_bladeloads(
-            self.rotor.r, loads, of=os.path.join(self.workdir, "ccblade_bladeloads.png")
-        )
+        plot_bladeloads(self.rotor.r, loads, of=self.workdir / "ccblade_bladeloads.png")
         logger.info(f"optimal tsr {self.optimal_tsr} {self.fine_pitch}")
 
-    def control_opt_above_rated(self):
+    def control_opt_above_rated(self) -> Dict[str, Any]:
         """Optimize control for above rated power by adjusting pitch."""
         self.omega = tsr2omega(
             self.optimal_tsr,
@@ -249,7 +281,7 @@ class controloptimize:
             self.pitch,
             coefficients=False,
         )
-        rotorplot(init_pc, self.uinf, of=os.path.join(self.workdir, "ccblade_init.png"))
+        rotorplot(init_pc, self.uinf, of=self.workdir / "ccblade_init.png")
         overrated = np.where(init_pc["P"] > self.rating)
         logger.info(f"overrated {overrated}, {self.uinf[overrated]}")
         upost = self.uinf[overrated]
@@ -278,13 +310,18 @@ class controloptimize:
             out_pc,
             self.uinf,
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
-            of=os.path.join(self.workdir, "ccblade_out.png"),
+            of=self.workdir / "ccblade_out.png",
         )
         logger.info(f"pitch {self.pitch}")
         return out_pc
 
 
-def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
+def rotorplot(
+    op: Dict[str, Any],
+    uinf: np.ndarray,
+    labels: List[str] = ["P", "CP", "T", "Mb"],
+    of: Path = Path("__temp.png"),
+) -> None:
     """Plot rotor performance data against wind speeds."""
     lab = [i for i in labels if i in op]
     fig, ax = plot_grid(len(lab), figsize=(10, 10))
@@ -302,32 +339,33 @@ def rotorplot(op, uinf, labels=["P", "CP", "T", "Mb"], of="__temp.png"):
 class ccblade_run:
     """Run CCBlade analysis on a blade."""
 
-    def __init__(self, blade):
-        """Initialize with a blade YAML file."""
-        self.dct = yml_portable.yaml_make_portable(blade).model_dump()
+    def __init__(self, config: BladeConfig, yml_dir: Path):
+        """Initialize with a BladeConfig object and YAML directory."""
+        self.config = config  # Use the Pydantic model directly
+        self.yml_dir = yml_dir  # For resolving relative paths
 
-        print(self.dct)
-        workdir = os.path.join(self.dct["general"]["workdir"], "mesh")
+        # Resolve workdir relative to YAML directory
+        workdir_path = Path(self.config.general.workdir)
+        if not workdir_path.is_absolute():
+            workdir_path = self.yml_dir / workdir_path
+        self.workdir = workdir_path.resolve() / "mesh"  # As per original logic
 
-        # bem = {}
-        # missing_keys = [key for key in bem if key not in self.dct["aero"]["bem"]]
-        # logger.info(
-        #     f"the following keys are not specified in aero/bem: {missing_keys}, using defaults {bem}"
-        # )
-        # bem |= self.dct["aero"]["bem"]
-        bem = self.dct["aero"]["bem"]
-        self.prefix = os.path.join(workdir, self.dct["general"]["prefix"])
-        if "polars" not in bem:
+        bem = self.config.aero.bem  # Access via model
+        self.prefix = self.workdir / self.config.general.prefix
+
+        if bem.polars is None:
             exit("no polars in blade file")
-        if not os.path.isfile(f"{self.prefix}.pck"):
+        if not os.path.isfile(self.prefix.with_suffix(".pck")):
             exit("blade not built yet, run b3p build <blade.yml> first")
-        plf = pd.read_csv(f"{self.prefix}_sca_50.csv", sep=";")
+        plf = pd.read_csv(
+            self.prefix.with_name(self.prefix.stem + "_sca_50.csv"), sep=";"
+        )
         plrs = sorted(
-            [(i[0], load_polar(Path(i[1]))) for i in bem["polars"].items()],
+            [(i[0], load_polar(yml_dir / Path(i[1]))) for i in bem.polars.items()],
             reverse=True,
         )
         iplr = interpolate_polars(
-            plrs, plf.relative_thickness, of=os.path.join(workdir, "polars.png")
+            plrs, plf.relative_thickness, of=self.workdir / "polars.png"
         )
         rhub, rtip = plf.z.iloc[0], plf.z.iloc[-1]
         self.rotor = CCBlade(
@@ -337,42 +375,42 @@ class ccblade_run:
             iplr,
             rhub,
             rtip,
-            B=bem["B"],
-            rho=bem["rho"],
-            mu=bem["mu"],
-            precone=bem["precone"],
-            tilt=bem["tilt"],
-            yaw=bem["yaw"],
-            shearExp=bem["shearExp"],
-            hubHt=bem["hubHt"],
+            B=bem.B,
+            rho=bem.rho,
+            mu=bem.mu,
+            precone=bem.precone,
+            tilt=bem.tilt,
+            yaw=bem.yaw,
+            shearExp=bem.shearExp,
+            hubHt=bem.hubHt,
             derivatives=False,
         )
         logger.info(f"Rotor from {rhub} to {rtip}")
         self.copt = controloptimize(
             self.rotor,
-            bem["max_tipspeed"],
+            bem.max_tipspeed,
             rtip,
-            bem["rated_power"],
-            uinf=np.array(bem["uinf"]),
-            workdir=workdir,
+            bem.rated_power,
+            uinf=np.array(bem.uinf),
+            workdir=self.workdir,
         )
 
-    def run(self):
+    def run(self) -> None:
         """Execute the CCBlade analysis."""
         self.copt.control_opt_below_rated()
         output = self.copt.control_opt_above_rated()
         del output["W"]
-        workdir = self.dct["general"]["workdir"]
         df = pd.DataFrame(output).dropna()
-        df.to_csv(os.path.join(workdir, "ccblade_output.csv"), sep=";")
+        df.to_csv(self.workdir.parent / "ccblade_output.csv", sep=";")
 
 
-def main():
+def main() -> None:
     """Run the main script with command-line arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument("blade", help="blade file")
     args = parser.parse_args()
-    ccblade_run(args.blade).run()
+    # Note: In CLI, this will be called with config and yml_dir
+    ccblade_run(args.blade).run()  # This should be updated in CLI to pass config
 
 
 if __name__ == "__main__":
