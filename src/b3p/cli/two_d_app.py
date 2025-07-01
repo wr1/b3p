@@ -80,11 +80,12 @@ class TwoDApp:
             material_map,
         ]
 
-        logger.info(" ".join(conda_command))
+        logger.info(f"Running command: {conda_command}")
         result = subprocess.run(
             conda_command,
             capture_output=True,
             text=True,
+            shell=True,  # Use shell to ensure proper interpretation
             env={
                 **os.environ.copy(),
                 "OPENBLAS_NUM_THREADS": "1",

@@ -17,6 +17,7 @@ class AppState:
         self.config: Optional[BladeConfig] = None
         self.yml_dir: Optional[Path] = None
         self.workdir_path: Optional[Path] = None
+        self.expanded_yml_path: Optional[Path] = None  # Track expanded file path
 
     @classmethod
     def get_instance(cls):
@@ -33,7 +34,10 @@ class AppState:
             self.config = yaml_make_portable(yml)
             self._set_workdir()
             self.make_workdir()
-            self.expand_chamfered_cores()
+            self.expanded_yml_path = self.workdir_path / (
+                self.config.general.prefix + "_expanded.yml"
+            )  # Set expanded path
+            self.expand_chamfered_cores()  # Now expands and saves to tracked path
         logger.info(f"Loaded YAML data from {self.config.general.workdir}")
         return self.config
 
@@ -51,12 +55,11 @@ class AppState:
 
     def expand_chamfered_cores(self):
         if self.config:
-            self.config = BladeConfig(
-                **build_plybook.expand_chamfered_cores(
-                    self.config.model_dump(),
-                    self.workdir_path / (self.config.general.prefix + "_expanded.yml"),
-                )
+            expanded_data = build_plybook.expand_chamfered_cores(
+                self.config.model_dump(),
+                self.expanded_yml_path,
             )
+            self.config = BladeConfig(**expanded_data)
 
     def make_workdir(self):
         if self.config is None:
@@ -92,3 +95,4 @@ class AppState:
         self.config = None
         self.yml_dir = None
         self.workdir_path = None
+        self.expanded_yml_path = None  # Reset expanded path as well

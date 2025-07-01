@@ -81,6 +81,7 @@ class Slab(BaseModel):
     increment: List[Union[int, int]] = [1, -1]  # e.g., [1, -1]
     grid: str  # e.g., "shell"
     splitstack: Optional[List[float]] = [1, 0]  # e.g., [0.5, 0.5] if present
+    chamfers: Optional[List[Dict[str, Any]]] = None  # e.g., [[0.1, 0.2], [0.3, 0.4]]
 
 
 class LaminateConfig(BaseModel):

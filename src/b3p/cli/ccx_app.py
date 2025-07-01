@@ -108,7 +108,7 @@ class CcxApp:
 
         if inps_to_run:
             with multiprocessing.Pool(nproc) as pool:
-                with Progress() as progress:  # Replace tqdm with rich Progress
+                with Progress() as progress:
                     task = progress.add_task("Running CCX", total=len(inps_to_run))
                     for inp, success, error_msg in pool.imap_unordered(
                         partial(run_ccx, ccxexe=ccxexe, logger=logger), inps_to_run
@@ -137,7 +137,7 @@ class CcxApp:
         self.state.load_yaml(self.yml)
         plotter = ccxpost.plot_ccx(self.state.get_workdir())
 
-        print(f"plotting 2d {plot2d} and 3d {plot3d}")
+        logger.info(f"plotting 2d {plot2d} and 3d {plot3d}")
         if plot3d:
             plotter.plot3d()
         if plot2d:

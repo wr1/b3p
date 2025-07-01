@@ -112,7 +112,8 @@ def expand_chamfered_cores(bldict, outputfile: Path = None):
     dctcopy = cp.deepcopy(bldict)
     for i in bldict["laminates"]["slabs"]:
         slab = dctcopy["laminates"]["slabs"][i]
-        if "chamfers" in slab:
+        if slab["chamfers"]:
+            logger.info(f"Expanding chamfered core {i} {slab}")
             coordinates, cores = expand_chamfered_core(slab)
             for j in range(len(cores)):
                 slabname = i + f"_ch{j}"
