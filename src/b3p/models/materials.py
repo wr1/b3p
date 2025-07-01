@@ -1,10 +1,17 @@
-from pydantic import BaseModel
-from typing import Optional
+"""Pydantic models for materials."""
 
+from pydantic import BaseModel
+
+class IsotropicMaterial(BaseModel):
+    """Model for isotropic materials."""
+    E: float  # Young's modulus
+    nu: float  # Poisson's ratio
+    rho: float  # Density
+    G: Optional[float] = None  # Shear modulus (optional)
+    name: str = ""  # Material name
 
 class AnisotropicMaterial(BaseModel):
     """Model for anisotropic materials."""
-
     Ex: float  # Young's modulus in x-direction
     Ey: Optional[float] = None  # Young's modulus in y-direction
     Ez: Optional[float] = None  # Young's modulus in z-direction
@@ -16,7 +23,9 @@ class AnisotropicMaterial(BaseModel):
     nu23: Optional[float] = None  # Poisson's ratio yz
     rho: float  # Density
     name: str = ""  # Material name
-    # Suggested Puck properties for failure criteria (add as needed):
+
+class PuckMaterial(AnisotropicMaterial):
+    # Suggested Puck properties for failure criteria
     Xt: Optional[float] = None  # Tensile strength in x-direction
     Xc: Optional[float] = None  # Compressive strength in x-direction
     Yt: Optional[float] = None  # Tensile strength in y-direction
