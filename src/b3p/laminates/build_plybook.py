@@ -272,8 +272,6 @@ def add_bondline_material(matdb, material_map):
 
 def export_matdb(blade, material_map, material_map_file: Path = None):
     """Export material database to JSON."""
-    # workdir = blade["general"]["workdir"]
-    # matmap = os.path.join(workdir, "drape", "material_map.json")
     matmap = material_map_file
 
     if "bondline" in blade["mesh"] and "material" in blade["mesh"]["bondline"]:
@@ -378,9 +376,3 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
     )
     export_plybook(allstacks, outputfile=outputfile)
     return allstacks
-
-
-# def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
-#     blade = yaml.safe_load(open(yamlfile, "r"))
-#     lamplan2plies(blade, outputfile)
-#     logger.info(f"written plydrape to {outputfile}")
