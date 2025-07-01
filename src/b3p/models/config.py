@@ -99,22 +99,6 @@ class BemConfig(BaseModel):
         description="List of inflow velocities in m/s",
     )
 
-    # polars: {1.0: polars/Cylinder1.dat, 0.21: polars/DU21_A17.dat, 0.25: polars/DU25_A17.dat,
-    #   0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
-    #   0.17: polars/NACA64_A17.dat}
-    # # This is the default configuration for the BEM solver.
-    # rated_power: 10e6
-    # B: 3
-    # rho: 1.225
-    # tilt: 5
-    # precone: 3
-    # shearExp: 0.1
-    # hubHt: 140.0
-    # mu: 1.81206e-5
-    # yaw: 0
-    # max_tipspeed: 95.0
-    # uinf: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 20]
-
 
 class AeroConfig(BaseModel):
     """Aerodynamic configuration."""

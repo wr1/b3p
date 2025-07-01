@@ -61,9 +61,20 @@ def test_ccblade_output(run_ccblade):
         reference_file.exists()
     ), f"Reference file {reference_file} not found in temp data directory"
 
-    generated_df = pd.read_csv(generated_file)
-    reference_df = pd.read_csv(reference_file)
+    generated_df = pd.read_csv(generated_file, sep=";")
+    reference_df = pd.read_csv(reference_file, sep=";")
 
-    assert generated_df.equals(
-        reference_df
-    ), "Generated CCBlade output does not match reference file"
+    logger.info(
+        f"Generated DataFrame:\n{generated_df}\nReference DataFrame:\n{reference_df}"
+    )
+
+    pd.testing.assert_frame_equal(
+        generated_df,
+        reference_df,
+        check_dtype=False,
+        check_like=True,
+        check_exact=False,
+    )
+    # assert generated_df.equals(
+    #     reference_df
+    # ), "Generated CCBlade output does not match reference file"

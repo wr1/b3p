@@ -13,6 +13,10 @@ import math
 import logging
 from b3p.models.config import BladeConfig  # Import the config model
 from typing import List, Tuple, Dict, Optional, Any
+import rich
+from rich.live import Live
+from rich.spinner import Spinner
+from contextlib import redirect_stdout  # Added for stdout redirection
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +152,10 @@ class RotorOptimizer:
             omega, pitch = self.omega, x[0]
 
         if (omega, pitch) not in self.cache:
+            # with Live(
+            #     Spinner("dots", text="Evaluating rotor..."), refresh_per_second=10
+            # ):
+            #     with redirect_stdout(open(os.devnull, "w")):  # Redirect stdout
             outputs, _ = self.rotor.evaluate(
                 self.uinf, omega, pitch, coefficients=coefficients
             )
@@ -252,10 +260,16 @@ class controloptimize:
         )
         optimizer = RotorOptimizer(self.rotor, [starting_uinf])
         initial_guess = np.array([omega, starting_pitch])
-        optimal_values = optimizer.optimize(initial_guess)
-        logger.info(f"initial guess {initial_guess} optimal values {optimal_values}")
-        init_val = optimizer.evaluate(initial_guess)[0]
-        opt_val, optt = optimizer.evaluate(optimal_values, coefficients=True)
+
+        with Live(
+            Spinner("dots", text="Optimize pitch and TSR below rated..."),
+            refresh_per_second=10,
+        ):
+            with redirect_stdout(open(os.devnull, "w")):
+                optimal_values = optimizer.optimize(initial_guess)
+                init_val = optimizer.evaluate(initial_guess)[0]
+                opt_val, optt = optimizer.evaluate(optimal_values, coefficients=True)
+
         logger.info(f" {init_val} {opt_val}, improvement {opt_val / init_val}")
         self.optimal_tsr = omega2tsr(optimal_values[0], starting_uinf, self.rtip)
         self.fine_pitch = optimal_values[1]
@@ -275,12 +289,18 @@ class controloptimize:
         )
         self.tsr = omega2tsr(self.omega, uinf=self.uinf, radius=self.rtip)
         self.pitch = self.fine_pitch * np.ones_like(self.uinf)
-        init_pc, _ = self.rotor.evaluate(
-            self.uinf,
-            self.omega,
-            self.pitch,
-            coefficients=False,
-        )
+
+        with Live(
+            Spinner("dots", text="Above rated initial guess..."),
+            refresh_per_second=10,
+        ):
+            with redirect_stdout(open(os.devnull, "w")):
+                init_pc, _ = self.rotor.evaluate(
+                    self.uinf,
+                    self.omega,
+                    self.pitch,
+                    coefficients=False,
+                )
         rotorplot(init_pc, self.uinf, of=self.workdir / "ccblade_init.png")
         overrated = np.where(init_pc["P"] > self.rating)
         logger.info(f"overrated {overrated}, {self.uinf[overrated]}")
@@ -288,20 +308,31 @@ class controloptimize:
         ompost = self.omega[overrated]
         pitch_over_rated = []
         closest_pitch = self.fine_pitch
-        for i in np.array(list(zip(upost, ompost))):
-            pitch = np.linspace(closest_pitch, closest_pitch + 15.0, 8)
-            ui = np.ones_like(pitch) * i[0]
-            oi = np.ones_like(pitch) * i[1]
-            pg, _ = self.rotor.evaluate(ui, oi, pitch, coefficients=False)
-            closest_pitch = find_closest_x(pitch, pg["P"], self.rating, 3)
-            pitch_over_rated.append(closest_pitch)
+        with Live(
+            Spinner(
+                "dots", text="Evaluating for adjusted pitch to find fixed power..."
+            ),
+            refresh_per_second=10,
+        ):
+            for i in np.array(list(zip(upost, ompost))):
+                pitch = np.linspace(closest_pitch, closest_pitch + 15.0, 8)
+                ui = np.ones_like(pitch) * i[0]
+                oi = np.ones_like(pitch) * i[1]
+                with redirect_stdout(open(os.devnull, "w")):  # Redirect stdout
+                    pg, _ = self.rotor.evaluate(ui, oi, pitch, coefficients=False)
+                closest_pitch = find_closest_x(pitch, pg["P"], self.rating, 3)
+                pitch_over_rated.append(closest_pitch)
         self.pitch[overrated] = pitch_over_rated
-        out_pc, _ = self.rotor.evaluate(
-            self.uinf,
-            self.omega,
-            self.pitch,
-            coefficients=True,
-        )
+        with Live(
+            Spinner("dots", text="Final rotor evaluation..."), refresh_per_second=10
+        ):
+            with redirect_stdout(open(os.devnull, "w")):  # Redirect stdout
+                out_pc, _ = self.rotor.evaluate(
+                    self.uinf,
+                    self.omega,
+                    self.pitch,
+                    coefficients=True,
+                )
         out_pc["omega"] = self.omega
         out_pc["tsr"] = self.tsr
         out_pc["pitch"] = self.pitch
@@ -407,7 +438,7 @@ class ccblade_run:
 def main() -> None:
     """Run the main script with command-line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("blade", help="blade file")
+    parser.add_argument("-b", "--blade", help="blade file", required=True)
     args = parser.parse_args()
     # Note: In CLI, this will be called with config and yml_dir
     ccblade_run(args.blade).run()  # This should be updated in CLI to pass config
