@@ -295,6 +295,7 @@ def export_plybook(stacks, outputfile):
 
 def lamplan2plies(blade, outputfile="__plybook.pck"):
     """Convert a lamplan to a list of plies."""
+
     root_radius = blade["planform"]["z"][0][1]
 
     tip_radius = blade["planform"]["z"][-1][1]
@@ -314,6 +315,7 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
 
     for i in slabs:
         material = slabs[i]["material"]
+        # print(material)
         if material not in material_map:
             material_map[material] = len(material_map) + 1
 
@@ -378,7 +380,7 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
     return allstacks
 
 
-def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
-    blade = yaml.safe_load(open(yamlfile, "r"))
-    lamplan2plies(blade, outputfile)
-    logger.info(f"written plydrape to {outputfile}")
+# def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
+#     blade = yaml.safe_load(open(yamlfile, "r"))
+#     lamplan2plies(blade, outputfile)
+#     logger.info(f"written plydrape to {outputfile}")
