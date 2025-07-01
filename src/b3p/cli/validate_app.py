@@ -7,6 +7,7 @@ from b3p.models.config import BladeConfig  # Updated import for fixed config
 
 logger = logging.getLogger(__name__)
 
+
 class ValidateApp:
     """Validate a YAML configuration file."""
 
@@ -18,10 +19,12 @@ class ValidateApp:
         state = AppState.get_instance()
         try:
             config = state.load_yaml(self.yml)  # Uses existing load_yaml to validate
+            print(config.materials)
             logger.info(f"YAML file {self.yml} is valid.")
             return True
         except Exception as e:
             logger.error(f"YAML validation failed for {self.yml}: {e}")
             return False
+
 
 # Note: To integrate this into the CLI, ensure the main CLI script (e.g., in src/b3p/cli/__init__.py or a main.py) adds a subcommand for 'validate'.
