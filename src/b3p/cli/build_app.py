@@ -17,6 +17,7 @@ from rich.logging import RichHandler
 logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class BuildApp:
     def __init__(self, state, yml: Path):
         self.state = state
@@ -42,7 +43,7 @@ class BuildApp:
         logger.info(f"prefix and mesh prefix: {prefix}, {mesh_prefix}")
         build_plybook.lamplan2plies(self.config.dict(), pbookpath)
         slb = self.config.laminates.slabs
-        used_grids = {slb[i]["grid"] for i in slb}
+        used_grids = {slb[i].grid for i in slb}
 
         if os.path.exists(pbookpath):
             plybook = pickle.load(open(pbookpath, "rb"))
