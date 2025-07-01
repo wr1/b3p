@@ -304,27 +304,18 @@ class ccblade_run:
 
     def __init__(self, blade):
         """Initialize with a blade YAML file."""
-        self.dct = yml_portable.yaml_make_portable(blade)
+        self.dct = yml_portable.yaml_make_portable(blade).model_dump()
+
+        print(self.dct)
         workdir = os.path.join(self.dct["general"]["workdir"], "mesh")
-        bem = {
-            "rated_power": 10e6,
-            "polars": {},
-            "B": 3,
-            "rho": 1.225,
-            "tilt": 5,
-            "precone": 3,
-            "shearExp": 0.1,
-            "hubHt": 140.0,
-            "mu": 1.81206e-5,
-            "yaw": 0,
-            "max_tipspeed": 95.0,
-            "uinf": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 20],
-        }
-        missing_keys = [key for key in bem if key not in self.dct["aero"]["bem"]]
-        logger.info(
-            f"the following keys are not specified in aero/bem: {missing_keys}, using defaults {bem}"
-        )
-        bem |= self.dct["aero"]["bem"]
+
+        # bem = {}
+        # missing_keys = [key for key in bem if key not in self.dct["aero"]["bem"]]
+        # logger.info(
+        #     f"the following keys are not specified in aero/bem: {missing_keys}, using defaults {bem}"
+        # )
+        # bem |= self.dct["aero"]["bem"]
+        bem = self.dct["aero"]["bem"]
         self.prefix = os.path.join(workdir, self.dct["general"]["prefix"])
         if "polars" not in bem:
             exit("no polars in blade file")

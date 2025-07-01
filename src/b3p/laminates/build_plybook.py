@@ -164,8 +164,9 @@ def coreblock(r, t, subdivisions=200, material=11):
     :param material: material number"""
     assert len(r) == len(t)
     lr = len(r)
-    x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
-    np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
+    # x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
+    # y = np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
+    # logger.info(f"coreblock: {x}, {y} {r}, {t}")
 
     stack = []
     for i in range(lr - 1):
