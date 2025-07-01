@@ -153,6 +153,12 @@ def main():
         help="Disable 2D plots",
     )
 
+    # Add failure subcommand
+    ccx_failure_parser = ccx_subparsers.add_parser("failure", help="Compute failure criteria")
+    ccx_failure_parser.add_argument(
+        "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
+    )
+
     # 2D subcommands
     twod_parser = subparsers.add_parser("2d", help="2D mesh and ANBA4 operations")
     twod_parser.add_argument("yml", type=Path, help="Path to YAML config file")
@@ -274,6 +280,8 @@ def main():
                 plot3d=args.plot3d,
                 plot2d=args.plot2d,
             )
+        elif args.subcommand == "failure":  # Handle failure subcommand
+            ccx.failure_criteria()
     elif args.command == "2d":
         if not hasattr(args, "subcommand") or args.subcommand is None:
             d2d.mesh2d(rotz=args.rotz, parallel=args.parallel)
