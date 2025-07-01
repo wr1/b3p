@@ -15,17 +15,17 @@ class TwoDApp:
         """Initialize TwoDApp with state and YAML config file."""
         self.state = state
         self.yml = yml
+        self.config = self.state.load_yaml(yml)  # Load config once
 
     def mesh2d(self, rotz=0.0, parallel=True):
         """Create 2D meshes from blade sections."""
-        dct = self.state.load_yaml(Path(self.yml))
-        if "mesh2d" not in dct:
-            logger.error("No mesh2d section in yml file")
+        if self.config.mesh2d is None:
+            logger.error("No mesh2d section in config")
             return
-        if "sections" not in dct["mesh2d"]:
-            logger.error("No sections in mesh2d section in yml file")
+        if "sections" not in self.config.mesh2d:
+            logger.error("No sections in mesh2d section in config")
             return
-        sections = dct["mesh2d"]["sections"]
+        sections = self.config.mesh2d["sections"]
 
         drape_prefix = self.state.get_prefix("drape")
         mesh_prefix = self.state.get_prefix("mesh")
@@ -47,8 +47,6 @@ class TwoDApp:
 
     def run_anba4(self, anba_env="anba4-env"):
         """Run ANBA4 on 2D meshes."""
-        yml = self.yml
-        self.state.load_yaml(yml)
         prefix = self.state.get_prefix("drape")
         meshes = glob.glob(str(Path(prefix) / "2d" / "msec_*.xdmf"))
         conda_path = os.environ.get("CONDA_EXE") or shutil.which("conda")
@@ -63,9 +61,8 @@ class TwoDApp:
             return
 
         logger.info(f"Using Conda environment for running anba4 {anba_env}")
-        self.state.load_yaml(yml)
         if not meshes:
-            meshes = self.mesh2d()
+            meshes = self.mesh2d()  # This will use self.config
 
         material_map = str(Path(prefix).parent / "material_map.json")
         script_path = os.path.abspath(
@@ -107,14 +104,14 @@ class TwoDApp:
 
     def clean(self):
         """Remove 2D working directory and its contents."""
-        self.state.load_yaml(self.yml)
-        workdir = Path(self.state.get_prefix("2d")).parent / "2d"
-        if not workdir.exists():
-            logger.info(f"Workdir {workdir} does not exist - nothing to clean")
-            return
+        if self.config.general.workdir:
+            workdir = Path(self.config.general.workdir) / "2d"
+            if not workdir.exists():
+                logger.info(f"Workdir {workdir} does not exist - nothing to clean")
+                return
 
-        try:
-            shutil.rmtree(workdir)
-            logger.info(f"Removed workdir {workdir}")
-        except Exception as e:
-            logger.error(f"Failed to remove workdir {workdir}: {e}")
+            try:
+                shutil.rmtree(workdir)
+                logger.info(f"Removed workdir {workdir}")
+            except Exception as e:
+                logger.error(f"Failed to remove workdir {workdir}: {e}")

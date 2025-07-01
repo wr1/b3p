@@ -7,6 +7,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+
 class AppState:
     """Singleton to manage application state."""
 
@@ -25,6 +26,7 @@ class AppState:
 
     def load_yaml(self, yml: Path) -> BladeConfig:
         from .yml_portable import yaml_make_portable
+
         if self.config is None:
             yml = yml.resolve()
             self.yml_dir = yml.parent
@@ -49,10 +51,12 @@ class AppState:
 
     def expand_chamfered_cores(self):
         if self.config:
-            self.config = BladeConfig(**build_plybook.expand_chamfered_cores(
-                self.config.dict(),
-                self.workdir_path / (self.config.general.prefix + "_expanded.yml"),
-            ))
+            self.config = BladeConfig(
+                **build_plybook.expand_chamfered_cores(
+                    self.config.model_dump(),
+                    self.workdir_path / (self.config.general.prefix + "_expanded.yml"),
+                )
+            )
 
     def make_workdir(self):
         if self.config is None:

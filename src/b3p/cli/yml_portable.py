@@ -108,5 +108,5 @@ def save_yaml(of: str, config: BladeConfig):
     yaml = YAML()
     yaml.default_flow_style = True
     with open(of, "w") as f:
-        yaml.dump(config.dict(exclude_none=True), f)
+        yaml.dump(config.model_dump(exclude_none=True), f)
         logger.info(f"Written to: {of}")

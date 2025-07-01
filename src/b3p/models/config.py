@@ -101,6 +101,7 @@ class BladeConfig(BaseModel):
     ] = Field(default_factory=dict)
     loads: Optional[Dict[str, Any]] = None
     damage: Optional[Dict[str, Any]] = None
+    mesh2d: Optional[Dict[str, Any]]
 
     class Config:
         extra = "allow"

@@ -25,13 +25,13 @@ class BuildApp:
 
     def geometry(self):
         prefix = self.state.get_prefix("mesh")
-        build_blade_geometry.build_blade_geometry(self.config.dict(), prefix)
+        build_blade_geometry.build_blade_geometry(self.config.model_dump(), prefix)
         prefix = self.state.get_prefix()
         yml_portable.save_yaml(f"{prefix}_portable.yml", self.config)
 
     def mesh(self):
         prefix = self.state.get_prefix("mesh")
-        build_blade_structure.build_blade_structure(self.config.dict(), prefix)
+        build_blade_structure.build_blade_structure(self.config.model_dump(), prefix)
 
     def drape(self, bondline: bool = True):
         plybookname = "_plybook.pck"
@@ -41,7 +41,7 @@ class BuildApp:
         pbookpath = str(prefix) + plybookname
 
         logger.info(f"prefix and mesh prefix: {prefix}, {mesh_prefix}")
-        build_plybook.lamplan2plies(self.config.dict(), pbookpath)
+        build_plybook.lamplan2plies(self.config.model_dump(), pbookpath)
         slb = self.config.laminates.slabs
         used_grids = {slb[i].grid for i in slb}
 
@@ -85,7 +85,7 @@ class BuildApp:
     def apply_loads(self):
         prefix = self.state.get_prefix("drape")
         add_load_to_mesh.add_load_to_mesh(
-            self.config.dict(),
+            self.config.model_dump(),
             f"{prefix}_joined.vtu",
             f"{prefix}_loads.png",
         )
