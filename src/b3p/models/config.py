@@ -1,54 +1,10 @@
 """Pydantic models for blade configuration."""
 
-import numpy as np  # For vectorization of arrays
-from pydantic import BaseModel, Field, validator, root_validator, ValidationError
+import numpy as np
+from pydantic import BaseModel, Field, validator, root_validator
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
-
-
-class IsotropicMaterial(BaseModel):
-    """Model for isotropic materials."""
-
-    E: float  # Young's modulus
-    nu: float  # Poisson's ratio
-    rho: float  # Density
-    G: Optional[float] = None  # Shear modulus (optional)
-    name: str = ""  # Material name
-
-
-class AnisotropicMaterial(BaseModel):
-    """Model for anisotropic materials."""
-
-    Ex: float  # Young's modulus in x-direction
-    Ey: Optional[float] = None  # Young's modulus in y-direction
-    Ez: Optional[float] = None  # Young's modulus in z-direction
-    Gxy: Optional[float] = None  # Shear modulus xy
-    Gxz: Optional[float] = None  # Shear modulus xz
-    Gyz: Optional[float] = None  # Shear modulus yz
-    nu12: Optional[float] = None  # Poisson's ratio xy
-    nu13: Optional[float] = None  # Poisson's ratio xz
-    nu23: Optional[float] = None  # Poisson's ratio yz
-    rho: float  # Density
-    name: str = ""  # Material name
-
-
-class PuckMaterial(AnisotropicMaterial):
-    # Suggested Puck properties for failure criteria (add as needed):
-    Xt: Optional[float] = None  # Tensile strength in x-direction
-    Xc: Optional[float] = None  # Compressive strength in x-direction
-    Yt: Optional[float] = None  # Tensile strength in y-direction
-    Yc: Optional[float] = None  # Compressive strength in y-direction
-    Zt: Optional[float] = None  # Tensile strength in z-direction
-    Zc: Optional[float] = None  # Compressive strength in z-direction
-    S12: Optional[float] = None  # Shear strength in 12 plane
-    S13: Optional[float] = None  # Shear strength in 13 plane
-    S23: Optional[float] = None  # Shear strength in 23 plane
-    THETAF: Optional[float] = None  # Friction angle or similar
-    MGF: Optional[float] = None  # Material growth factor
-    ANU12: Optional[float] = None  # Additional Poisson's ratio
-    ANU12f: Optional[float] = None  # Fiber-related Poisson's ratio
-    E11_puck: Optional[float] = None  # Puck-specific modulus
-    E11f: Optional[float] = None  # Fiber modulus for Puck
+from .materials import IsotropicMaterial, AnisotropicMaterial, PuckMaterial
 
 
 class GeneralConfig(BaseModel):
@@ -85,7 +41,6 @@ class MeshConfig(BaseModel):
 
     radii: str
     webs: Dict[str, Dict]
-
     panel_mesh_scale: List[List[int]] = Field(
         default_factory=lambda: [[0, 1]],
         description="Scale for panel mesh, e.g., [[0, 1]]",
@@ -107,7 +62,6 @@ class MeshConfig(BaseModel):
         },
         description="Coordinate offsets for the mesh",
     )
-
     bondline: Dict[str, Union[str, float, List[List[float]]]] = (
         Field(  # Updated to handle lists
             default_factory=lambda: {"type": "default", "thickness": 0.01, "width": []},
@@ -135,21 +89,6 @@ class LaminateConfig(BaseModel):
     slabs: Dict[str, Slab] = Field(default_factory=dict, description="Slab definitions")
 
 
-class MaterialConfig(BaseModel):
-    """Material configuration."""
-
-    materials: Dict[
-        str, Union[IsotropicMaterial, AnisotropicMaterial, PuckMaterial]
-    ] = Field(default_factory=dict)
-
-    @root_validator(skip_on_failure=True)
-    def check_materials(cls, values):
-        """Ensure materials are provided and handle input dict."""
-        if "materials" not in values or not values["materials"]:
-            raise ValueError("materials must be provided")
-        return values
-
-
 class BladeConfig(BaseModel):
     """Top-level blade configuration."""
 
@@ -157,13 +96,17 @@ class BladeConfig(BaseModel):
     aero: AeroConfig = Field(default_factory=AeroConfig)
     mesh: MeshConfig = Field(default_factory=MeshConfig)
     laminates: LaminateConfig = Field(default_factory=LaminateConfig)
-    materials: MaterialConfig = Field(default_factory=MaterialConfig)
+    materials: Dict[
+        str, Union[IsotropicMaterial, AnisotropicMaterial, PuckMaterial]
+    ] = Field(default_factory=dict)
     loads: Optional[Dict[str, Any]] = None
     damage: Optional[Dict[str, Any]] = None
 
     class Config:
         extra = "allow"
 
-    @validator("materials")
-    def validate_materials(cls, v):
-        return v  # Validation handled in MaterialConfig
+    @root_validator(skip_on_failure=True)
+    def check_materials(cls, values):
+        if not values.get("materials"):
+            raise ValueError("materials must be provided")
+        return values

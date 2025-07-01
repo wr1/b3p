@@ -4,8 +4,8 @@ import ruamel.yaml
 from pathlib import Path
 from pydantic import BaseModel
 from typing import Dict, Any, Union, Optional
-from .aniso_material import AnisotropicMaterial
-from .iso_material import IsotropicMaterial
+from ..materials.aniso_material import AnisotropicMaterial
+from ..materials.iso_material import IsotropicMaterial
 
 
 class MaterialDatabase:
