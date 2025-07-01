@@ -1,9 +1,10 @@
 """Pydantic models for blade configuration."""
 
 import numpy as np  # For vectorization of arrays
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, root_validator, ValidationError
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
+
 
 class IsotropicMaterial(BaseModel):
     """Model for isotropic materials."""
@@ -82,6 +83,31 @@ class AeroConfig(BaseModel):
 class MeshConfig(BaseModel):
     """Mesh configuration."""
 
+    radii: str
+    webs: Dict[str, Dict]
+
+    panel_mesh_scale: List[List[int]] = Field(
+        default_factory=lambda: [[0, 1]],
+        description="Scale for panel mesh, e.g., [[0, 1]]",
+    )
+    n_web_points: int = Field(
+        default=10,
+        description="Number of points along the web",
+    )
+    n_chordwise_points: int = Field(
+        default=100,
+        description="Number of chordwise points in the mesh",
+    )
+    coordinates: Dict[str, Dict[str, Union[str, List[List[float]]]]] = Field(
+        default_factory=lambda: {
+            "d_te_offset": {
+                "base": "d_te",
+                "points": [[0, -0.1], [0.30, -0.2], [0.7, -0.3]],
+            }
+        },
+        description="Coordinate offsets for the mesh",
+    )
+
     bondline: Dict[str, Union[str, float, List[List[float]]]] = (
         Field(  # Updated to handle lists
             default_factory=lambda: {"type": "default", "thickness": 0.01, "width": []},
@@ -100,7 +126,7 @@ class Slab(BaseModel):
     key: List[Union[int, float]]  # e.g., [100, 2000]
     increment: List[Union[int, int]] = [1, -1]  # e.g., [1, -1]
     grid: str  # e.g., "shell"
-    splitstack: Optional[List[float]] = None  # e.g., [0.5, 0.5] if present
+    splitstack: Optional[List[float]] = [1, 0]  # e.g., [0.5, 0.5] if present
 
 
 class LaminateConfig(BaseModel):
@@ -112,17 +138,15 @@ class LaminateConfig(BaseModel):
 class MaterialConfig(BaseModel):
     """Material configuration."""
 
-    path: Optional[str] = None
-    materials: Optional[Dict[str, Dict]] = None
+    materials: Dict[
+        str, Union[IsotropicMaterial, AnisotropicMaterial, PuckMaterial]
+    ] = Field(default_factory=dict)
 
     @root_validator(skip_on_failure=True)
     def check_materials(cls, values):
-        """Ensure either path or materials is provided; treat input dict as materials if needed."""
-        if 'path' not in values and 'materials' not in values:
-            if len(values) > 0:
-                values['materials'] = values  # Assign input dict to materials
-            else:
-                raise ValueError("Either materials.path or materials.materials must be provided")
+        """Ensure materials are provided and handle input dict."""
+        if "materials" not in values or not values["materials"]:
+            raise ValueError("materials must be provided")
         return values
 
 
@@ -142,4 +166,4 @@ class BladeConfig(BaseModel):
 
     @validator("materials")
     def validate_materials(cls, v):
-        return v  # Root validator in MaterialConfig handles the check
+        return v  # Validation handled in MaterialConfig
