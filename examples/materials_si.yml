@@ -125,8 +125,8 @@ glass_ud:
   nu23: 0.38927850417208315
   vf: 0.55
   wf: 0.7296944371898669
-dummy_puck:
-  name: dummy_puck
+ud_puck:
+  name: ud_puck
   rho: 1914.5
   Ex: 150000.0
   Ey: 10000.0

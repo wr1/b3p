@@ -88,15 +88,15 @@ loads: loads_v0.yml
 
 damage:
   puck_stack:
-    - angle: 0 
-      material: 'glass_ud_puck'
-    - angle: 45
-      material: 'glass_ud_puck'
-    - angle: -45
-      material: 'glass_ud_puck'
-    - angle: 90
-      material: 'glass_ud_puck'
-    - angle: 0 
-      material: 'carbon_ud_puck'
+    - theta: 0 
+      material: 'ud_puck'
+    - theta: 45
+      material: 'ud_puck'
+    - theta: -45
+      material: 'ud_puck'
+    - theta: 90
+      material: 'ud_puck'
+    - theta: 0
+      material: 'ud_puck'
 
   

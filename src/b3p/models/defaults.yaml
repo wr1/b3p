@@ -136,8 +136,8 @@ materials:
     nu12: 0.3434999999999999
     nu13: 0.34350000000000014
     nu23: 0.38927850417208315
-  dummy_puck:
-    name: dummy_puck
+  ud_puck:
+    name: ud_puck
     rho: 1914.5
     e11: 150000.0
     e22: 10000.0
@@ -307,4 +307,4 @@ damage:
     - angle: 90
       material: 'glass_ud_puck'
     - angle: 0
-      material: 'carbon_ud_puck'
+      material: 'cud_puck'
