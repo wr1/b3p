@@ -29,6 +29,8 @@ jobs:
         shell: bash -el {0}
         run: |
           pip install -e . 
+          python scripts/ccblade_install.py
+
       # conda install -c conda-forge poetry
       # poetry config virtualenvs.create false
       # poetry install --no-interaction
@@ -39,7 +41,6 @@ jobs:
         run: |
           conda create -n anba4-env -c conda-forge -y fenics=2019.1.0 python=3.9
           conda info --envs  # Verify environment creation
-          python scripts/ccblade_install.py
 
       # Run tests
       - name: Run tests
