@@ -28,9 +28,10 @@ jobs:
       - name: Install b3p dependencies
         shell: bash -el {0}
         run: |
-          conda install -c conda-forge poetry
-          poetry config virtualenvs.create false
-          poetry install --no-interaction
+          pip install -e . 
+      # conda install -c conda-forge poetry
+      # poetry config virtualenvs.create false
+      # poetry install --no-interaction
 
       # Create the anba4-env environment for run_anba4
       - name: Set up anba4-env
@@ -38,15 +39,18 @@ jobs:
         run: |
           conda create -n anba4-env -c conda-forge -y fenics=2019.1.0 python=3.9
           conda info --envs  # Verify environment creation
+          python scripts/ccblade_install.py
 
       # Run tests
       - name: Run tests
         shell: bash -el {0}
         run: |
-          pytest -v tests/test_build.py
-          pytest -v tests/test_ccx.py
-          pytest -v tests/test_ccblade.py
-          pytest -v tests/test_2d.py
+          pytest -v 
+     
+      # tests/test_build.py
+      # pytest -v tests/test_ccx.py
+      # pytest -v tests/test_ccblade.py
+      # pytest -v tests/test_2d.py
 
       # Cache Conda environments
       - name: Cache Conda environments
