@@ -52,14 +52,15 @@ def get_material_db(material_map, unit_factor=1):
         )
         density = matdb_entry.get("rho", matdb_entry.get("density", 1.0))
 
-        if "e11" in matdb_entry:
+        # if Ex and Ey and Ez are present, assume orthotropic material
+        if "Ex" in matdb_entry and "Ey" in matdb_entry and "Ez" in matdb_entry:
             required_keys = [
-                "e11",
-                "e22",
-                "e33",
-                "g12",
-                "g13",
-                "g23",
+                "Ex",
+                "Ey",
+                "Ez",
+                "Gxy",
+                "Gxz",
+                "Gyz",
                 "nu12",
                 "nu13",
                 "nu23",
@@ -69,17 +70,16 @@ def get_material_db(material_map, unit_factor=1):
                     f"Missing orthotropic properties for material {matdb_id}: {required_keys}"
                 )
             matMechanicProp = np.zeros((3, 3))
-            matMechanicProp[0, 2] = matdb_entry["e11"] * unit_factor
-            matMechanicProp[0, 1] = matdb_entry["e22"] * unit_factor
-            matMechanicProp[0, 0] = matdb_entry["e33"] * unit_factor
-            matMechanicProp[1, 2] = matdb_entry["g23"] * unit_factor
-            matMechanicProp[1, 1] = matdb_entry["g13"] * unit_factor
-            matMechanicProp[1, 0] = matdb_entry["g12"] * unit_factor
+            matMechanicProp[0, 2] = matdb_entry["Ex"] * unit_factor
+            matMechanicProp[0, 1] = matdb_entry["Ey"] * unit_factor
+            matMechanicProp[0, 0] = matdb_entry["Ez"] * unit_factor
+            matMechanicProp[1, 2] = matdb_entry["Gyz"] * unit_factor
+            matMechanicProp[1, 1] = matdb_entry["Gxz"] * unit_factor
+            matMechanicProp[1, 0] = matdb_entry["Gxy"] * unit_factor
             matMechanicProp[2, 2] = matdb_entry["nu23"]
             matMechanicProp[2, 1] = matdb_entry["nu13"]
             matMechanicProp[2, 0] = matdb_entry["nu12"]
             materials[matdb_id] = material.OrthotropicMaterial(matMechanicProp, density)
-
         else:
             if "E" not in matdb_entry and "Ex" not in matdb_entry:
                 raise ValueError(
@@ -202,9 +202,6 @@ def solve_anba4(mesh_filename, material_db_filename):
 
     result_file = mesh_filename.replace(".xdmf", "_results.vtp")
     export_unit_strains(anba, result_file, pv_mesh)
-    # import pyvista as pv
-    # mesh = pv.read(result_filename)
-    # mesh.save(result_filename.replace(".xdmf", ".vtu"))
     logger.info(f"Wrote results to {json_output_filename} and {result_file}")
 
 
