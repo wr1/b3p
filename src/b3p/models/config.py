@@ -176,8 +176,8 @@ class BladeConfig(BaseModel):
         str, Union[IsotropicMaterial, AnisotropicMaterial, PuckMaterial]
     ] = Field(default_factory=dict)
     loads: Optional[Dict[str, Any]] = None
-    damage: Optional[Dict[str, Any]] = None
-    mesh2d: Optional[Dict[str, Any]]
+    damage: Optional[Dict[str, List[Dict[str, Any]]]] = None
+    mesh2d: Optional[Dict[str, Any]] = None
 
     class Config:
         extra = "allow"
@@ -188,21 +188,36 @@ class BladeConfig(BaseModel):
             raise ValueError("materials must be provided in the configuration")
         return values
 
-        # materials = values.get("materials")
-        # if materials:
-        #     for key, material in materials.items():
-        #         if isinstance(material, IsotropicMaterial):
-        #             material.type = "isotropic"
-        #         elif isinstance(material, AnisotropicMaterial):
-        #             material.type = "anisotropic"
-        #         elif isinstance(material, PuckMaterial):
-        #             material.type = "puck"
-        #         else:
-        #             raise ValueError(f"Unknown material type for {key}")
-        # return values
 
-    # @root_validator(skip_on_failure=True)
-    # def check_materials(cls, values):
-    #     if not values.get("materials"):
-    #         raise ValueError("materials must be provided")
-    #     return values
+# damage:
+#   puck_stack:
+#     - angle: 0
+#       material: 'glass_ud_puck'
+#     - angle: 45
+#       material: 'glass_ud_puck'
+#     - angle: -45
+#       material: 'glass_ud_puck'
+#     - angle: 90
+#       material: 'glass_ud_puck'
+#     - angle: 0
+#       material: 'cud_puck'
+
+
+# materials = values.get("materials")
+# if materials:
+#     for key, material in materials.items():
+#         if isinstance(material, IsotropicMaterial):
+#             material.type = "isotropic"
+#         elif isinstance(material, AnisotropicMaterial):
+#             material.type = "anisotropic"
+#         elif isinstance(material, PuckMaterial):
+#             material.type = "puck"
+#         else:
+#             raise ValueError(f"Unknown material type for {key}")
+# return values
+
+# @root_validator(skip_on_failure=True)
+# def check_materials(cls, values):
+#     if not values.get("materials"):
+#         raise ValueError("materials must be provided")
+#     return values

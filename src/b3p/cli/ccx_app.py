@@ -124,10 +124,24 @@ class CcxApp:
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 
+        # self.state.load_yaml(self.yml)
+
     def failure_criteria(self, **kwargs):
-        self.state.load_yaml(self.yml)
+        logger.info("{kwargs}")
         prefix = self.state.get_prefix(self.dir)
-        puck_config = self.state.dct.get("damage", {})
+
+        puck_config = self.state.config.damage["puck_stack"]
+        materials = self.state.config.materials
+
+        for i in puck_config:
+            if i["material"] not in materials:
+                logger.error(
+                    f"Material {i['material']} not found in materials config, available: {materials.keys()}"
+                )
+                continue
+
+            i["material"] = materials[i["material"]].model_dump()
+
         vtus = [i for i in prefix.parent.glob("*ccx*vtu") if str(i).find("fail") == -1]
         logger.info(f"VTU files found for failure criteria: {vtus}")
 
