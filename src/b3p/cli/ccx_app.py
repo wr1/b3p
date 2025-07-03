@@ -40,6 +40,7 @@ def check_ccx_run_done(inpfile):
             f.seek(-5, 2)
             y = f.read()
             if y == b"9999\n":
+                logger.info(f"CCX run for {inpfile} is done, found {frd_file}")
                 return True
     return False
 
@@ -77,6 +78,7 @@ class CcxApp:
             matmap=str(Path(base_prefix).parent / "material_map.json"),
             out=f"{prefix}_ccx.inp",
             bondline=bondline,
+            # buckling=kwargs.get("buckling", False),
             **{k: v for k, v in kwargs.items() if k != "bondline"},
         )
         logger.info(f"Written: {', '.join(output_files)}")

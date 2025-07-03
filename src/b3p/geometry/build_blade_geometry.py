@@ -35,7 +35,7 @@ def build_blade_geometry(config, prefix, xfoil=True):
                 f"xs_{config['general']['prefix']}",
             )
         )
-    blade.plot(f"{prefix}", fname=f"{prefix}.png")
+    blade.plot(fname=f"{prefix}.png")
     n_sections = 50
     blade.to_table(np.linspace(0, 1, n_sections), "%s_sca_%i" % (prefix, n_sections))
 
