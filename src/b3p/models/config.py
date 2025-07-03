@@ -148,7 +148,7 @@ class Slab(BaseModel):
     """Definition of a slab in the laminate configuration."""
 
     material: str
-    cover: Dict[str, List[float]]  # e.g., {"d_w0": [-0.5, 0.5, 0]}
+    cover: Dict[str, List[Any]]  # e.g., {"d_w0": [-0.5, 0.5, 0]}
     slab: List[List[float]]  # e.g., [[0.03, 0], [0.10, 58]]
     ply_thickness: float
     key: List[Union[int, int]]  # e.g., [100, 2000]
@@ -159,10 +159,23 @@ class Slab(BaseModel):
     draping: Optional[str] = "plies"  # e.g., "blocks" or "plies"
 
 
+class Datum(BaseModel):
+    """Definition of a datum in the laminate configuration."""
+
+    scalex: float = 1.0
+    scaley: float = 1.0
+    xy: List[List[float]] = Field(
+        default_factory=list, description="List of [x, y] coordinates"
+    )
+
+
 class LaminateConfig(BaseModel):
     """Laminate configuration."""
 
     slabs: Dict[str, Slab] = Field(default_factory=dict, description="Slab definitions")
+    datums: Dict[str, Datum] = Field(
+        default_factory=dict, description="Datum definitions"
+    )
 
 
 class BladeConfig(BaseModel):
