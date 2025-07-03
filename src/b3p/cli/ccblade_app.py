@@ -5,17 +5,13 @@ logger = logging.getLogger(__name__)
 
 try:
     from b3p.models.config import BladeConfig  # Ensure models are used
+    from b3p.bem.ccblade_run import ccblade_run  # Import the updated class
 
     has_ccblade = True
-
 
 except ImportError:
     logger.warning("Could not import ccblade_run. Functionality will be disabled.")
     has_ccblade = False
-
-
-if has_ccblade:
-    from b3p.bem.ccblade_run import ccblade_run  # Import the updated class
 
 
 class CCBladeApp:
