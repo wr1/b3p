@@ -44,6 +44,13 @@ def run_ccblade(temp_example_dir):
         os.chdir(original_dir)
 
 
+@pytest.mark.skipif(not has_ccblade, reason="CCBlade functionality is not available")
+def test_ccblade_available():
+    """Test if CCBlade is available for use."""
+    assert has_ccblade, "CCBlade should be available"
+
+
+@pytest.mark.skipif(not has_ccblade, reason="CCBlade functionality is not available")
 def test_ccblade_output(run_ccblade):
     """Test if CCBlade generates the expected output table matching the reference."""
     workdir = run_ccblade["workdir"]
