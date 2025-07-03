@@ -142,99 +142,6 @@ def transform_stress_to_material(stress, theta):
     return stress_material
 
 
-def get_ply_stack():
-    """Return default ply stack configuration with angles relative to local_x."""
-    return [
-        {
-            "theta": 0.0,  # 0° relative to local_x
-            "material": {
-                "E11": 150000.0,
-                "E22": 10000.0,
-                "E33": 10000.0,
-                "G12": 5000.0,
-                "G13": 5000.0,
-                "G23": 4000.0,
-                "nu12": 0.3,
-                "nu13": 0.3,
-                "nu23": 0.4,
-                "Xt": 2000.0,
-                "Xc": 1500.0,
-                "Yt": 50.0,
-                "Yc": 200.0,
-                "Zt": 50.0,
-                "Zc": 200.0,
-                "S12": 80.0,
-                "S13": 80.0,
-                "S23": 80.0,
-                "THETAF": 53.0,
-                "MGF": 0.5,
-                "ANU12": 0.3,
-                "ANU12f": 0.25,
-                "E11_puck": 150000.0,
-                "E11f": 200000.0,
-            },
-        },
-        {
-            "theta": 45.0,  # 45° relative to local_x
-            "material": {
-                "E11": 150000.0,
-                "E22": 10000.0,
-                "E33": 10000.0,
-                "G12": 5000.0,
-                "G13": 5000.0,
-                "G23": 4000.0,
-                "nu12": 0.3,
-                "nu13": 0.3,
-                "nu23": 0.4,
-                "Xt": 2000.0,
-                "Xc": 1500.0,
-                "Yt": 50.0,
-                "Yc": 200.0,
-                "Zt": 50.0,
-                "Zc": 200.0,
-                "S12": 80.0,
-                "S13": 80.0,
-                "S23": 80.0,
-                "THETAF": 53.0,
-                "MGF": 0.5,
-                "ANU12": 0.3,
-                "ANU12f": 0.25,
-                "E11_puck": 150000.0,
-                "E11f": 200000.0,
-            },
-        },
-        {
-            "theta": 90.0,  # 90° relative to local_x
-            "material": {
-                "E11": 120000.0,
-                "E22": 8000.0,
-                "E33": 8000.0,
-                "G12": 4000.0,
-                "G13": 4000.0,
-                "G23": 3000.0,
-                "nu12": 0.28,
-                "nu13": 0.28,
-                "nu23": 0.35,
-                "Xt": 1800.0,
-                "Xc": 1300.0,
-                "Yt": 40.0,
-                "Yc": 180.0,
-                "Zt": 40.0,
-                "Zc": 180.0,
-                "S12": 70.0,
-                "S13": 70.0,
-                "S23": 70.0,
-                "THETAF": 50.0,
-                "MGF": 0.4,
-                "ANU12": 0.28,
-                "ANU12f": 0.23,
-                "E11_puck": 120000.0,
-                "E11f": 180000.0,
-            },
-        },
-    ]
-
-
 def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
     """Compute Puck failure indices for a surface mesh with cell-based strains and local ply angles."""
     # Ensure cell normals and strains
@@ -291,8 +198,8 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
             theta_global[i] = np.degrees(np.arctan2(fiber_dir[1], fiber_dir[0]))
 
         mat = ply["material"]
-        E11, E22, E33 = mat["E11"], mat["E22"], mat["E33"]
-        G12, G13, G23 = mat["G12"], mat["G13"], mat["G23"]
+        E11, E22, E33 = mat["Ex"], mat["Ey"], mat["Ez"]
+        G12, G13, G23 = mat["Gxy"], mat["Gxz"], mat["Gyz"]
         nu12, nu13, nu23 = mat["nu12"], mat["nu13"], mat["nu23"]
         Xt, Xc = mat["Xt"], mat["Xc"]
         Yt, Yc = mat["Yt"], mat["Yc"]
@@ -349,12 +256,14 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
     return new_mesh, failure_data
 
 
-def compute_failure_for_meshes(mesh_files):
+def compute_failure_for_meshes(mesh_files, damage_calc_config: dict = None):
     """Process multiple mesh files and compute failure indices for each."""
+
+    logger.info(f"config for damage calculation: {damage_calc_config}")
     for mesh_file in mesh_files:
         try:
             mesh = pv.read(mesh_file).extract_surface()
-            ply_stack = get_ply_stack()
+            ply_stack = damage_calc_config  # get_ply_stack(damage_calc_config)
             result = compute_laminate_failure(mesh, ply_stack, 0.9)
 
             if result is None:

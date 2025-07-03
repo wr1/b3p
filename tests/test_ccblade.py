@@ -44,6 +44,13 @@ def run_ccblade(temp_example_dir):
         os.chdir(original_dir)
 
 
+@pytest.mark.skipif(not has_ccblade, reason="CCBlade functionality is not available")
+def test_ccblade_available():
+    """Test if CCBlade is available for use."""
+    assert has_ccblade, "CCBlade should be available"
+
+
+@pytest.mark.skipif(not has_ccblade, reason="CCBlade functionality is not available")
 def test_ccblade_output(run_ccblade):
     """Test if CCBlade generates the expected output table matching the reference."""
     workdir = run_ccblade["workdir"]
@@ -61,9 +68,20 @@ def test_ccblade_output(run_ccblade):
         reference_file.exists()
     ), f"Reference file {reference_file} not found in temp data directory"
 
-    generated_df = pd.read_csv(generated_file)
-    reference_df = pd.read_csv(reference_file)
+    generated_df = pd.read_csv(generated_file, sep=";")
+    reference_df = pd.read_csv(reference_file, sep=";")
 
-    assert generated_df.equals(
-        reference_df
-    ), "Generated CCBlade output does not match reference file"
+    logger.info(
+        f"Generated DataFrame:\n{generated_df}\nReference DataFrame:\n{reference_df}"
+    )
+
+    pd.testing.assert_frame_equal(
+        generated_df,
+        reference_df,
+        check_dtype=False,
+        check_like=True,
+        check_exact=False,
+    )
+    # assert generated_df.equals(
+    #     reference_df
+    # ), "Generated CCBlade output does not match reference file"

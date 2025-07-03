@@ -1,9 +1,9 @@
 from pathlib import Path
 import os
-from b3p.cli import yml_portable
-from b3p.laminates import build_plybook
+from ..models.config import BladeConfig
+from ..laminates import build_plybook
 import logging
-from typing import Optional, Dict
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +14,10 @@ class AppState:
     _state: Optional["AppState"] = None
 
     def __init__(self):
-        self.dct: Optional[Dict] = None
+        self.config: Optional[BladeConfig] = None
         self.yml_dir: Optional[Path] = None
-        self.workdir_path: Optional[Path] = None  # Stores the resolved workdir as Path
+        self.workdir_path: Optional[Path] = None
+        self.expanded_yml_path: Optional[Path] = None  # Track expanded file path
 
     @classmethod
     def get_instance(cls):
@@ -24,22 +25,25 @@ class AppState:
             cls._state = cls()
         return cls._state
 
-    def load_yaml(self, yml: Path) -> Optional[Dict]:
-        if self.dct is None:
+    def load_yaml(self, yml: Path) -> BladeConfig:
+        from .yml_portable import yaml_make_portable
+
+        if self.config is None:
             yml = yml.resolve()
             self.yml_dir = yml.parent
-            self.dct = yml_portable.yaml_make_portable(yml)
+            self.config = yaml_make_portable(yml)
             self._set_workdir()
             self.make_workdir()
-            self.expand_chamfered_cores()
-
-        logger.info(f"Loaded YAML data from {self.dct['general']['workdir']}")
-        return self.dct
+            self.expanded_yml_path = self.workdir_path / (
+                self.config.general.prefix + "_expanded.yml"
+            )  # Set expanded path
+            self.expand_chamfered_cores()  # Now expands and saves to tracked path
+        logger.info(f"Loaded YAML data from {self.config.general.workdir}")
+        return self.config
 
     def _set_workdir(self):
-        if self.dct and "general" in self.dct and "workdir" in self.dct["general"]:
-            workdir_str = self.dct["general"]["workdir"]
-            workdir_path = Path(workdir_str)
+        if self.config and self.config.general.workdir:
+            workdir_path = Path(self.config.general.workdir)
             if not workdir_path.is_absolute():
                 workdir_path = self.yml_dir / workdir_path
                 workdir_path = workdir_path.resolve()
@@ -50,14 +54,15 @@ class AppState:
             self.workdir_path = default_workdir.resolve()
 
     def expand_chamfered_cores(self):
-        if self.dct:
-            self.dct = build_plybook.expand_chamfered_cores(
-                self.dct,
-                self.workdir_path / (self.dct["general"]["prefix"] + "_expanded.yml"),
+        if self.config:
+            expanded_data = build_plybook.expand_chamfered_cores(
+                self.config.model_dump(),
+                self.expanded_yml_path,
             )
+            self.config = BladeConfig(**expanded_data)
 
     def make_workdir(self):
-        if self.dct is None:
+        if self.config is None:
             raise ValueError("No YAML data loaded")
         if self.workdir_path is None:
             raise ValueError("Workdir not set")
@@ -65,13 +70,13 @@ class AppState:
             os.makedirs(self.workdir_path, exist_ok=True)
 
     def get_prefix(self, subdir: Optional[str] = None) -> Optional[Path]:
-        if self.dct is None:
+        if self.config is None:
             logger.warning("No YAML data loaded, returning None")
             return None
         if self.workdir_path is None:
             logger.warning("Workdir not set, returning None")
             return None
-        prefix_name = self.dct["general"].get("prefix", "b3p")
+        prefix_name = self.config.general.prefix
         if subdir is None:
             prefix = self.workdir_path / prefix_name
         else:
@@ -87,6 +92,7 @@ class AppState:
         return self.workdir_path
 
     def reset(self):
-        self.dct = None
+        self.config = None
         self.yml_dir = None
         self.workdir_path = None
+        self.expanded_yml_path = None  # Reset expanded path as well

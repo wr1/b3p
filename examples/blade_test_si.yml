@@ -2,7 +2,7 @@ general:
   # prefix for output files
   prefix: test_blade
   # workdirectory for all variants
-  workdir: temp_blade
+  workdir: si_blade
 
 planform:
   npchord: 100
@@ -30,7 +30,7 @@ aero:
       0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
       0.17: polars/NACA64_A17.dat}
 
-mesh:
+mesh:  
   radii: np.linspace(0,100, 100)
   webs:
     w0:
@@ -63,9 +63,7 @@ mesh:
       z_start: 0
       z_follow_blade: 100
       z_end: 105
-
   panel_mesh_scale: [[0,1]]
-
   n_web_points: 10
   n_chordwise_points: 100
   coordinates:
@@ -75,8 +73,6 @@ mesh:
     d_te_offset1:
       base: d_te_offset
       points: [[0, -0.1], [0.30, -0.2], [0.7, -0.1]]
-
-  # model a solid bondline
   bondline:
     width: [[0, 0], [0.2, 0.0], [0.4, 0.3], [0.6, 0.3], [1.0, 0.1]]
     material: epoxy_adhesive 
@@ -84,7 +80,7 @@ mesh:
 mesh2d:
   sections: [0.1, 0.5, 1, 2, 5, 8, 12, 15, 25, 45, 60, 80, 100]
 
-materials: materials_iso.yml
+materials: materials_si.yml
 
 laminates: laminates_v0.yml
 
@@ -92,15 +88,15 @@ loads: loads_v0.yml
 
 damage:
   puck_stack:
-    - angle: 0 
-      material: 'glass_ud_puck'
-    - angle: 45
-      material: 'glass_ud_puck'
-    - angle: -45
-      material: 'glass_ud_puck'
-    - angle: 90
-      material: 'glass_ud_puck'
-    - angle: 0 
-      material: 'carbon_ud_puck'
+    - theta: 0 
+      material: 'ud_puck'
+    - theta: 45
+      material: 'ud_puck'
+    - theta: -45
+      material: 'ud_puck'
+    - theta: 90
+      material: 'ud_puck'
+    - theta: 0
+      material: 'ud_puck'
 
   

@@ -13,8 +13,6 @@ import logging
 # from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
-# logger.handlers.clear()
-# logger.addHandler(RichHandler(rich_tracebacks=True))
 
 
 def zero_midside_loads(mesh):
@@ -190,7 +188,7 @@ def nodebuffer(grid):
 
 def element_buffer(grid):
     conn = grid.cells_dict
-    logger.info(f"{conn}")
+    # logger.info(f"{conn}")
     extypes = [23]
 
     vtk_ccx = {23: "s8r"}

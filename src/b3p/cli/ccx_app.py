@@ -108,7 +108,7 @@ class CcxApp:
 
         if inps_to_run:
             with multiprocessing.Pool(nproc) as pool:
-                with Progress() as progress:  # Replace tqdm with rich Progress
+                with Progress() as progress:
                     task = progress.add_task("Running CCX", total=len(inps_to_run))
                     for inp, success, error_msg in pool.imap_unordered(
                         partial(run_ccx, ccxexe=ccxexe, logger=logger), inps_to_run
@@ -124,10 +124,24 @@ class CcxApp:
         ccxpost.load_grids()
         ccxpost.tabulate(nbins)
 
+        # self.state.load_yaml(self.yml)
+
     def failure_criteria(self, **kwargs):
-        self.state.load_yaml(self.yml)
+        logger.info("{kwargs}")
         prefix = self.state.get_prefix(self.dir)
-        puck_config = self.state.dct.get("damage", {})
+
+        puck_config = self.state.config.damage["puck_stack"]
+        materials = self.state.config.materials
+
+        for i in puck_config:
+            if i["material"] not in materials:
+                logger.error(
+                    f"Material {i['material']} not found in materials config, available: {materials.keys()}"
+                )
+                continue
+
+            i["material"] = materials[i["material"]].model_dump()
+
         vtus = [i for i in prefix.parent.glob("*ccx*vtu") if str(i).find("fail") == -1]
         logger.info(f"VTU files found for failure criteria: {vtus}")
 
@@ -137,7 +151,7 @@ class CcxApp:
         self.state.load_yaml(self.yml)
         plotter = ccxpost.plot_ccx(self.state.get_workdir())
 
-        print(f"plotting 2d {plot2d} and 3d {plot3d}")
+        logger.info(f"plotting 2d {plot2d} and 3d {plot3d}")
         if plot3d:
             plotter.plot3d()
         if plot2d:

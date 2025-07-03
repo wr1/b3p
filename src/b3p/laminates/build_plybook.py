@@ -112,7 +112,8 @@ def expand_chamfered_cores(bldict, outputfile: Path = None):
     dctcopy = cp.deepcopy(bldict)
     for i in bldict["laminates"]["slabs"]:
         slab = dctcopy["laminates"]["slabs"][i]
-        if "chamfers" in slab:
+        if slab["chamfers"]:
+            logger.info(f"Expanding chamfered core {i} {slab}")
             coordinates, cores = expand_chamfered_core(slab)
             for j in range(len(cores)):
                 slabname = i + f"_ch{j}"
@@ -163,8 +164,9 @@ def coreblock(r, t, subdivisions=200, material=11):
     :param material: material number"""
     assert len(r) == len(t)
     lr = len(r)
-    x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
-    np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
+    # x = np.array(sorted(list(np.linspace(min(r), max(r), int(subdivisions))) + list(r)))
+    # y = np.interp(0.5 * (x[:-1] + x[1:]), list(r), t)
+    # logger.info(f"coreblock: {x}, {y} {r}, {t}")
 
     stack = []
     for i in range(lr - 1):
@@ -272,8 +274,6 @@ def add_bondline_material(matdb, material_map):
 
 def export_matdb(blade, material_map, material_map_file: Path = None):
     """Export material database to JSON."""
-    # workdir = blade["general"]["workdir"]
-    # matmap = os.path.join(workdir, "drape", "material_map.json")
     matmap = material_map_file
 
     if "bondline" in blade["mesh"] and "material" in blade["mesh"]["bondline"]:
@@ -295,6 +295,7 @@ def export_plybook(stacks, outputfile):
 
 def lamplan2plies(blade, outputfile="__plybook.pck"):
     """Convert a lamplan to a list of plies."""
+
     root_radius = blade["planform"]["z"][0][1]
 
     tip_radius = blade["planform"]["z"][-1][1]
@@ -314,6 +315,7 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
 
     for i in slabs:
         material = slabs[i]["material"]
+        # print(material)
         if material not in material_map:
             material_map[material] = len(material_map) + 1
 
@@ -376,9 +378,3 @@ def lamplan2plies(blade, outputfile="__plybook.pck"):
     )
     export_plybook(allstacks, outputfile=outputfile)
     return allstacks
-
-
-def slab2plybook(yamlfile, outputfile="__lamplan.pck"):
-    blade = yaml.safe_load(open(yamlfile, "r"))
-    lamplan2plies(blade, outputfile)
-    logger.info(f"written plydrape to {outputfile}")
