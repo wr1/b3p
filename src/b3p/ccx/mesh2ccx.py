@@ -141,30 +141,13 @@ def format_eset(name, eids):
 
 def compute_ply_groups(grid, prefix):
     gr = ""
-    out = []
     n = 1
     for i in grid.cell_data:
         if i.startswith(prefix):
-            thickness = grid.cell_data[i][:, 1].max()
-            material = grid.cell_data[i][:, 0].max()
-            out.append(
-                {
-                    "Ply Name": i,
-                    "Ply ID": n,
-                    "Card Image": "PLY",
-                    "Mat Name": f"m{int(material)}",
-                    "Thickness": thickness,
-                    "Orientation": 0,
-                    "Output Results": "yes",
-                    "TMANU": "",
-                    "DRAPE_ID": 0,
-                    "ESID": n,
-                }
-            )
             eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
             gr += format_eset(i, eids)
             n += 1
-    return gr, pd.DataFrame(out)
+    return gr
 
 
 def compute_slab_groups(grid, prefix):
@@ -276,7 +259,7 @@ def mesh2ccx(
     quadratic=True,
     add_centers=False,
     force_isotropic=False,
-    export_hyperworks=False,
+    # export_hyperworks=False,
     export_plygroups=False,
     buckling=False,
     meshonly=False,
@@ -314,7 +297,7 @@ def mesh2ccx(
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
 
     if export_plygroups:
-        plygroups, df = compute_ply_groups(mesh, "ply_")
+        plygroups = compute_ply_groups(mesh, "ply_")
         slabgroups = compute_slab_groups(mesh, "slab_thickness_")
         buf += plygroups + slabgroups
 
@@ -375,11 +358,5 @@ def mesh2ccx(
             open(of, "w").write(output)
             output_files.append(of)
             logger.info(f"written ccx input file to {of}")
-
-    if export_hyperworks:
-        otb = out.replace(".inp", ".csv")
-        df.to_csv(otb, index=False)
-        logger.info(f"written plybook to hyperworks table {otb}")
-        output_files.append(otb)
 
     return output_files
