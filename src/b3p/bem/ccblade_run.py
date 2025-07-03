@@ -7,6 +7,7 @@ import os
 import pandas as pd
 from matplotlib import pyplot as plt
 from scipy.optimize import fmin
+
 from ccblade.ccblade import CCAirfoil, CCBlade
 from pathlib import Path
 import math
