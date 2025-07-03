@@ -13,12 +13,11 @@ class CleanApp:
     def __init__(self, state, yml: Path):
         self.state = state
         self.yml = yml
+        self.state.load_yaml(self.yml)
 
     def clean(self):
         """Remove the working directory specified in the configuration."""
-        # config: BladeConfig = self.state.load_yaml(self.yml)
         workdir_path = self.state.get_workdir()  # Path(config.general.workdir)
-
         if workdir_path.is_dir():
             shutil.rmtree(workdir_path)
             logger.info(f"Removed workdir {workdir_path}")
