@@ -4,7 +4,7 @@ license = {text = "MIT"}
 name = "b3p"
 readme = "README.md"
 requires-python = ">=3.11,<4.0.0"
-version = "0.1.9rc1"
+version = "0.1.9"
 
 authors = [
   {name = "wr1", email = "8971152+wr1@users.noreply.github.com"},
