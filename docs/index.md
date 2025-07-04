@@ -65,6 +65,26 @@ To begin using B3P, follow these steps:
 3. Check out the [Input File Format](use/inputfile.md) to create blade definitions.
 4. Run example workflows as described in [Examples](examples/blade_test.md).
 
+## Build blade
+
+```bash
+usage: b3p [-h] {build,ccx,2d,ccblade,clean,validate} ...
+
+Blade Design CLI
+
+positional arguments:
+  {build,ccx,2d,ccblade,clean,validate}
+    build               Build the full blade model
+    ccx                 Run Calculix operations
+    2d                  2D mesh and ANBA4 operations
+    ccblade             Run CCBlade analysis
+    clean               Clean working directory
+    validate            Validate YAML configuration
+
+options:
+  -h, --help            show this help message and exit
+```
+
 
 ## Support
 

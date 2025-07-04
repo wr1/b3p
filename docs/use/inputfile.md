@@ -57,7 +57,7 @@ laminates:
       ply_thickness: 0.001
       slab: [[0, 0.01], [0.5, 0.02], [1, 0.015]]
       cover:
-        chord: [0.1, 0.9, 0]
+        d_lechord: [0.1, 0.9, 0]
   datums:
     chord:
       xy: [[0, 0], [0.5, 0.5], [1, 1]]
@@ -108,25 +108,27 @@ loads:
 
 - Path to a YAML file defining material properties or a dictionary of materials.
 - Example material file (`materials.yml`):
-  ```yaml
-  carbon_ud:
-    name: Carbon UD
-    e11: 135e9
-    e22: 10e9
-    e33: 10e9
-    g12: 5e9
-    g13: 5e9
-    g23: 4e9
-    nu12: 0.3
-    nu13: 0.3
-    nu23: 0.4
-    rho: 1600
-  adhesive:
-    name: Adhesive
-    E: 3e9
-    nu: 0.35
-    rho: 1200
-  ```
+```yaml
+glass_ud:
+  name: ud_e-glas_Epikote04908_55
+  resin_weight: 148.17465998568358
+  rho: 1914.5
+  Ex: 39805000000.0
+  Ey: 11154878519.089855
+  Ez: 11154878519.089855
+  Gxy: 3672385620.9150333
+  Gxz: 3672385620.9150333
+  Gyz: 4014630070.785344
+  thickness: 0.28632784538296346
+  nuxy: 0.3434999999999999
+  nuxz: 0.34350000000000014
+  nuyz: 0.38927850417208315
+adhesive:
+  name: Adhesive
+  E: 3e9
+  nu: 0.35
+  rho: 1200
+```
 
 ### `laminates`
 
