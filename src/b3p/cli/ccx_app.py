@@ -78,7 +78,6 @@ class CcxApp:
             matmap=str(Path(base_prefix).parent / "material_map.json"),
             out=f"{prefix}_ccx.inp",
             bondline=bondline,
-            # buckling=kwargs.get("buckling", False),
             **{k: v for k, v in kwargs.items() if k != "bondline"},
         )
         logger.info(f"Written: {', '.join(output_files)}")

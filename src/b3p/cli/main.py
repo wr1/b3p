@@ -79,7 +79,10 @@ def main():
     ccx_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     ccx_parser.add_argument(
         "-b", "--bondline", action="store_true", help="Use bondline meshes"
-    )  # Note: Using -b, assuming no conflict; adjust if needed
+    )
+    ccx_parser.add_argument(  # Added for top-level ccx command
+        "-k", "--buckling", action="store_true", help="Enable buckling analysis"
+    )
     ccx_subparsers = ccx_parser.add_subparsers(dest="subcommand", required=False)
 
     ccx_ccx_parser = ccx_subparsers.add_parser("ccx", help="Run full Calculix process")
@@ -92,6 +95,9 @@ def main():
         action="store_true",
         dest="bondline",
         help="Use bondline meshes",
+    )
+    ccx_ccx_parser.add_argument(
+        "-k", "--buckling", action="store_true", help="Enable buckling analysis"
     )
 
     ccx_prep_parser = ccx_subparsers.add_parser("prep", help="Prepare CCX input files")

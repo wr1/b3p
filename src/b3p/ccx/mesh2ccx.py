@@ -6,11 +6,8 @@ import vtk
 import time
 import json
 import os
-
-# import yaml
 import pandas as pd
 import logging
-# from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
 
@@ -265,12 +262,12 @@ def mesh2ccx(
     meshonly=False,
     bondline=False,  # Added to accept bondline argument
 ):
-    logger.info(f"** Running {vtu}")
+    logger.info(f"Converting {vtu} to ccx input file {out}")
     grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
-    logger.info(f"** Exporting {gr.GetNumberOfCells()} elements")
+    logger.info(f"Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
         lf = vtk.vtkLinearToQuadraticCellsFilter()
         lf.SetInputData(gr)
