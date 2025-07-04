@@ -30,10 +30,12 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     
     - name: Install dependencies with uv
-      run: uv pip install . # mkdocs mkdocs-material
+      run: uv pip install .[docs]
     
-    - name: Build and deploy docs
+    - name: Build MkDocs site
+      run: mkdocs build
+    
+    - name: Deploy to GitHub Pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        mkdocs gh-deploy --force
+      run: mkdocs gh-deploy --force

@@ -15,7 +15,6 @@ dependencies = [
   "h5py>=3.11.0,<4.0.0",
   "jinja2>=3.1.4,<4.0.0",
   "meshio>=5.3.5,<6.0.0",
-  "mkdocs-material>=9.6.1,<10.0.0",
   "numpy>=2.3.1",
   "pandas>=2.2.3,<3.0.0",
   "pyarrow>18",
@@ -28,6 +27,16 @@ dependencies = [
   "tqdm>=4.66.5,<5.0.0",
   "vtk==9.3.1",
 ]
+
+[project.optional-dependencies]
+docs = [
+  "mkdocs>=1.6.1,<2.0.0",
+  "mkdocs-material>=9.6.1,<10.0.0",
+]
+test = [
+  "pytest>=8.3.3,<9.0.0",
+]
+
 [project.scripts]
 b3p = "b3p.cli.main:main"
 
