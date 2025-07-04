@@ -183,18 +183,11 @@ def main():
         dest="parallel",
         help="Disable parallel processing for mesh2d",
     )
+
     twod_parser.add_argument(
         "-e", "--anba-env", default="anba4-env", help="Conda environment for ANBA4"
     )
-    twod_parser.add_argument(
-        "-o",
-        "--output-dir",
-        type=Path,
-        help="Output directory for VTU files",
-        default=None,
-    )
     twod_subparsers = twod_parser.add_subparsers(dest="subcommand", required=False)
-
     twod_mesh2d_parser = twod_subparsers.add_parser("mesh2d", help="Create 2D meshes")
     twod_mesh2d_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
@@ -214,7 +207,6 @@ def main():
         dest="parallel",
         help="Disable parallel processing",
     )
-
     twod_run_anba4_parser = twod_subparsers.add_parser(
         "run-anba4", help="Run ANBA4 on 2D meshes"
     )
@@ -228,16 +220,13 @@ def main():
         dest="anba_env",
         help="Conda environment for ANBA4",
     )
-
     twod_clean_parser = twod_subparsers.add_parser("clean", help="Remove msec* files")
     twod_clean_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
-
     # CCBlade subcommand
     ccblade_parser = subparsers.add_parser("ccblade", help="Run CCBlade analysis")
     ccblade_parser.add_argument("yml", type=Path, help="Path to YAML config file")
-
     # Clean subcommand
     clean_parser = subparsers.add_parser("clean", help="Clean working directory")
     clean_parser.add_argument("yml", type=Path, help="Path to YAML config file")

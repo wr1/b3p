@@ -23,10 +23,28 @@ options:
   -h, --help            show this help message and exit
 ```
 
+```bash
+❯ b3p build -h
+usage: b3p build [-h] [-n] yml {geometry,mesh,drape,mass,apply-loads} ...
+
+positional arguments:
+  yml                   Path to YAML config file
+  {geometry,mesh,drape,mass,apply-loads}
+    geometry            Build blade geometry
+    mesh                Mesh blade structure
+    drape               Drape plies onto mesh
+    mass                Calculate blade mass
+    apply-loads         Apply loads to mesh
+
+options:
+  -h, --help            show this help message and exit
+  -n, --no-bondline     Exclude bondline
+```
+
 ## Interpolation of planform parameters
 ![Test blade](../assets/images/test_blade.png)
 
-## Creation of a 2D blade model
+<!-- ## Creation of a 2D blade model -->
 
 
 

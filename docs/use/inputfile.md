@@ -142,7 +142,7 @@ loads:
 - Dictionary of load cases (e.g., `forward_flap`):
   - `z`: Radial positions for load application (m).
   - `mx`, `my`: Moments about x and y axes (N·m).
-  - `apply`: Conditions for load application (e.g., `radius: [min, max]`).
+  - `apply`: Query nodes for load application (e.g., to apply forces only between 20 and 70% chord, `d_le_r: [0.2, 0.7]`).
 
 ## Notes
 - File paths (e.g., airfoils, materials) are relative to the YAML file unless absolute.
