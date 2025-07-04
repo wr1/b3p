@@ -1,0 +1,127 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - master  # Run tests on pushes to the main branch
+      - dev
+  pull_request:
+    branches:
+      - master  # Run tests on pull requests targeting the main branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'  # Match your local Python version
+
+      # Install pip and upgrade
+      - name: Install pip
+        run: |
+          python -m pip install --upgrade pip
+          echo "Upgraded pip to $(pip --version)"
+
+      # Install build dependencies
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc python3-dev gfortran libopenblas-dev
+          echo "Installed build dependencies"
+
+      # Install Miniforge for Conda
+      - name: Install Miniforge
+        run: |
+          wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" -O miniforge.sh
+          bash miniforge.sh -b -p $HOME/miniforge3
+          rm miniforge.sh
+          echo "Installed Miniforge to $HOME/miniforge3"
+
+      # Initialize Conda
+      - name: Initialize Conda
+        run: |
+          source $HOME/miniforge3/bin/activate
+          conda init bash
+          conda install -y pip
+          echo "Initialized Conda"
+
+      # Set up anba4-env
+      - name: Set up anba4-env
+        run: |
+          source $HOME/miniforge3/etc/profile.d/conda.sh
+          if conda env list | grep -q 'anba4-env'; then
+            echo "anba4-env already exists"
+          else
+            conda create -n anba4-env -y fenics=2019.1.0 python=3.9
+            echo "Created anba4-env"
+          fi
+          conda activate anba4-env
+          if [ ! -d "anba4" ]; then
+            git clone https://github.com/ANBA4/anba4.git
+          else
+            cd anba4
+            git pull
+            cd ..
+          fi
+          cd anba4
+          pip install -e .
+          conda install -y pyyaml pyvista numpy scipy
+          conda deactivate
+          echo "Set up anba4-env with ANBA4"
+
+      # Verify anba4-env
+      - name: Verify anba4-env
+        run: |
+          source $HOME/miniforge3/etc/profile.d/conda.sh
+          conda env list | grep anba4-env || { echo "anba4-env not found"; exit 1; }
+          conda run -n anba4-env python -c "import anba4; print('ANBA4 imported successfully')"
+          echo "Verified anba4-env"
+
+      # Install numpy for CCBlade
+      - name: Install numpy
+        run: |
+          python -m pip install "numpy>2.0.0"
+          echo "Installed numpy"
+
+      # Install CCBlade
+      - name: Install CCBlade
+        run: |
+          python -m pip install --verbose git+https://github.com/WISDEM/CCBlade.git || python scripts/ccblade_install.py
+          pip show ccblade
+          echo "Installed CCBlade"
+
+      # Install test dependencies
+      - name: Install test dependencies
+        run: |
+          python -m pip install "pytest>=8.3.3" "pytest-cov>=6.0.0"
+          echo "Installed test dependencies"
+
+      # Install B3P
+      - name: Install B3P
+        run: |
+          python -m pip install -e .
+          python -c "import b3p; print('B3P installed')"
+          echo "Installed B3P in editable mode"
+
+      # Verify package installations
+      - name: Verify package installations
+        run: |
+          python -c "import pytest, pyvista, vtk, numpy; print('All key packages imported successfully')"
+          echo "Verified package installations"
+
+      # Run tests
+      - name: Run tests with pytest
+        run: |
+          source $HOME/miniforge3/etc/profile.d/conda.sh
+          conda init bash
+          pytest tests/ -v -s --log-cli-level=INFO --cov=b3p
+        env:
+          VERBOSE: 1
