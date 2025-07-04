@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - dev
+      - gh-pages
   pull_request:
     branches:
       - master
