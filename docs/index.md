@@ -1,6 +1,10 @@
 # Welcome to B3P Documentation
 
-**B3P** (Blade Preprocessor) is a Python-based tool designed to preprocess wind turbine blade models for structural and aerodynamic analyses. It translates blade input files into formats suitable for solvers such as CalculiX (`ccx`), ANBA4 (`anba`), and CCBlade (`ccblade`). B3P supports the creation of 3D blade geometries, 2D sectional meshes, and finite element analysis (FEA) inputs, enabling comprehensive blade design and analysis workflows.
+**B3P** (Blade Preprocessor) is a Python-based tool designed to preprocess wind turbine blade models for structural and aerodynamic analyses. 
+
+It translates blade input files into formats suitable for solvers such as CalculiX (`ccx`), ANBA4 (`anba`), and CCBlade (`ccblade`). 
+
+B3P supports the creation of 3D blade geometries, 2D sectional meshes, and finite element analysis (FEA) inputs, enabling comprehensive blade design and analysis workflows.
 
 ## Overview
 
@@ -16,12 +20,32 @@ The following diagram illustrates the B3P workflow:
 
 ```mermaid
 graph TD
-    A[Blade Input YAML] --> B[b3p build]
-    B --> C[3D Blade Mesh]
-    C --> D[2D Section Meshes]
-    C --> E[3D FEA with CalculiX]
-    D --> F[ANBA4 Sectional Analysis]
-    A --> G[CCBlade Aerodynamic Analysis]
+    subgraph ss["b3p"]
+        %% fill[black]
+        B[interpolate planform]
+        C[3D mesh]
+        D[drape plies]
+        EE[slice 3D mesh]
+        %% EE[ccx post]
+    end
+    A[Blade Input YAML] --> B 
+    B --> C 
+    C --> D 
+    D --> EE
+    %% B --> C[3D Blade Mesh]
+    %% EE --> DD[2D Section Meshes]
+    D -->|3D draped mesh| E[3D FEA with CalculiX]
+    %% E --> EE
+    EE -->|section meshes| F[ANBA4 Sectional Analysis]
+    B -->|aero blade model| G[CCBlade Aerodynamic Analysis]
+    subgraph out["outputs"]
+        GG[powercurve]
+        SS[buckling and strain output]
+        S6[6x6 matrices for aeroelastic analysis]
+    end
+    G --> GG
+    E --> SS
+    F --> S6
 ```
 
 ## Key Features

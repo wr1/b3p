@@ -29,16 +29,6 @@ aero:
     with pytest.raises(ValueError, match="xy must be a list of \\[x, y\\] coordinates"):
         yaml_make_portable(invalid_yaml)
 
-# def test_materials_required(tmp_path):
-#     """Test that materials are required in configuration."""
-#     invalid_yaml = tmp_path / "no_materials.yml"
-#     invalid_yaml.write_text("""
-# general:
-#   prefix: test
-# """)
-#     with pytest.raises(ValueError, match="materials must be provided in the configuration"):
-#         yaml_make_portable(invalid_yaml)
-
 def test_airfoil_path_loading(tmp_path):
     """Test loading configuration with a valid airfoil path."""
     test_file = tmp_path / "airfoil_test.dat"

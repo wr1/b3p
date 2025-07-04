@@ -1,12 +1,12 @@
 # Installation
 
-This guide covers the installation of **B3P** (Blade Preprocessor) and its dependencies. B3P is tested on Ubuntu 24.04 and Windows WSL2 (do not use WSL1). A Python environment (version 3.8 or higher) is required.
+This guide covers the installation of **B3P** (Blade Preprocessor) and its dependencies. B3P is tested on Ubuntu 24.04 and Windows WSL2 (do not use WSL1). A Python environment (version 3.12 or higher) is required.
 
 ## Prerequisites
 
 Before installing B3P, ensure the following are installed:
 
-- **Python 3.8+**: Install via your package manager (e.g., `apt install python3` on Ubuntu) or from [python.org](https://www.python.org).
+- **Python 3.12+**: Install via your package manager (e.g., `apt install python3` on Ubuntu) or from [python.org](https://www.python.org).
 - **pip**: Python package manager, typically included with Python.
 - **Git**: For cloning the repository (e.g., `apt install git` on Ubuntu).
 - **Conda** (optional): For managing dependencies like ANBA4 (install Miniconda or Anaconda from [conda.io](https://conda.io)).

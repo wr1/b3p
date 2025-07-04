@@ -6,17 +6,18 @@ b3p build blade_test.yml
 ```
 This is subdivided into the following steps:
 ```bash
-usage: b3p [-h] {build,ccx,2d,ccblade,clean} ...
+usage: b3p [-h] {build,ccx,2d,ccblade,clean,validate} ...
 
 Blade Design CLI
 
 positional arguments:
-  {build,ccx,2d,ccblade,clean}
+  {build,ccx,2d,ccblade,clean,validate}
     build               Build the full blade model
     ccx                 Run Calculix operations
     2d                  2D mesh and ANBA4 operations
     ccblade             Run CCBlade analysis
     clean               Clean working directory
+    validate            Validate YAML configuration
 
 options:
   -h, --help            show this help message and exit
