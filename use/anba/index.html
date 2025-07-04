@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../../installation/">
+        <link rel="prev" href="../fea/">
       
       
-        <link rel="next" href="../inputfile/">
+        <link rel="next" href="../../examples/blade_test/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Build - b3p</title>
+        <title>ANBA - b3p</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#blade-modeling" class="md-skip">
+        <a href="#2d-cross-section-analysis" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Build
+              ANBA
             
           </span>
         </div>
@@ -321,32 +321,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Build
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../build/" class="md-nav__link">
         
   
   
@@ -357,62 +335,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#building-a-blade-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      Building a blade model
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#substeps" class="md-nav__link">
-    <span class="md-ellipsis">
-      Substeps
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#interpolation-of-planform-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Interpolation of planform parameters
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#creation-of-3d-models-for-the-shell-and-webs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Creation of 3D models for the shell and webs
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -468,10 +390,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../anba/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    ANBA
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -482,6 +426,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#using-anba-to-compute-cross-section-properties-6x6-matrices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using ANBA to compute cross section properties (6x6 matrices)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-analysis-substeps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section analysis substeps
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -589,36 +571,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#building-a-blade-model" class="md-nav__link">
+  <a href="#using-anba-to-compute-cross-section-properties-6x6-matrices" class="md-nav__link">
     <span class="md-ellipsis">
-      Building a blade model
+      Using ANBA to compute cross section properties (6x6 matrices)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#substeps" class="md-nav__link">
+  <a href="#section-analysis-substeps" class="md-nav__link">
     <span class="md-ellipsis">
-      Substeps
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#interpolation-of-planform-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Interpolation of planform parameters
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#creation-of-3d-models-for-the-shell-and-webs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Creation of 3D models for the shell and webs
+      Section analysis substeps
     </span>
   </a>
   
@@ -643,50 +607,30 @@
   
 
 
-<h1 id="blade-modeling">Blade modeling</h1>
-<h2 id="building-a-blade-model">Building a blade model</h2>
-<p>A b3p blade model is built using the following command.
-<div class="highlight"><pre><span></span><code>b3p<span class="w"> </span>build<span class="w"> </span>blade_test.yml
-</code></pre></div></p>
-<h2 id="substeps">Substeps</h2>
-<p>The build command runs a series of substeps that form a 3D blade mesh with assigned materials. 
-<div class="highlight"><pre><span></span><code>❯<span class="w"> </span>b3p<span class="w"> </span>build<span class="w"> </span>-h
-usage:<span class="w"> </span>b3p<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-n<span class="o">]</span><span class="w"> </span>yml<span class="w"> </span><span class="o">{</span>geometry,mesh,drape,mass,apply-loads<span class="o">}</span><span class="w"> </span>...
+<h1 id="2d-cross-section-analysis">2D cross section analysis</h1>
+<h2 id="using-anba-to-compute-cross-section-properties-6x6-matrices">Using ANBA to compute cross section properties (6x6 matrices)</h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># after running b3p build</span>
+<span class="c1"># b3p build blade_test.yml</span>
+b3p<span class="w"> </span>2d<span class="w"> </span>blade_test.yml
+</code></pre></div>
+<h2 id="section-analysis-substeps">Section analysis substeps</h2>
+<div class="highlight"><pre><span></span><code>❯<span class="w"> </span>b3p<span class="w"> </span>2d<span class="w"> </span>-h
+usage:<span class="w"> </span>b3p<span class="w"> </span>2d<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-r<span class="w"> </span>ROTZ<span class="o">]</span><span class="w"> </span><span class="o">[</span>-P<span class="o">]</span><span class="w"> </span><span class="o">[</span>-e<span class="w"> </span>ANBA_ENV<span class="o">]</span><span class="w"> </span>yml<span class="w"> </span><span class="o">{</span>mesh2d,run-anba4,clean<span class="o">}</span><span class="w"> </span>...
 
 positional<span class="w"> </span>arguments:
 <span class="w">  </span>yml<span class="w">                   </span>Path<span class="w"> </span>to<span class="w"> </span>YAML<span class="w"> </span>config<span class="w"> </span>file
-<span class="w">  </span><span class="o">{</span>geometry,mesh,drape,mass,apply-loads<span class="o">}</span>
-<span class="w">    </span>geometry<span class="w">            </span>Build<span class="w"> </span>blade<span class="w"> </span>geometry
-<span class="w">    </span>mesh<span class="w">                </span>Mesh<span class="w"> </span>blade<span class="w"> </span>structure
-<span class="w">    </span>drape<span class="w">               </span>Drape<span class="w"> </span>plies<span class="w"> </span>onto<span class="w"> </span>mesh
-<span class="w">    </span>mass<span class="w">                </span>Calculate<span class="w"> </span>blade<span class="w"> </span>mass
-<span class="w">    </span>apply-loads<span class="w">         </span>Apply<span class="w"> </span>loads<span class="w"> </span>to<span class="w"> </span>mesh
+<span class="w">  </span><span class="o">{</span>mesh2d,run-anba4,clean<span class="o">}</span>
+<span class="w">    </span>mesh2d<span class="w">              </span>Create<span class="w"> </span>2D<span class="w"> </span>meshes
+<span class="w">    </span>run-anba4<span class="w">           </span>Run<span class="w"> </span>ANBA4<span class="w"> </span>on<span class="w"> </span>2D<span class="w"> </span>meshes
+<span class="w">    </span>clean<span class="w">               </span>Remove<span class="w"> </span>msec*<span class="w"> </span>files
 
 options:
 <span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
-<span class="w">  </span>-n,<span class="w"> </span>--no-bondline<span class="w">     </span>Exclude<span class="w"> </span>bondline
-</code></pre></div></p>
-<h2 id="interpolation-of-planform-parameters">Interpolation of planform parameters</h2>
-<p>The blade planform is defined in the <code>planform</code> subsection of the input file.
-<div class="highlight"><pre><span></span><code><span class="nt">planform</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">npchord</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
-<span class="w">  </span><span class="nt">npspan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">70</span>
-<span class="w">  </span><span class="c1"># offset in prebend direction, negative is upwind</span>
-<span class="w">  </span><span class="nt">dx</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-5.0</span><span class="p p-Indicator">]]</span>
-<span class="w">  </span><span class="c1"># offset in chord direction</span>
-<span class="w">  </span><span class="nt">dy</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.01</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5860957549908372</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.43</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5292475355828817</span><span class="p p-Indicator">],</span>
-<span class="w">    </span><span class="p p-Indicator">[</span><span class="nv">0.56</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.4981144528302349</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.69</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.43552499282773205</span><span class="p p-Indicator">],</span>
-<span class="w">    </span><span class="p p-Indicator">[</span><span class="nv">0.82</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.32879129475154056</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.95</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.3334681541732368</span><span class="p p-Indicator">]]</span>
-<span class="w">  </span><span class="nt">z</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">126</span><span class="p p-Indicator">]]</span>
-<span class="w">  </span><span class="nt">chord</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.03</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5.06</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">6.5</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">4.4</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.8</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span>
-<span class="w">      </span><span class="nv">0.94</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.4</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.985</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.8</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">]]</span>
-<span class="w">  </span><span class="nt">thickness</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.05</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.97</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.53</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.31</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.39</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.17</span><span class="p p-Indicator">]]</span>
-<span class="w">  </span><span class="nt">twist</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">0.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-0.5</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.9</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-1</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">]]</span>
+<span class="w">  </span>-r<span class="w"> </span>ROTZ,<span class="w"> </span>--rotz<span class="w"> </span>ROTZ<span class="w">  </span>Rotation<span class="w"> </span>around<span class="w"> </span>Z-axis<span class="w"> </span><span class="o">(</span>degrees<span class="o">)</span>
+<span class="w">  </span>-P,<span class="w"> </span>--no-parallel<span class="w">     </span>Disable<span class="w"> </span>parallel<span class="w"> </span>processing<span class="w"> </span><span class="k">for</span><span class="w"> </span>mesh2d
+<span class="w">  </span>-e<span class="w"> </span>ANBA_ENV,<span class="w"> </span>--anba-env<span class="w"> </span>ANBA_ENV
+<span class="w">                        </span>Conda<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>ANBA4
 </code></pre></div>
-Which gets interpolated. 
-<img alt="Test blade" src="../../assets/images/test_blade.png" /></p>
-<h2 id="creation-of-3d-models-for-the-shell-and-webs">Creation of 3D models for the shell and webs</h2>
-<!-- ## Creation of a 2D blade model -->
 
 
 
