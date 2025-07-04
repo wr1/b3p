@@ -30,6 +30,8 @@ options:
 ```
 
 ## Load application
+Loads are specified as moments at given radius positions, which are translated into shear forces in the selected region. 
+
 ![Test blade](../assets/images/test_blade_loads.png)
 
 
