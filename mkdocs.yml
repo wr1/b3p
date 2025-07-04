@@ -2,8 +2,6 @@ site_name: b3p
 repo_url: https://github.com/wr1/b3p  # Add GitHub repository URL
 repo_name: wr1/b3p  # Add repository name for display
 
-
-
 theme:
   name: material
   palette:
