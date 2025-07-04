@@ -6,8 +6,6 @@ from pydantic import (
     Field,
     field_validator,
     model_validator,
-    # validator,
-    # root_validator,
 )
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
@@ -39,14 +37,6 @@ class Airfoil(BaseModel):
                 lines = f.readlines()
             v = [list(map(float, line.split())) for line in lines if line.strip()]
         return v
-
-    # @validator("xy", pre=True)
-    # def validate_xy(cls, v):
-    #     if v is not None:
-    #         for point in v:
-    #             if not isinstance(point, list) or len(point) != 2:
-    #                 raise ValueError("xy must be a list of [x, y] coordinates")
-    #     return v
 
 
 class BemConfig(BaseModel):
@@ -200,37 +190,3 @@ class BladeConfig(BaseModel):
         if not values.get("materials"):
             raise ValueError("materials must be provided in the configuration")
         return values
-
-
-# damage:
-#   puck_stack:
-#     - angle: 0
-#       material: 'glass_ud_puck'
-#     - angle: 45
-#       material: 'glass_ud_puck'
-#     - angle: -45
-#       material: 'glass_ud_puck'
-#     - angle: 90
-#       material: 'glass_ud_puck'
-#     - angle: 0
-#       material: 'cud_puck'
-
-
-# materials = values.get("materials")
-# if materials:
-#     for key, material in materials.items():
-#         if isinstance(material, IsotropicMaterial):
-#             material.type = "isotropic"
-#         elif isinstance(material, AnisotropicMaterial):
-#             material.type = "anisotropic"
-#         elif isinstance(material, PuckMaterial):
-#             material.type = "puck"
-#         else:
-#             raise ValueError(f"Unknown material type for {key}")
-# return values
-
-# @root_validator(skip_on_failure=True)
-# def check_materials(cls, values):
-#     if not values.get("materials"):
-#         raise ValueError("materials must be provided")
-#     return values
