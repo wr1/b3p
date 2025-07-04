@@ -1,0 +1,101 @@
+balsa110:
+  E: 35.0
+  name: balsa110
+  nu: 0.3
+  rho: 110.0
+balsa155:
+  E: 57.0
+  name: balsa155
+  nu: 0.3
+  rho: 155.0
+biax:
+  E: 13595.049593414333
+  name: biax45_e-glas_Epikote04908_60
+  nu: 0.3
+  rho: 1984.0
+carbon_ud:
+  E: 139160.0
+  name: ud_T300_Epikote04908_60
+  nu: 0.3
+  rho: 1515.9999999999998
+glass_ud:
+  E: 43160.00000000001
+  name: ud_e-glas_Epikote04908_60
+  nu: 0.3
+  rho: 1984.0
+pet100:
+  E: 91.0
+  G: 25.0
+  name: pet100
+  nu: 0.3
+  rho: 100.0
+pet115:
+  E: 105.0
+  G: 30.0
+  name: pet115
+  nu: 0.3
+  rho: 115.0
+pet135:
+  E: 126.0
+  G: 37.0
+  name: pet135
+  nu: 0.3
+  rho: 135.0
+pet150:
+  E: 142.0
+  G: 43.0
+  name: pet150
+  nu: 0.3
+  rho: 150.0
+pet200:
+  E: 203.0
+  G: 62.0
+  name: pet200
+  nu: 0.3
+  rho: 200.0
+pet235:
+  E: 246.0
+  G: 76.0
+  name: pet235
+  nu: 0.3
+  rho: 235.0
+pet250:
+  E: 276.0
+  G: 83.0
+  name: pet250
+  nu: 0.3
+  rho: 250.0
+pet300:
+  E: 360.0
+  G: 105.0
+  name: pet300
+  nu: 0.3
+  rho: 300.0
+pet80:
+  E: 74.0
+  G: 18.0
+  name: pet80
+  nu: 0.3
+  rho: 80.0
+triax:
+  E: 25942.25103360522
+  name: triax45_e-glas_Epikote04908_60
+  nu: 0.3
+  rho: 1984.0
+triax_30:
+  E: 29350.98874829512
+  name: triax30_e-glas_Epikote04908_60
+  nu: 0.3
+  rho: 1984.0
+adhesive:
+  E: 5000.0
+  G: 1500.0
+  name: adhesive
+  nu: 0.3
+  rho: 1200.0
+epoxy_adhesive:
+  E: 5000.0
+  G: 1500.0
+  name: adhesive
+  nu: 0.3
+  rho: 1200.0

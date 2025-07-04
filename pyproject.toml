@@ -1,0 +1,42 @@
+[project]
+description = "Command line tools for preprocessing of wind turbine blade models"
+license = {text = "MIT"}
+name = "b3p"
+readme = "README.md"
+requires-python = ">=3.11,<4.0.0"
+version = "0.1.9"
+
+authors = [
+  {name = "wr1", email = "8971152+wr1@users.noreply.github.com"},
+]
+
+dependencies = [
+  "frd2vtu>=0.1.6",
+  "h5py>=3.11.0,<4.0.0",
+  "jinja2>=3.1.4,<4.0.0",
+  "meshio>=5.3.5,<6.0.0",
+  "mkdocs-material>=9.6.1,<10.0.0",
+  "numpy>=2.3.1",
+  "pandas>=2.2.3,<3.0.0",
+  "pyarrow>18",
+  "pydantic>=2.11.7",
+  "pytest>=8.3.3,<9.0.0",
+  "pyvista>=0.44.2",
+  "ruamel.yaml==0.18.11",
+  "scipy>=1.13.0,<2.0.0",
+  "sympy>=1.13.3,<2.0.0",
+  "tqdm>=4.66.5,<5.0.0",
+  "vtk==9.3.1",
+]
+[project.scripts]
+b3p = "b3p.cli.main:main"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"b3p.models" = ["*.yaml"]
