@@ -31,7 +31,8 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
     
     - name: Install dependencies with uv
-      run: uv pip install .[docs]
+      run:        uv venv ;   uv pip install .[docs]
+        
     
     - name: Build MkDocs site
       run: uv run mkdocs build
