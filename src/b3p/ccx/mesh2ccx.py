@@ -89,17 +89,17 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     + f"{D[3, 3]:.4g},{D[4, 4]:.4g},\n"
                     + f"{D[5, 5]:.4g},293\n"
                 )
-            elif "e11" in material_properties and not force_iso:
+            elif "Ex" in material_properties and not force_iso:
                 logger.info(f"{material_properties['name']} has engineering constants")
                 matblock += "** orthotropic material\n"
                 matblock += (
                     "*material,name=m%i\n*elastic,type=engineering constants\n" % i
                 )
                 matblock += (
-                    f"{material_properties['e11']:.4g},{material_properties['e22']:.4g},{material_properties['e33']:.4g},"
-                    + f"{material_properties['nu12']:.4g},{material_properties['nu13']:.4g},{material_properties['nu23']:.4g},"
-                    + f"{material_properties['g12']:.4g},{material_properties['g13']:.4g},\n"
-                    + f"{material_properties['g23']:.4g},293\n"
+                    f"{material_properties['Ex']:.4g},{material_properties['Ey']:.4g},{material_properties['Ez']:.4g},"
+                    + f"{material_properties['nuxy']:.4g},{material_properties['nuxz']:.4g},{material_properties['nuyz']:.4g},"
+                    + f"{material_properties['Gxy']:.4g},{material_properties['Gxz']:.4g},\n"
+                    + f"{material_properties['Gyz']:.4g},293\n"
                 )
             else:
                 logger.info(f"{material_properties['name']} is assumed to be isotropic")
@@ -110,7 +110,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                         (
                             float(material_properties["nu"])
                             if "nu" in material_properties
-                            else material_properties["nu12"]
+                            else material_properties["nuxy"]
                         ),
                     ),
                 )
