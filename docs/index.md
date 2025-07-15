@@ -1,4 +1,4 @@
-# Welcome to B3P Documentation
+# b3p docs
 
 **B3P** (Blade Preprocessor) is a Python-based tool designed to preprocess wind turbine blade models for structural and aerodynamic analyses. It translates blade input files into formats suitable for solvers such as CalculiX (`ccx`), ANBA4 (`anba`), and CCBlade (`ccblade`). B3P supports the creation of 3D blade geometries, 2D sectional meshes, and finite element analysis (FEA) inputs, enabling comprehensive blade design and analysis workflows.
 
