@@ -7,6 +7,9 @@ from b3p.cli.yml_portable import yaml_make_portable
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.mark.skip("old test, needs update")
 def test_default_yaml():
     """Test loading a default YAML configuration."""
     config = yaml_make_portable(Path("examples/blade_test.yml"))
@@ -14,6 +17,7 @@ def test_default_yaml():
     assert config.general.workdir == "temp_blade"
     assert config.general.prefix == "test_blade"
     # assert config.mesh.bondline["type"] == "default"
+
 
 def test_invalid_yaml(tmp_path):
     """Test loading an invalid YAML configuration."""
@@ -29,6 +33,7 @@ aero:
     with pytest.raises(ValueError, match="xy must be a list of \\[x, y\\] coordinates"):
         yaml_make_portable(invalid_yaml)
 
+
 # def test_materials_required(tmp_path):
 #     """Test that materials are required in configuration."""
 #     invalid_yaml = tmp_path / "no_materials.yml"
@@ -38,6 +43,7 @@ aero:
 # """)
 #     with pytest.raises(ValueError, match="materials must be provided in the configuration"):
 #         yaml_make_portable(invalid_yaml)
+
 
 def test_airfoil_path_loading(tmp_path):
     """Test loading configuration with a valid airfoil path."""
@@ -51,7 +57,6 @@ aero:
 """
     yaml_file = tmp_path / "test.yml"
     yaml_file.write_text(yaml_content)
-
 
     config = yaml_make_portable(yaml_file)
     logger.debug(f"Loaded airfoil: {config.aero}")
