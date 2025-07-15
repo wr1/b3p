@@ -6,11 +6,8 @@ import vtk
 import time
 import json
 import os
-
-# import yaml
 import pandas as pd
 import logging
-# from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
 
@@ -92,17 +89,17 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                     + f"{D[3, 3]:.4g},{D[4, 4]:.4g},\n"
                     + f"{D[5, 5]:.4g},293\n"
                 )
-            elif "e11" in material_properties and not force_iso:
+            elif "Ex" in material_properties and not force_iso:
                 logger.info(f"{material_properties['name']} has engineering constants")
                 matblock += "** orthotropic material\n"
                 matblock += (
                     "*material,name=m%i\n*elastic,type=engineering constants\n" % i
                 )
                 matblock += (
-                    f"{material_properties['e11']:.4g},{material_properties['e22']:.4g},{material_properties['e33']:.4g},"
-                    + f"{material_properties['nu12']:.4g},{material_properties['nu13']:.4g},{material_properties['nu23']:.4g},"
-                    + f"{material_properties['g12']:.4g},{material_properties['g13']:.4g},\n"
-                    + f"{material_properties['g23']:.4g},293\n"
+                    f"{material_properties['Ex']:.4g},{material_properties['Ey']:.4g},{material_properties['Ez']:.4g},"
+                    + f"{material_properties['nuxy']:.4g},{material_properties['nuxz']:.4g},{material_properties['nuyz']:.4g},"
+                    + f"{material_properties['Gxy']:.4g},{material_properties['Gxz']:.4g},\n"
+                    + f"{material_properties['Gyz']:.4g},293\n"
                 )
             else:
                 logger.info(f"{material_properties['name']} is assumed to be isotropic")
@@ -113,7 +110,7 @@ def material_db_to_ccx(materials, matmap=None, force_iso=False):
                         (
                             float(material_properties["nu"])
                             if "nu" in material_properties
-                            else material_properties["nu12"]
+                            else material_properties["nuxy"]
                         ),
                     ),
                 )
@@ -141,30 +138,13 @@ def format_eset(name, eids):
 
 def compute_ply_groups(grid, prefix):
     gr = ""
-    out = []
     n = 1
     for i in grid.cell_data:
         if i.startswith(prefix):
-            thickness = grid.cell_data[i][:, 1].max()
-            material = grid.cell_data[i][:, 0].max()
-            out.append(
-                {
-                    "Ply Name": i,
-                    "Ply ID": n,
-                    "Card Image": "PLY",
-                    "Mat Name": f"m{int(material)}",
-                    "Thickness": thickness,
-                    "Orientation": 0,
-                    "Output Results": "yes",
-                    "TMANU": "",
-                    "DRAPE_ID": 0,
-                    "ESID": n,
-                }
-            )
             eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
             gr += format_eset(i, eids)
             n += 1
-    return gr, pd.DataFrame(out)
+    return gr
 
 
 def compute_slab_groups(grid, prefix):
@@ -276,18 +256,18 @@ def mesh2ccx(
     quadratic=True,
     add_centers=False,
     force_isotropic=False,
-    export_hyperworks=False,
+    # export_hyperworks=False,
     export_plygroups=False,
     buckling=False,
     meshonly=False,
     bondline=False,  # Added to accept bondline argument
 ):
-    logger.info(f"** Running {vtu}")
+    logger.info(f"Converting {vtu} to ccx input file {out}")
     grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")
     gr.cell_data["centers"] = gr.cell_centers().points
 
-    logger.info(f"** Exporting {gr.GetNumberOfCells()} elements")
+    logger.info(f"Exporting {gr.GetNumberOfCells()} elements")
     if quadratic:
         lf = vtk.vtkLinearToQuadraticCellsFilter()
         lf.SetInputData(gr)
@@ -314,7 +294,7 @@ def mesh2ccx(
     buf += "*elset,elset=Eall,GENERATE\n%i,%i\n" % (1, mesh.GetNumberOfCells())
 
     if export_plygroups:
-        plygroups, df = compute_ply_groups(mesh, "ply_")
+        plygroups = compute_ply_groups(mesh, "ply_")
         slabgroups = compute_slab_groups(mesh, "slab_thickness_")
         buf += plygroups + slabgroups
 
@@ -375,11 +355,5 @@ def mesh2ccx(
             open(of, "w").write(output)
             output_files.append(of)
             logger.info(f"written ccx input file to {of}")
-
-    if export_hyperworks:
-        otb = out.replace(".inp", ".csv")
-        df.to_csv(otb, index=False)
-        logger.info(f"written plybook to hyperworks table {otb}")
-        output_files.append(otb)
 
     return output_files

@@ -153,10 +153,6 @@ class RotorOptimizer:
             omega, pitch = self.omega, x[0]
 
         if (omega, pitch) not in self.cache:
-            # with Live(
-            #     Spinner("dots", text="Evaluating rotor..."), refresh_per_second=10
-            # ):
-            #     with redirect_stdout(open(os.devnull, "w")):  # Redirect stdout
             outputs, _ = self.rotor.evaluate(
                 self.uinf, omega, pitch, coefficients=coefficients
             )

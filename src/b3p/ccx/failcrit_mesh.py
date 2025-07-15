@@ -142,11 +142,21 @@ def transform_stress_to_material(stress, theta):
     return stress_material
 
 
-def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
+def compute_laminate_failure(mesh, ply_stack):
     """Compute Puck failure indices for a surface mesh with cell-based strains and local ply angles."""
     # Ensure cell normals and strains
     mesh = mesh.compute_normals(point_normals=False, cell_normals=True)
-    strainid = "TOSTRAIN_1.000"
+    possible_strain_ids = ["TOSTRAIN_1.000", "TOSTRAIN_0.000"]
+    strainid = None
+    for sid in possible_strain_ids:
+        if sid in mesh.point_data:
+            strainid = sid
+            break
+    if strainid is None:
+        raise ValueError(
+            f"Mesh must contain point data array 'TOSTRAIN_1.000' or 'TOSTRAIN_0.000' with 6 components"
+        )
+
     if strainid not in mesh.point_data:
         raise ValueError(
             f"Mesh must contain point data array '{strainid}' with 6 components"
@@ -160,27 +170,17 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
     # Compute local x and y vectors
     normals = mesh.cell_data["Normals"]
     global_z = np.array([0, 0, 1])
-    dot_z_n = np.sum(normals * global_z, axis=1, keepdims=True)
-    local_x = global_z - dot_z_n * normals
+    local_x = global_z - np.sum(normals * global_z, axis=1, keepdims=True) * normals
     local_x_norm = np.linalg.norm(local_x, axis=1, keepdims=True)
     local_x = np.where(local_x_norm > 1e-10, local_x / local_x_norm, 0)
     local_y = np.cross(normals, local_x)
     local_y_norm = np.linalg.norm(local_y, axis=1, keepdims=True)
     local_y = np.where(local_y_norm > 1e-10, local_y / local_y_norm, 0)
 
-    # Filter cells by alignment of local_x with global z
-    dot_products = np.sum(local_x * global_z, axis=1)
-    keep_mask = dot_products <= alignment_threshold
-
-    if not np.any(keep_mask):
-        logger.info("No cells meet the alignment threshold. Output file not created.")
-        return None
-
-    indices_to_keep = np.where(keep_mask)[0]
-    new_mesh = mesh.extract_cells(indices_to_keep)
-    new_strains = new_mesh.cell_data[strainid]
-    new_local_x = local_x[keep_mask]
-    new_local_y = local_y[keep_mask]
+    new_mesh = mesh  # No filtering, use full mesh
+    new_strains = strains
+    new_local_x = local_x
+    new_local_y = local_y
     n_cells = new_strains.shape[0]
 
     failure_data = {}
@@ -200,7 +200,7 @@ def compute_laminate_failure(mesh, ply_stack, alignment_threshold=0.9):
         mat = ply["material"]
         E11, E22, E33 = mat["Ex"], mat["Ey"], mat["Ez"]
         G12, G13, G23 = mat["Gxy"], mat["Gxz"], mat["Gyz"]
-        nu12, nu13, nu23 = mat["nu12"], mat["nu13"], mat["nu23"]
+        nu12, nu13, nu23 = mat["nuxy"], mat["nuxz"], mat["nuyz"]
         Xt, Xc = mat["Xt"], mat["Xc"]
         Yt, Yc = mat["Yt"], mat["Yc"]
         Zt, Zc = mat["Zt"], mat["Zc"]
@@ -261,20 +261,20 @@ def compute_failure_for_meshes(mesh_files, damage_calc_config: dict = None):
 
     logger.info(f"config for damage calculation: {damage_calc_config}")
     for mesh_file in mesh_files:
-        try:
-            mesh = pv.read(mesh_file).extract_surface()
-            ply_stack = damage_calc_config  # get_ply_stack(damage_calc_config)
-            result = compute_laminate_failure(mesh, ply_stack, 0.9)
+        # try:
+        mesh = pv.read(mesh_file).extract_surface()
+        ply_stack = damage_calc_config  # get_ply_stack(damage_calc_config)
+        result = compute_laminate_failure(mesh, ply_stack)
 
-            if result is None:
-                logger.info(f"No valid cells for mesh {mesh_file}; skipping.")
-                continue
+        if result is None:
+            logger.info(f"No valid cells for mesh {mesh_file}; skipping.")
+            continue
 
-            new_mesh, failure_data = result
-            for key, data in failure_data.items():
-                new_mesh.cell_data[key] = data
-            output_file = os.path.splitext(mesh_file)[0] + "_fail.vtu"
-            new_mesh.save(output_file)
-            logger.info(f"Written output to {output_file}")
-        except Exception as e:
-            logger.error(f"Error processing {mesh_file}: {e}")
+        new_mesh, failure_data = result
+        for key, data in failure_data.items():
+            new_mesh.cell_data[key] = data
+        output_file = os.path.splitext(mesh_file)[0] + "_fail.vtp"
+        new_mesh.save(output_file)
+        logger.info(f"Written output to {output_file}")
+        # except Exception as e:
+        #     logger.error(f"Error processing {mesh_file}: {e}")

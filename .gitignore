@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+# test_*
 
 # data files 
 *.vtp
@@ -26,7 +27,7 @@ __pycache__/
 *var
 *sta
 examples/*/*/*json
-examples/**yml
+# examples/**yml
 examples/*/*yml
 *.pyc
 *.out

@@ -79,7 +79,10 @@ def main():
     ccx_parser.add_argument("yml", type=Path, help="Path to YAML config file")
     ccx_parser.add_argument(
         "-b", "--bondline", action="store_true", help="Use bondline meshes"
-    )  # Note: Using -b, assuming no conflict; adjust if needed
+    )
+    ccx_parser.add_argument(  # Added for top-level ccx command
+        "-k", "--buckling", action="store_true", help="Enable buckling analysis"
+    )
     ccx_subparsers = ccx_parser.add_subparsers(dest="subcommand", required=False)
 
     ccx_ccx_parser = ccx_subparsers.add_parser("ccx", help="Run full Calculix process")
@@ -93,6 +96,9 @@ def main():
         dest="bondline",
         help="Use bondline meshes",
     )
+    ccx_ccx_parser.add_argument(
+        "-k", "--buckling", action="store_true", help="Enable buckling analysis"
+    )
 
     ccx_prep_parser = ccx_subparsers.add_parser("prep", help="Prepare CCX input files")
     ccx_prep_parser.add_argument(
@@ -104,6 +110,9 @@ def main():
         action="store_true",
         dest="bondline",
         help="Use bondline meshes",
+    )
+    ccx_prep_parser.add_argument(  # New addition for buckling
+        "-k", "--buckling", action="store_true", help="Enable buckling analysis"
     )
 
     ccx_solve_parser = ccx_subparsers.add_parser("solve", help="Solve CCX problem")
@@ -154,7 +163,9 @@ def main():
     )
 
     # Add failure subcommand
-    ccx_failure_parser = ccx_subparsers.add_parser("failure", help="Compute failure criteria")
+    ccx_failure_parser = ccx_subparsers.add_parser(
+        "failure", help="Compute failure criteria"
+    )
     ccx_failure_parser.add_argument(
         "yml_sub", type=Path, help="Path to YAML config file", nargs="?", default=None
     )
@@ -232,7 +243,9 @@ def main():
     clean_parser.add_argument("yml", type=Path, help="Path to YAML config file")
 
     # Validate subcommand
-    validate_parser = subparsers.add_parser("validate", help="Validate YAML configuration")
+    validate_parser = subparsers.add_parser(
+        "validate", help="Validate YAML configuration"
+    )
     validate_parser.add_argument("yml", type=Path, help="Path to YAML config file")
 
     args = parser.parse_args()
@@ -261,11 +274,11 @@ def main():
                 build.apply_loads()
     elif args.command == "ccx":
         if not hasattr(args, "subcommand") or args.subcommand is None:
-            ccx.ccx(bondline=args.bondline)
+            ccx.ccx(bondline=args.bondline, buckling=args.buckling)
         elif args.subcommand == "ccx":
-            ccx.ccx(bondline=args.bondline)
+            ccx.ccx(bondline=args.bondline, buckling=args.buckling)
         elif args.subcommand == "prep":
-            ccx.prep(bondline=args.bondline)
+            ccx.prep(bondline=args.bondline, buckling=args.buckling)
         elif args.subcommand == "solve":
             ccx.solve(
                 wildcard=args.wildcard,

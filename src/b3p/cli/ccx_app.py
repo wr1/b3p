@@ -40,6 +40,7 @@ def check_ccx_run_done(inpfile):
             f.seek(-5, 2)
             y = f.read()
             if y == b"9999\n":
+                logger.info(f"CCX run for {inpfile} is done, found {frd_file}")
                 return True
     return False
 

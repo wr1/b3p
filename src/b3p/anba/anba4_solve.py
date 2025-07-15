@@ -61,9 +61,9 @@ def get_material_db(material_map, unit_factor=1):
                 "Gxy",
                 "Gxz",
                 "Gyz",
-                "nu12",
-                "nu13",
-                "nu23",
+                "nuxy",
+                "nuxz",
+                "nuyz",
             ]
             if not all(k in matdb_entry for k in required_keys):
                 raise ValueError(
@@ -76,9 +76,9 @@ def get_material_db(material_map, unit_factor=1):
             matMechanicProp[1, 2] = matdb_entry["Gyz"] * unit_factor
             matMechanicProp[1, 1] = matdb_entry["Gxz"] * unit_factor
             matMechanicProp[1, 0] = matdb_entry["Gxy"] * unit_factor
-            matMechanicProp[2, 2] = matdb_entry["nu23"]
-            matMechanicProp[2, 1] = matdb_entry["nu13"]
-            matMechanicProp[2, 0] = matdb_entry["nu12"]
+            matMechanicProp[2, 2] = matdb_entry["nuyz"]
+            matMechanicProp[2, 1] = matdb_entry["nuxz"]
+            matMechanicProp[2, 0] = matdb_entry["nuxy"]
             materials[matdb_id] = material.OrthotropicMaterial(matMechanicProp, density)
         else:
             if "E" not in matdb_entry and "Ex" not in matdb_entry:

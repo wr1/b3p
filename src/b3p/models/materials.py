@@ -1,8 +1,7 @@
 """Pydantic models for materials."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
-
 
 class IsotropicMaterial(BaseModel):
     """Model for isotropic materials."""
@@ -13,22 +12,21 @@ class IsotropicMaterial(BaseModel):
     G: Optional[float] = None  # Shear modulus (optional)
     name: str = ""  # Material name
 
-
 class AnisotropicMaterial(BaseModel):
     """Model for anisotropic materials."""
 
-    Ex: float  # Young's modulus in x-direction
-    Ey: Optional[float] = None  # Young's modulus in y-direction
-    Ez: Optional[float] = None  # Young's modulus in z-direction
-    Gxy: Optional[float] = None  # Shear modulus xy
-    Gxz: Optional[float] = None  # Shear modulus xz
-    Gyz: Optional[float] = None  # Shear modulus yz
-    nu12: Optional[float] = None  # Poisson's ratio xy
-    nu13: Optional[float] = None  # Poisson's ratio xz
-    nu23: Optional[float] = None  # Poisson's ratio yz
+    # remove aliases
+    Ex: float #= Field(aliases=["e11"])  # Young's modulus in x-direction
+    Ey:   Optional[float] = Field(aliases=["e22"], default=None)  # Young's modulus in y-direction
+    Ez:   Optional[float] = Field(aliases=["e33"], default=None)  # Young's modulus in z-direction
+    Gxy:  Optional[float] = Field(aliases=["g12"], default=None)  # Shear modulus xy
+    Gxz:  Optional[float] = Field(aliases=["g13"], default=None)  # Shear modulus xz
+    Gyz:  Optional[float] = Field(aliases=["g23"], default=None)  # Shear modulus yz
+    nuxy: Optional[float] = Field(aliases=["nu12"], default=None)  # Poisson's ratio xy
+    nuxz: Optional[float] = Field(aliases=["nu13"], default=None)  # Poisson's ratio xz
+    nuyz: Optional[float] = Field(aliases=["nu23"], default=None)  # Poisson's ratio yz
     rho: float  # Density
     name: str = ""  # Material name
-
 
 class PuckMaterial(AnisotropicMaterial):
     # Suggested Puck properties for failure criteria
