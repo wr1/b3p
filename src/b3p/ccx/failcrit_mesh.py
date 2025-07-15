@@ -146,7 +146,16 @@ def compute_laminate_failure(mesh, ply_stack):
     """Compute Puck failure indices for a surface mesh with cell-based strains and local ply angles."""
     # Ensure cell normals and strains
     mesh = mesh.compute_normals(point_normals=False, cell_normals=True)
-    strainid = "TOSTRAIN_1.000"
+    possible_strain_ids = ["TOSTRAIN_1.000", "TOSTRAIN_0.000"]
+    strainid = None
+    for sid in possible_strain_ids:
+        if sid in mesh.point_data:
+            strainid = sid
+            break
+    if strainid is None:
+        raise ValueError(
+            f"Mesh must contain point data array 'TOSTRAIN_1.000' or 'TOSTRAIN_0.000' with 6 components"
+        )
 
     if strainid not in mesh.point_data:
         raise ValueError(
