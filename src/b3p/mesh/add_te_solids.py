@@ -2,7 +2,6 @@
 import pyvista as pv
 import pandas as pd
 import numpy as np
-import glob
 import json
 import warnings
 import logging

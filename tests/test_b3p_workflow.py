@@ -1,10 +1,6 @@
 import pytest
 import logging
-from pathlib import Path
-import shutil
-import os
 from unittest.mock import patch
-from b3p.cli.app_state import AppState
 from b3p.cli.clean_app import CleanApp
 from b3p.cli.build_app import BuildApp
 from b3p.cli.two_d_app import TwoDApp
@@ -135,6 +131,6 @@ def test_full_workflow(temp_example_dir, app_state, caplog):
         ccx_app.ccx(bondline=False)
 
     # Verify key outputs
-    workdir / "drape" / "2d" / "msec_1000.xdmf",
+    (workdir / "drape" / "2d" / "msec_1000.xdmf",)
     for f in expected_files:
         assert f.exists(), f"Expected file {f} not found"

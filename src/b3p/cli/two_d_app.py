@@ -118,10 +118,8 @@ class TwoDApp:
             except Exception as e:
                 logger.error(f"Failed to remove workdir {workdir}: {e}")
 
-
 from treeparse import cli, command, argument, option
 from .app_state import AppState
-
 
 def run_callback(yml: Path, rotz: float, parallel: bool, anba_env: str):
     state = AppState.get_instance()
@@ -129,24 +127,20 @@ def run_callback(yml: Path, rotz: float, parallel: bool, anba_env: str):
     app.mesh2d(rotz=rotz, parallel=parallel)
     app.run_anba4(anba_env=anba_env)
 
-
 def mesh2d_callback(yml: Path, rotz: float, parallel: bool):
     state = AppState.get_instance()
     app = TwoDApp(state, yml)
     app.mesh2d(rotz=rotz, parallel=parallel)
-
 
 def run_anba4_callback(yml: Path, anba_env: str):
     state = AppState.get_instance()
     app = TwoDApp(state, yml)
     app.run_anba4(anba_env=anba_env)
 
-
 def clean_callback(yml: Path):
     state = AppState.get_instance()
     app = TwoDApp(state, yml)
     app.clean()
-
 
 twod_cli = cli(
     name="2d",
@@ -161,28 +155,11 @@ twod_cli.commands.append(
         name="run",
         help="Run full 2D process",
         callback=run_callback,
-        arguments=[
-            argument(name="yml", arg_type=Path, help="Path to YAML config file")
-        ],
+        arguments=[],
         options=[
-            option(
-                flags=["--rotz", "-r"],
-                default=0.0,
-                arg_type=float,
-                help="Rotation around Z-axis (degrees)",
-            ),
-            option(
-                flags=["--parallel", "-P"],
-                is_flag=True,
-                default=True,
-                help="Enable parallel processing",
-            ),
-            option(
-                flags=["--anba-env", "-e"],
-                default="anba4-env",
-                arg_type=str,
-                help="Conda environment for ANBA4",
-            ),
+            option(flags=["--rotz", "-r"], default=0.0, arg_type=float, help="Rotation around Z-axis (degrees)"),
+            option(flags=["--parallel", "-P"], is_flag=True, default=True, help="Enable parallel processing"),
+            option(flags=["--anba-env", "-e"], default="anba4-env", arg_type=str, help="Conda environment for ANBA4"),
         ],
     )
 )
@@ -192,22 +169,10 @@ twod_cli.commands.append(
         name="mesh2d",
         help="Create 2D meshes",
         callback=mesh2d_callback,
-        arguments=[
-            argument(name="yml", arg_type=Path, help="Path to YAML config file")
-        ],
+        arguments=[],
         options=[
-            option(
-                flags=["--rotz", "-r"],
-                default=0.0,
-                arg_type=float,
-                help="Rotation around Z-axis (degrees)",
-            ),
-            option(
-                flags=["--parallel", "-P"],
-                is_flag=True,
-                default=True,
-                help="Enable parallel processing",
-            ),
+            option(flags=["--rotz", "-r"], default=0.0, arg_type=float, help="Rotation around Z-axis (degrees)"),
+            option(flags=["--parallel", "-P"], is_flag=True, default=True, help="Enable parallel processing"),
         ],
     )
 )
@@ -217,16 +182,9 @@ twod_cli.commands.append(
         name="run-anba4",
         help="Run ANBA4 on 2D meshes",
         callback=run_anba4_callback,
-        arguments=[
-            argument(name="yml", arg_type=Path, help="Path to YAML config file")
-        ],
+        arguments=[],
         options=[
-            option(
-                flags=["--anba-env", "-e"],
-                default="anba4-env",
-                arg_type=str,
-                help="Conda environment for ANBA4",
-            ),
+            option(flags=["--anba-env", "-e"], default="anba4-env", arg_type=str, help="Conda environment for ANBA4"),
         ],
     )
 )
@@ -236,8 +194,6 @@ twod_cli.commands.append(
         name="clean",
         help="Remove msec* files",
         callback=clean_callback,
-        arguments=[
-            argument(name="yml", arg_type=Path, help="Path to YAML config file")
-        ],
+        arguments=[],
     )
 )

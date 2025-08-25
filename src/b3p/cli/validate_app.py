@@ -27,4 +27,25 @@ class ValidateApp:
             return False
 
 
-# Note: To integrate this into the CLI, ensure the main CLI script (e.g., in src/b3p/cli/__init__.py or a main.py) adds a subcommand for 'validate'.
+from treeparse import cli, command, argument, option
+
+def validate_callback(yml: Path):
+    app = ValidateApp(yml)
+    app.validate()
+
+validate_cli = cli(
+    name="validate",
+    help="Validate YAML configuration",
+    line_connect=True,
+    show_types=True,
+    show_defaults=True,
+)
+
+validate_cli.commands.append(
+    command(
+        name="run",
+        help="Validate the YAML file",
+        callback=validate_callback,
+        arguments=[],
+    )
+)

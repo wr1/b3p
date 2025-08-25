@@ -70,9 +70,9 @@ def test_build_geometry_only(temp_example_dir):
         workdir = temp_example_dir / "temp_blade" / "mesh"
         assert workdir.exists(), "Working directory not created."
         assert (workdir / "test_blade.vtp").exists(), "Geometry file not created."
-        assert (
-            temp_example_dir / "temp_blade" / "test_blade_portable.yml"
-        ).exists(), "Portable YAML not created."
+        assert (temp_example_dir / "temp_blade" / "test_blade_portable.yml").exists(), (
+            "Portable YAML not created."
+        )
     finally:
         pass
         # os.chdir(original_dir)

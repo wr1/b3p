@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from b3p.cli import yml_portable
 import argparse
 import numpy as np
 import os
@@ -14,7 +13,6 @@ import math
 import logging
 from b3p.models.config import BladeConfig  # Import the config model
 from typing import List, Tuple, Dict, Optional, Any
-import rich
 from rich.live import Live
 from rich.spinner import Spinner
 from contextlib import redirect_stdout  # Added for stdout redirection

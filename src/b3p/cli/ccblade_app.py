@@ -26,3 +26,28 @@ class CCBladeApp:
             ccblade.run()
         else:
             logger.error("ccblade_run is not available.")
+
+from treeparse import cli, command, argument, option
+from .app_state import AppState
+
+def ccblade_callback(yml: Path):
+    state = AppState.get_instance()
+    app = CCBladeApp(state, yml)
+    app.ccblade()
+
+ccblade_cli = cli(
+    name="ccblade",
+    help="Run CCBlade analysis",
+    line_connect=True,
+    show_types=True,
+    show_defaults=True,
+)
+
+ccblade_cli.commands.append(
+    command(
+        name="run",
+        help="Run CCBlade",
+        callback=ccblade_callback,
+        arguments=[],
+    )
+)

@@ -121,7 +121,7 @@ class plot_ccx:
         return ""
 
     def plot2d(self):
-        pqs = glob.glob(os.path.join(self.wdir, "fea", f"*eps2d.pq"))
+        pqs = glob.glob(os.path.join(self.wdir, "fea", "*eps2d.pq"))
         logger.info(f"Found {len(pqs)} parquet files for 2D plotting: {pqs}")
         for pq in pqs:
             df = pd.read_parquet(pq)

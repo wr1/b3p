@@ -47,19 +47,24 @@ def test_geometry_bounding_box(load_geometry):
 
 def test_geometry_n_points(load_geometry):
     """Test if the geometry has the expected number of points."""
-    assert load_geometry.n_points == 10200, "Number of points does not match expected value"
+    assert load_geometry.n_points == 10200, (
+        "Number of points does not match expected value"
+    )
 
 
 def test_geometry_n_cells(load_geometry):
     """Test if the geometry has the expected number of cells."""
-    assert load_geometry.n_cells == 5049, "Number of cells does not match expected value"
+    assert load_geometry.n_cells == 5049, (
+        "Number of cells does not match expected value"
+    )
 
 
 def test_geometry_cell_types(load_geometry):
     """Test if the geometry contains only quad cells."""
-    assert (
-        load_geometry.celltypes == [9]
-    ), "Geometry should only contain quad cells (pyvista.VTK_QUAD)"
+    assert load_geometry.celltypes == [9], (
+        "Geometry should only contain quad cells (pyvista.VTK_QUAD)"
+    )
+
 
 def test_geometry_cell_data(load_geometry):
     """Test if the geometry has the expected cell data arrays."""
@@ -83,8 +88,12 @@ def test_geometry_cell_data(load_geometry):
         "area",
     ]
     for array in expected_arrays:
-        assert array in load_geometry.cell_data, f"Expected cell data array '{array}' not found"
+        assert array in load_geometry.cell_data, (
+            f"Expected cell data array '{array}' not found"
+        )
 
     # Check for layer arrays
-    layer_arrays = [name for name in load_geometry.cell_data if name.startswith("layer_")]
+    layer_arrays = [
+        name for name in load_geometry.cell_data if name.startswith("layer_")
+    ]
     assert len(layer_arrays) > 0, "No layer arrays found in cell data"

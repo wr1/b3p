@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from ruamel.yaml import YAML
 from importlib.resources import files
-from ..models.config import BladeConfig, Airfoil
+from ..models.config import BladeConfig
 import numpy as np
 import re
 import os

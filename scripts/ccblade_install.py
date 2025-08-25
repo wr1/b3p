@@ -14,6 +14,5 @@ def build_ccblade_dependency():
     # subprocess.run(["python","-m","build"], cwd=build_dir, check=True)
 
 
-
 if __name__ == "__main__":
     build_ccblade_dependency()
