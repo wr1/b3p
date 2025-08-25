@@ -11,6 +11,8 @@ def build_ccblade_dependency():
             check=True,
         )
     subprocess.run(["pip", "install", "."], cwd=build_dir, check=True)
+    # subprocess.run(["python","-m","build"], cwd=build_dir, check=True)
+
 
 
 if __name__ == "__main__":

@@ -4,6 +4,8 @@ import shutil
 from pathlib import Path
 from b3p.cli.app_state import AppState
 from b3p.cli.build_app import BuildApp
+from b3p.cli.two_d_app import TwoDApp
+from b3p.cli.ccx_app import CcxApp
 
 
 @pytest.fixture(scope="session")
@@ -33,22 +35,67 @@ def temp_example_dir(tmp_path_factory):
     return tmp_dir
 
 
-@pytest.fixture(scope="session")
-def built_blade(temp_example_dir):
-    """Fixture to build the blade once and provide the resulting workdir."""
+@pytest.fixture(scope="function")
+def app_state():
+    """Fixture for a clean AppState singleton."""
+    state = AppState.get_instance()
+    state.reset()
+    yield state
+    state.reset()
+
+
+def _run_build(temp_dir):
     original_dir = os.getcwd()
-    os.chdir(temp_example_dir)
+    os.chdir(temp_dir)
     try:
         state = AppState()
         yml_path = Path("blade_test.yml")
 
         build_app = BuildApp(state, yml_path)
         build_app.build()
-        workdir = temp_example_dir / "temp_blade"  # New default workdir
+        workdir = temp_dir / "temp_blade"  # New default workdir
         assert workdir.exists(), f"Blade build failed: workdir {workdir} not created"
-        yield {
+        return {
             "workdir": workdir,
-            "temp_dir": temp_example_dir.parent,  # Expose parent temp dir for data access
+            "temp_dir": temp_dir.parent,  # Expose parent temp dir for data access
         }
+    finally:
+        os.chdir(original_dir)
+
+
+@pytest.fixture(scope="session")
+def built_blade(temp_example_dir):
+    """Fixture to build the blade once and provide the resulting workdir."""
+    return _run_build(temp_example_dir)
+
+
+@pytest.fixture(scope="session")
+def meshed_blade(built_blade):
+    """Fixture to run the 2D meshing process."""
+    original_dir = os.getcwd()
+    os.chdir(built_blade["workdir"].parent)
+    try:
+        state = AppState()
+        yml_path = Path("blade_test.yml")
+
+        two_d_app = TwoDApp(state, yml_path)
+        two_d_app.mesh2d(rotz=0.0, parallel=False)
+        return built_blade
+    finally:
+        os.chdir(original_dir)
+
+
+@pytest.fixture(scope="session")
+def ccx_analyzed_blade(built_blade):
+    """Fixture to run the CCX analysis."""
+    original_dir = os.getcwd()
+    os.chdir(built_blade["workdir"].parent)
+    try:
+        state = AppState()
+        yml_path = Path("blade_test.yml")
+
+        ccx_app = CcxApp(state, yml_path)
+        ccx_app.prep(bondline=False)
+        return built_blade
     finally:
         os.chdir(original_dir)

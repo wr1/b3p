@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 def test_default_yaml():
     """Test loading a default YAML configuration."""
-    config = yaml_make_portable(Path("examples/blade_test.yml"))
+    config = yaml_make_portable(temp_example_dir / "blade_test.yml")
     assert isinstance(config, BladeConfig)
     assert config.general.workdir == "temp_blade"
     assert config.general.prefix == "test_blade"

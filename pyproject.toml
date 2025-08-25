@@ -26,8 +26,9 @@ dependencies = [
   "scipy>=1.13.0,<2.0.0",
   "sympy>=1.13.3,<2.0.0",
   "tqdm>=4.66.5,<5.0.0",
-  "vtk==9.3.1",
+  "vtk==9.3.1", # "ccblade@git+https://github.com/WISDEM/CCBlade.git@master",
 ]
+
 [project.scripts]
 b3p = "b3p.cli.main:main"
 
@@ -35,8 +36,8 @@ b3p = "b3p.cli.main:main"
 build-backend = "hatchling.build"
 requires = ["hatchling"]
 
-[tool.setuptools]
-include-package-data = true
+# [tool.setuptools]
+# include-package-data = true
 
-[tool.setuptools.package-data]
-"b3p.models" = ["*.yaml"]
+# [tool.setuptools.package-data]
+# "b3p.models" = ["*.yaml"]
