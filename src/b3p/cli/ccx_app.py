@@ -157,3 +157,202 @@ class CcxApp:
             plotter.plot3d()
         if plot2d:
             plotter.plot2d()
+
+
+from treeparse import cli, command, argument, option
+from .app_state import AppState
+
+
+def run_callback(yml: Path, bondline: bool, buckling: bool):
+    state = AppState.get_instance()
+    app = CcxApp(state, yml)
+    app.ccx(bondline=bondline, buckling=buckling)
+
+
+def prep_callback(yml: Path, bondline: bool, buckling: bool):
+    state = AppState.get_instance()
+    app = CcxApp(state, yml)
+    app.prep(bondline=bondline, buckling=buckling)
+
+
+def solve_callback(
+    yml: Path, wildcard: str, nproc: int, ccxexe: str, merged_plies: bool
+):
+    state = AppState.get_instance()
+    app = CcxApp(state, yml)
+    app.solve(wildcard=wildcard, nproc=nproc, ccxexe=ccxexe, merged_plies=merged_plies)
+
+
+def post_callback(yml: Path, wildcard: str, nbins: int):
+    state = AppState.get_instance()
+    app = CcxApp(state, yml)
+    app.post(wildcard=wildcard, nbins=nbins)
+
+
+def plot_callback(yml: Path, plot3d: bool, plot2d: bool):
+    state = AppState.get_instance()
+    app = CcxApp(state, yml)
+    app.plot(plot3d=plot3d, plot2d=plot2d)
+
+
+def failure_callback(yml: Path):
+    state = AppState.get_instance()
+    app = CcxApp(state, yml)
+    app.failure_criteria()
+
+
+ccx_cli = cli(
+    name="ccx",
+    help="Run Calculix operations",
+    line_connect=True,
+    show_types=True,
+    show_defaults=True,
+)
+
+ccx_cli.commands.append(
+    command(
+        name="run",
+        help="Run full Calculix process",
+        callback=run_callback,
+        arguments=[
+            argument(name="yml", arg_type=Path, help="Path to YAML config file")
+        ],
+        options=[
+            option(
+                flags=["--bondline", "-b"],
+                is_flag=True,
+                default=False,
+                help="Use bondline meshes",
+            ),
+            option(
+                flags=["--buckling", "-k"],
+                is_flag=True,
+                default=False,
+                help="Enable buckling analysis",
+            ),
+        ],
+    )
+)
+
+ccx_cli.commands.append(
+    command(
+        name="prep",
+        help="Prepare CCX input files",
+        callback=prep_callback,
+        arguments=[
+            argument(name="yml", arg_type=Path, help="Path to YAML config file")
+        ],
+        options=[
+            option(
+                flags=["--bondline", "-b"],
+                is_flag=True,
+                default=False,
+                help="Use bondline meshes",
+            ),
+            option(
+                flags=["--buckling", "-k"],
+                is_flag=True,
+                default=False,
+                help="Enable buckling analysis",
+            ),
+        ],
+    )
+)
+
+ccx_cli.commands.append(
+    command(
+        name="solve",
+        help="Solve CCX problem",
+        callback=solve_callback,
+        arguments=[
+            argument(name="yml", arg_type=Path, help="Path to YAML config file")
+        ],
+        options=[
+            option(
+                flags=["--wildcard", "-w"],
+                default="",
+                arg_type=str,
+                help="Wildcard pattern for input files",
+            ),
+            option(
+                flags=["--nproc", "-p"],
+                default=2,
+                arg_type=int,
+                help="Number of processes",
+            ),
+            option(
+                flags=["--ccxexe", "-c"],
+                default="ccx",
+                arg_type=str,
+                help="Calculix executable",
+            ),
+            option(
+                flags=["--merged-plies", "-m"],
+                is_flag=True,
+                default=False,
+                help="Only process merged plies",
+            ),
+        ],
+    )
+)
+
+ccx_cli.commands.append(
+    command(
+        name="post",
+        help="Postprocess CCX results",
+        callback=post_callback,
+        arguments=[
+            argument(name="yml", arg_type=Path, help="Path to YAML config file")
+        ],
+        options=[
+            option(
+                flags=["--wildcard", "-w"],
+                default="",
+                arg_type=str,
+                help="Wildcard pattern for results",
+            ),
+            option(
+                flags=["--nbins", "-n"],
+                default=60,
+                arg_type=int,
+                help="Number of bins for tabulation",
+            ),
+        ],
+    )
+)
+
+ccx_cli.commands.append(
+    command(
+        name="plot",
+        help="Plot CCX results",
+        callback=plot_callback,
+        arguments=[
+            argument(name="yml", arg_type=Path, help="Path to YAML config file")
+        ],
+        options=[
+            option(
+                flags=["--plot3d", "-3"],
+                is_flag=True,
+                default=True,
+                help="Enable 3D plots",
+            ),
+            option(
+                flags=["--plot2d", "-2"],
+                is_flag=True,
+                default=True,
+                help="Enable 2D plots",
+            ),
+        ],
+    )
+)
+
+ccx_cli.commands.append(
+    command(
+        name="failure",
+        help="Compute failure criteria",
+        callback=failure_callback,
+        arguments=[
+            argument(name="yml", arg_type=Path, help="Path to YAML config file")
+        ],
+    )
+)
