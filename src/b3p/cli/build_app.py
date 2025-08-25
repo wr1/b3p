@@ -96,3 +96,122 @@ class BuildApp:
         self.drape(bondline=bondline)
         self.mass()
         self.apply_loads()
+
+
+from treeparse import cli, command, argument, option
+from .app_state import AppState
+
+
+def run_callback(yml: Path, bondline: bool):
+    state = AppState.get_instance()
+    app = BuildApp(state, yml)
+    app.build(bondline=bondline)
+
+
+def geometry_callback(yml: Path):
+    state = AppState.get_instance()
+    app = BuildApp(state, yml)
+    app.geometry()
+
+
+def mesh_callback(yml: Path):
+    state = AppState.get_instance()
+    app = BuildApp(state, yml)
+    app.mesh()
+
+
+def drape_callback(yml: Path, bondline: bool):
+    state = AppState.get_instance()
+    app = BuildApp(state, yml)
+    app.drape(bondline=bondline)
+
+
+def mass_callback(yml: Path):
+    state = AppState.get_instance()
+    app = BuildApp(state, yml)
+    app.mass()
+
+
+def apply_loads_callback(yml: Path):
+    state = AppState.get_instance()
+    app = BuildApp(state, yml)
+    app.apply_loads()
+
+
+build_cli = cli(
+    name="build",
+    help="Build the blade model",
+    line_connect=True,
+    show_types=True,
+    show_defaults=True,
+)
+
+geometry_cmd = command(
+    name="geometry",
+    help="Build blade geometry",
+    callback=geometry_callback,
+    arguments=[argument(name="yml", arg_type=Path, help="Path to YAML config file")],
+)
+geometry_cmd.sort_key = 10
+build_cli.commands.append(geometry_cmd)
+
+mesh_cmd = command(
+    name="mesh",
+    help="Mesh blade structure",
+    callback=mesh_callback,
+    arguments=[argument(name="yml", arg_type=Path, help="Path to YAML config file")],
+)
+mesh_cmd.sort_key = 20
+build_cli.commands.append(mesh_cmd)
+
+drape_cmd = command(
+    name="drape",
+    help="Drape plies onto mesh",
+    callback=drape_callback,
+    arguments=[argument(name="yml", arg_type=Path, help="Path to YAML config file")],
+    options=[
+        option(
+            flags=["--bondline", "-b"],
+            is_flag=True,
+            default=True,
+            help="Add bondline to mesh",
+        ),
+    ],
+)
+drape_cmd.sort_key = 30
+build_cli.commands.append(drape_cmd)
+
+apply_loads_cmd = command(
+    name="apply-loads",
+    help="Apply loads to mesh",
+    callback=apply_loads_callback,
+    arguments=[argument(name="yml", arg_type=Path, help="Path to YAML config file")],
+)
+apply_loads_cmd.sort_key = 40
+build_cli.commands.append(apply_loads_cmd)
+
+mass_cmd = command(
+    name="mass",
+    help="Calculate blade mass",
+    callback=mass_callback,
+    arguments=[argument(name="yml", arg_type=Path, help="Path to YAML config file")],
+)
+mass_cmd.sort_key = 50
+build_cli.commands.append(mass_cmd)
+
+run_cmd = command(
+    name="run",
+    help="Build the full blade model",
+    callback=run_callback,
+    arguments=[argument(name="yml", arg_type=Path, help="Path to YAML config file")],
+    options=[
+        option(
+            flags=["--bondline", "-b"],
+            is_flag=True,
+            default=True,
+            help="Include bondline",
+        ),
+    ],
+)
+run_cmd.sort_key = 60
+build_cli.commands.append(run_cmd)
