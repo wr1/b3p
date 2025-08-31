@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from b3p.cli.app_state import AppState
 from b3p.models.config import BladeConfig  # Updated import for fixed config
+from treeparse import cli, command, option
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,6 @@ class ValidateApp:
             return False
 
 
-from treeparse import cli, command, argument, option
-
 def validate_callback(yml: Path):
     app = ValidateApp(yml)
     app.validate()
@@ -39,6 +38,14 @@ validate_cli = cli(
     line_connect=True,
     show_types=True,
     show_defaults=True,
+    options=[
+        option(
+            flags=["--yml", "-y"],
+            arg_type=Path,
+            required=True,
+            help="Path to YAML config file",
+        ),
+    ],
 )
 
 validate_cli.commands.append(

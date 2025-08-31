@@ -14,6 +14,8 @@ except ImportError:
     has_ccblade = False
 
 
+from treeparse import cli, command, option
+
 class CCBladeApp:
     def __init__(self, state, yml: Path):
         self.state = state  # AppState instance
@@ -27,8 +29,6 @@ class CCBladeApp:
         else:
             logger.error("ccblade_run is not available.")
 
-from treeparse import cli, command, argument, option
-from .app_state import AppState
 
 def ccblade_callback(yml: Path):
     state = AppState.get_instance()
@@ -41,6 +41,14 @@ ccblade_cli = cli(
     line_connect=True,
     show_types=True,
     show_defaults=True,
+    options=[
+        option(
+            flags=["--yml", "-y"],
+            arg_type=Path,
+            required=True,
+            help="Path to YAML config file",
+        ),
+    ],
 )
 
 ccblade_cli.commands.append(

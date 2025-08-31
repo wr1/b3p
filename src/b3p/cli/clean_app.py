@@ -4,6 +4,8 @@ import os
 import shutil
 from ..models.config import BladeConfig  # Import for type hinting
 
+from treeparse import cli, command, option
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +26,6 @@ class CleanApp:
         else:
             logger.info(f"Workdir {workdir_path} does not exist")
 
-from treeparse import cli, command, argument, option
-from .app_state import AppState
 
 def clean_callback(yml: Path):
     state = AppState.get_instance()
@@ -38,6 +38,14 @@ clean_cli = cli(
     line_connect=True,
     show_types=True,
     show_defaults=True,
+    options=[
+        option(
+            flags=["--yml", "-y"],
+            arg_type=Path,
+            required=True,
+            help="Path to YAML config file",
+        ),
+    ],
 )
 
 clean_cli.commands.append(

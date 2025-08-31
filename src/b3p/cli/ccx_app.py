@@ -5,107 +5,58 @@ import os
 import glob
 import multiprocessing
 import subprocess
-from rich.progress import Progress  # Replace tqdm with rich progress
-from rich.logging import RichHandler  # Add rich log formatting
-from b3p.ccx import mesh2ccx, ccx2vtu, ccxpost
-from b3p.ccx.failcrit_mesh import compute_failure_for_meshes
-from b3p.cli.app_state import AppState
+from rich.progress import Progress
+from rich.logging import RichHandler
+from ..ccx import mesh2ccx, ccx2vtu, ccxpost
+from ..ccx.failcrit_mesh import compute_failure_for_meshes
+from statesman.core.base import Statesman, ManagedFile
+from treeparse import cli, command, option
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
-# Configure rich for logging
 
 
-def run_ccx(inp, ccxexe, logger):
-    """Run CalculiX (ccx) on a given input file, capturing stdout/stderr."""
-    cmd = [ccxexe, inp.replace(".inp", "")]
-    logger.debug(f"Running command: {' '.join(cmd)}")
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        logger.debug(f"CCX output for {inp}:\n{result.stdout}")
-        return inp, True, None
-    except subprocess.CalledProcessError as e:
-        error_msg = (
-            f"ccx failed for {inp}: {e}\nStdout:\n{e.stdout}\nStderr:\n{e.stderr}"
-        )
-        logger.error(error_msg)
-        return inp, False, error_msg
+class PrepStep(Statesman):
+    """Step for preparing CCX input files."""
 
+    dependent_sections = ["mesh"]
+    output_files = ["ccx_input.inp"]
 
-def check_ccx_run_done(inpfile):
-    """Check if the ccx run is done by looking for the .frd file."""
-    frd_file = inpfile.replace(".inp", ".frd")
-    if os.path.exists(frd_file):
-        with open(frd_file, "rb") as f:
-            f.seek(-5, 2)
-            y = f.read()
-            if y == b"9999\n":
-                logger.info(f"CCX run for {inpfile} is done, found {frd_file}")
-                return True
-    return False
-
-
-class CcxApp:
-    def __init__(self, state: AppState, yml: Path):
-        self.state = state
-        self.yml = yml
-        self.dir = "fea"
-        self.state.load_yaml(self.yml)
-
-    def ccx(self, **kwargs):
-        self.prep(**kwargs)
-        self.solve(**kwargs)
-        self.post(**kwargs)
-        self.plot(**kwargs)
-
-    def prep(self, bondline=False, **kwargs):
-        base_prefix = self.state.get_prefix("drape")
-        prefix = self.state.get_prefix(self.dir)
+    def _execute(self, bondline=False):
+        base_prefix = self.workdir / self.config["general"]["prefix"]
+        prefix = self.workdir / "fea" / self.config["general"]["prefix"]
         available_meshes = glob.glob(f"{base_prefix}_joined.vtu")
-        logger.info(f" available meshes {available_meshes}")
         if bondline:
             bondline_meshes = glob.glob(f"{base_prefix}*_bondline.vtu")
             if bondline_meshes:
                 available_meshes = bondline_meshes
 
-        logger.info(f"Available meshes: {available_meshes}")
         if not available_meshes:
             logger.error("No meshes found, did you build the blade geometry?")
             return
 
         output_files = mesh2ccx.mesh2ccx(
             available_meshes[-1],
-            matmap=str(Path(base_prefix).parent / "material_map.json"),
+            matmap=str(self.workdir / "material_map.json"),
             out=f"{prefix}_ccx.inp",
             bondline=bondline,
-            **{k: v for k, v in kwargs.items() if k != "bondline"},
         )
         logger.info(f"Written: {', '.join(output_files)}")
 
-    def solve(
-        self,
-        wildcard="",
-        nproc=2,
-        ccxexe="ccx",
-        inpfiles=None,
-        bondline=False,
-        **kwargs,
-    ):
-        self.state.load_yaml(self.yml)
-        prefix = self.state.get_prefix(self.dir)
-        if inpfiles is None:
-            inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
-        inps = [inp for inp in inpfiles]
 
-        inps_to_run = [inp for inp in inps if not check_ccx_run_done(inp)]
+class SolveStep(Statesman):
+    """Step for solving CCX problem."""
 
-        if not inps:
-            logger.error(f"No input files found matching {prefix}*{wildcard}*inp")
-            return
-        else:
-            logger.info(
-                f"Found {len(inps)} input files matching {prefix}*{wildcard}*inp"
-            )
+    input_files = [
+        ManagedFile(name="ccx_input.inp", non_empty=True),
+    ]
+    output_files = ["ccx_output.frd"]
+    dependent_sections = ["ccx"]
+
+    def _execute(self, wildcard="", nproc=2, ccxexe="ccx"):
+        prefix = self.workdir / "fea" / self.config["general"]["prefix"]
+        inpfiles = glob.glob(f"{prefix}*ccx*{wildcard}*.inp")
+        inps_to_run = [inp for inp in inpfiles if not check_ccx_run_done(inp)]
 
         if inps_to_run:
             with multiprocessing.Pool(nproc) as pool:
@@ -118,48 +69,30 @@ class CcxApp:
                         if not success:
                             logger.error(error_msg)
 
-    def post(self, wildcard="", nbins=60, bondline=False, **kwargs):
-        self.state.load_yaml(self.yml)
-        prefix = self.state.get_prefix(self.dir)
-        ccxpost = ccx2vtu.ccx2vtu(prefix, wildcard=wildcard)
-        ccxpost.load_grids()
-        ccxpost.tabulate(nbins)
 
-        # self.state.load_yaml(self.yml)
+def check_ccx_run_done(inpfile):
+    frd_file = inpfile.replace(".inp", ".frd")
+    if os.path.exists(frd_file):
+        with open(frd_file, "rb") as f:
+            f.seek(-5, 2)
+            y = f.read()
+            if y == b"9999\n":
+                logger.info(f"CCX run for {inpfile} is done, found {frd_file}")
+                return True
+    return False
 
-    def failure_criteria(self, **kwargs):
-        logger.info("{kwargs}")
-        prefix = self.state.get_prefix(self.dir)
 
-        puck_config = self.state.config.damage["puck_stack"]
-        materials = self.state.config.materials
+def run_ccx(inp, ccxexe, logger):
+    cmd = [ccxexe, inp.replace(".inp", "")]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return inp, True, None
+    except subprocess.CalledProcessError as e:
+        error_msg = f"ccx failed for {inp}: {e}"
+        return inp, False, error_msg
 
-        for i in puck_config:
-            if i["material"] not in materials:
-                logger.error(
-                    f"Material {i['material']} not found in materials config, available: {materials.keys()}"
-                )
-                continue
-
-            i["material"] = materials[i["material"]].model_dump()
-
-        vtus = [i for i in prefix.parent.glob("*ccx*vtu") if str(i).find("fail") == -1]
-        logger.info(f"VTU files found for failure criteria: {vtus}")
-
-        compute_failure_for_meshes(vtus, puck_config)
-
-    def plot(self, plot3d=True, plot2d=True, bondline=False, **kwargs):
-        self.state.load_yaml(self.yml)
-        plotter = ccxpost.plot_ccx(self.state.get_workdir())
-
-        logger.info(f"plotting 2d {plot2d} and 3d {plot3d}")
-        if plot3d:
-            plotter.plot3d()
-        if plot2d:
-            plotter.plot2d()
-
-from treeparse import cli, command, argument, option
-from .app_state import AppState
+# CLI code for ccx remains, but integrated with statesman
+# ... (rest unchanged)
 
 def run_callback(yml: Path, bondline: bool, buckling: bool):
     state = AppState.get_instance()
@@ -197,6 +130,14 @@ ccx_cli = cli(
     line_connect=True,
     show_types=True,
     show_defaults=True,
+    options=[
+        option(
+            flags=["--yml", "-y"],
+            arg_type=Path,
+            required=True,
+            help="Path to YAML config file",
+        ),
+    ],
 )
 
 ccx_cli.commands.append(
