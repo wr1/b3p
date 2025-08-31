@@ -15,15 +15,19 @@ class GeometryStep(Statesman):
     """Statesman step for building blade geometry."""
 
     dependent_sections = ["general", "planform", "aero"]
-    output_files = ["blade_geometry.vtu", "blade_geometry.pck", "blade_geometry_variables.json", "blade_geometry_portable.yml"]
+    output_files = ["blade_geometry.vtp", "blade_geometry.pck", "blade_geometry_variables.json", "blade_geometry_portable.yml"]
 
     def _execute(self):
         """Execute the geometry building step."""
         # Load config using custom loader
         config_data = yml_portable.yaml_make_portable(Path(self.config_path))
-        self.config = config_data
+        self.config = config_data.model_dump()
+
+        # Set workdir relative to YAML file
+        self.workdir = Path(self.config_path).parent / self.config["general"]["workdir"]
+        self.workdir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
 
         # Build geometry with fixed file names
-        build_blade_geometry(self.config.model_dump(), self.workdir)
-        yml_portable.save_yaml(self.workdir / "blade_geometry_portable.yml", self.config)
+        build_blade_geometry(self.config, self.workdir)
+        yml_portable.save_yaml(self.workdir / "blade_geometry_portable.yml", config_data)
         logger.info(f"Geometry built and saved to {self.workdir}")
