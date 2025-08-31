@@ -18,13 +18,15 @@ from .ccx_app import ccx_cli
 from .ccblade_app import ccblade_cli
 from .clean_app import clean_cli
 from .validate_app import validate_cli
-from ..geom_app.cli import geom_cli  # Import from the new subdirectory
+from ..geom_app.cli import geom_cli
+from ..mesh_app.cli import mesh_cli  # Add the new mesh_cli
 from pathlib import Path
 
 clean_cli.sort_key = 10
 validate_cli.sort_key = 20
-geom_cli.sort_key = 25  # Insert before build_cli
-build_cli.sort_key = 30
+geom_cli.sort_key = 25
+mesh_cli.sort_key = 30  # Add mesh_cli
+build_cli.sort_key = 35
 twod_cli.sort_key = 40
 ccx_cli.sort_key = 50
 ccblade_cli.sort_key = 60
@@ -41,6 +43,7 @@ app = cli(
         clean_cli,
         validate_cli,
         geom_cli,
+        mesh_cli,  # Add mesh_cli
         build_cli,
         twod_cli,
         ccx_cli,

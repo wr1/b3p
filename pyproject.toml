@@ -28,6 +28,7 @@ dependencies = [
   "tqdm>=4.66.5,<5.0.0",
   "vtk==9.3.1", # "ccblade@git+https://github.com/WISDEM/CCBlade.git@master",
   "treeparse @ git+https://github.com/wr1/treeparse.git@master",
+  "statesman @ git+https://github.com/wr1/statesman.git@master"
 ]
 
 [project.scripts]
