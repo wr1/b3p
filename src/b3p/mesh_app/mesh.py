@@ -67,7 +67,11 @@ def write_web(
     cc = out.GetPointData().GetArray("d_abs_dist_from_te")
     p = out.GetPointData().GetArray(zone)
 
+    num_points = out.GetNumberOfPoints()
+    logger.info(f"Web {name}: origin {loc}, normal {normal}, points found: {num_points}")
+
     if c is None or p is None or cc is None:
+        logger.warning(f"Web {name}: missing point data arrays")
         return []
 
     lw, ww = [], []
@@ -87,6 +91,7 @@ def write_web(
         points.append(out.GetPoint(i))
 
     if not lw or not ww:
+        logger.warning(f"Web {name}: no points in leading or trailing edge")
         return []
 
     lw = list(zip(*lw))
@@ -194,7 +199,8 @@ def build_blade_mesh(config, workdir):
         prefix,
         outfile=str(outfile),
     )
-    logger.info(f"Web planes exported to {workdir}")
+    web_files = [f"{prefix}_{i}.vtp" for i in web_inputs]
+    logger.info(f"Web planes exported to {workdir}: {', '.join(web_files)}")
 
 
 def build_mesh(
@@ -272,6 +278,40 @@ def spline_interp_k(x, y, newx):
 
 def distance(point1, point2):
     return np.sqrt(sum((i[1] - i[0]) ** 2 for i in zip(point1, point2)))
+
+
+def equals(v1, v2):
+    tol = 1e-6
+    return (v1 - v2) ** 2 < tol
+
+
+def mesh_line(pnt1, pnt2, n_cells, id):
+    xyz = []
+    web_height = vtk.vtkGeoMath().DistanceSquared(pnt1, pnt2) ** 0.5
+    for i in zip(pnt1, pnt2):
+        mm = min(0.3, 0.06 / web_height)
+        rel = sorted([0, 1] + list(np.linspace(mm, 1.0 - mm, n_cells - 2)))
+        ab = [j * (i[1] - i[0]) + i[0] for j in rel]
+        xyz.append(np.array(ab))
+    dst = [i[1:] - i[:-1] for i in xyz]
+    sl = (dst[0] ** 2 + dst[1] ** 2 + dst[2] ** 2) ** 0.5
+    pl = [0] + [sum(sl[:i]) for i in range(1, len(sl) + 1)]
+    ppl = [-i + pl[-1] for i in pl]
+    ml = [abs(i - 0.5 * web_height) for i in pl]
+    wh = [web_height for _ in ml]
+    rad = np.mean(xyz[2])
+    r = [rad for _ in range(n_cells)]
+    arrays = {
+        "d_te": pl,
+        "d_le": ppl,
+        "d_le_r": [i / max(ppl) for i in ppl],
+        f"d_{id}_r": [i / max(ml) for i in ml],
+        f"d_{id}": ml,
+        "web_height": wh,
+        "radius": r,
+        "is_web": [1.0 for _ in ppl],
+    }
+    return list(zip(*xyz)), arrays
 
 class GeometrySection:
     def __init__(self, r, r_relative, points, min_te_thickness=0.002, open_te=False):
@@ -500,16 +540,16 @@ class Web:
         self.evaluations[int(round(r * 1e2) * 10)] = [out]
         return out
 
-    def _find_top_and_bottom_points(self, mesh):
+    def _find_top_and_bottom_points(self, webmesh):
         if not self.points:
             return
-        rad = mesh.GetPointData().GetArray("radius")
-        rel_dist = mesh.GetPointData().GetArray("d_rel_dist_from_te")
-        for i in range(mesh.GetNumberOfPoints()):
+        rad = webmesh.GetPointData().GetArray("radius")
+        rel_dist = webmesh.GetPointData().GetArray("d_rel_dist_from_te")
+        for i in range(webmesh.GetNumberOfPoints()):
             rm = rad.GetValue(i)
             if self.web_root <= rm <= self.web_tip:
                 rd = rel_dist.GetValue(i)
-                pnt = mesh.GetPoint(i)
+                pnt = webmesh.GetPoint(i)
                 rmm = int(round(rm * 1e2) * 10)
                 if rmm in self.evaluations and (
                     abs(rd - self.evaluations[rmm][0][0]) < 1e-6 or
@@ -558,18 +598,23 @@ class Web:
         return vp, added_arrays
 
     def write_mesh(self, vtpfile):
-        self.mesh.save(vtpfile)
+        if not hasattr(self, 'webmesh'):
+            return
+        self.webmesh.save(vtpfile)
         logger.info(f"Wrote mesh to {vtpfile}")
 
-    def mesh(self, mesh, n_cells):
-        self._find_top_and_bottom_points(mesh)
+    def mesh(self, webmesh, n_cells):
+        self._find_top_and_bottom_points(webmesh)
         points, pdata = self._create_points(n_cells)
+        logger.info(f"Web {self.name}: created {len(points)} points")
         if not points:
+            self.webmesh = pv.PolyData()
+            logger.info(f"Web {self.name}: no points, creating empty mesh")
             return
         cells = self._create_quad_connectivity(n_cells, len(points), self.flip_normal)
-        self.mesh = pv.PolyData(points, faces=cells)
+        self.webmesh = pv.PolyData(points, faces=cells)
         for i in pdata:
-            self.mesh.point_data[i] = np.array(pdata[i]).astype(np.float32)
+            self.webmesh.point_data[i] = np.array(pdata[i]).astype(np.float32)
 
 class BladeShape:
     def __init__(
@@ -667,6 +712,7 @@ class BladeShape:
             writer.Write()
         except Exception:
             logger.info("no valid mesh available")
+        workdir = Path(filename).parent
         for i in self.webs:
-            if hasattr(i, 'mesh'):
-                i.write_mesh(f"{i.name}.vtp")
+            if hasattr(i, 'webmesh'):
+                i.write_mesh(str(workdir / f"{i.name}.vtp"))
