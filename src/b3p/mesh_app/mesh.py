@@ -68,7 +68,9 @@ def write_web(
     p = out.GetPointData().GetArray(zone)
 
     num_points = out.GetNumberOfPoints()
-    logger.info(f"Web {name}: origin {loc}, normal {normal}, points found: {num_points}")
+    logger.info(
+        f"Web {name}: origin {loc}, normal {normal}, points found: {num_points}"
+    )
 
     if c is None or p is None or cc is None:
         logger.warning(f"Web {name}: missing point data arrays")
@@ -127,6 +129,7 @@ def write_web(
         # Write data to a JSON file
         with open(workdir / f"{name}.json", "w") as f:
             import json
+
             json.dump(data, f, indent=4)
 
     # open("%s.txt" % name, "wb").write(str(out).encode("utf-8"))
@@ -187,7 +190,9 @@ def build_blade_mesh(config, workdir):
     radii = np.linspace(0, 100, 100)
     web_inputs = config["mesh"]["webs"]
     base_vtp = workdir / "blade_geometry.vtp"
-    web_intersections = build_webs(str(base_vtp), web_inputs, prefix="blade", workdir=workdir)
+    web_intersections = build_webs(
+        str(base_vtp), web_inputs, prefix="blade", workdir=workdir
+    )
     prefix = "blade"
     pckfile = workdir / "blade_geometry.pck"
     outfile = workdir / "blade_mesh.vtp"
@@ -254,7 +259,9 @@ def build_mesh(
     logger.info(f"Wrote blade mesh to {outfile}")
     return blade
 
+
 # Local classes for self-containment
+
 
 def spline_interp(x, y, newx):
     spl = vtk.vtkCardinalSpline()
@@ -312,6 +319,7 @@ def mesh_line(pnt1, pnt2, n_cells, id):
         "is_web": [1.0 for _ in ppl],
     }
     return list(zip(*xyz)), arrays
+
 
 class GeometrySection:
     def __init__(self, r, r_relative, points, min_te_thickness=0.002, open_te=False):
@@ -469,7 +477,13 @@ class GeometrySection:
         for i in webs:
             splits = sorted(i.splits(self.r, self.r_relative))
             datum, datum_r = [], []
-            for j in zip(rel_dist_from_te, [1 if k < len(rel_dist_from_te) // 2 else -1 for k in range(len(rel_dist_from_te))]):
+            for j in zip(
+                rel_dist_from_te,
+                [
+                    1 if k < len(rel_dist_from_te) // 2 else -1
+                    for k in range(len(rel_dist_from_te))
+                ],
+            ):
                 datum.append(
                     (j[0] - splits[j[1]]) * distance_along_airfoil * (-1 if j[1] else 1)
                 )
@@ -509,6 +523,7 @@ class GeometrySection:
             offs = np.interp(self.r_relative, i[1][1], i[1][2])
             datums[i[0]] = np.array(np.array(datums[i[1][0]]) + offs).astype(np.float32)
         return out, datums
+
 
 class Web:
     def __init__(
@@ -552,8 +567,8 @@ class Web:
                 pnt = webmesh.GetPoint(i)
                 rmm = int(round(rm * 1e2) * 10)
                 if rmm in self.evaluations and (
-                    abs(rd - self.evaluations[rmm][0][0]) < 1e-6 or
-                    abs(rd - self.evaluations[rmm][0][1]) < 1e-6
+                    abs(rd - self.evaluations[rmm][0][0]) < 1e-6
+                    or abs(rd - self.evaluations[rmm][0][1]) < 1e-6
                 ):
                     self.evaluations[rmm].append(pnt)
 
@@ -598,7 +613,7 @@ class Web:
         return vp, added_arrays
 
     def write_mesh(self, vtpfile):
-        if not hasattr(self, 'webmesh'):
+        if not hasattr(self, "webmesh"):
             return
         self.webmesh.save(vtpfile)
         logger.info(f"Wrote mesh to {vtpfile}")
@@ -615,6 +630,7 @@ class Web:
         self.webmesh = pv.PolyData(points, faces=cells)
         for i in pdata:
             self.webmesh.point_data[i] = np.array(pdata[i]).astype(np.float32)
+
 
 class BladeShape:
     def __init__(
@@ -714,5 +730,5 @@ class BladeShape:
             logger.info("no valid mesh available")
         workdir = Path(filename).parent
         for i in self.webs:
-            if hasattr(i, 'webmesh'):
+            if hasattr(i, "webmesh"):
                 i.write_mesh(str(workdir / f"{i.name}.vtp"))

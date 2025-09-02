@@ -28,7 +28,7 @@ def test_geometry_step():
             "airfoils": {
                 0.2: {"xy": [[0, 0], [0.5, 0.1], [1, 0]]},
             }
-        }
+        },
     }
 
     with tempfile.TemporaryDirectory() as tmpdir:

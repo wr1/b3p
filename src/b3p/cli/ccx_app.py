@@ -13,7 +13,7 @@ from statesman.core.base import Statesman, ManagedFile
 from treeparse import cli, command, option
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
+# logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
 
 
 class PrepStep(Statesman):
@@ -91,38 +91,48 @@ def run_ccx(inp, ccxexe, logger):
         error_msg = f"ccx failed for {inp}: {e}"
         return inp, False, error_msg
 
+
 # CLI code for ccx remains, but integrated with statesman
 # ... (rest unchanged)
+
 
 def run_callback(yml: Path, bondline: bool, buckling: bool):
     state = AppState.get_instance()
     app = CcxApp(state, yml)
     app.ccx(bondline=bondline, buckling=buckling)
 
+
 def prep_callback(yml: Path, bondline: bool, buckling: bool):
     state = AppState.get_instance()
     app = CcxApp(state, yml)
     app.prep(bondline=bondline, buckling=buckling)
 
-def solve_callback(yml: Path, wildcard: str, nproc: int, ccxexe: str, merged_plies: bool):
+
+def solve_callback(
+    yml: Path, wildcard: str, nproc: int, ccxexe: str, merged_plies: bool
+):
     state = AppState.get_instance()
     app = CcxApp(state, yml)
     app.solve(wildcard=wildcard, nproc=nproc, ccxexe=ccxexe, merged_plies=merged_plies)
+
 
 def post_callback(yml: Path, wildcard: str, nbins: int):
     state = AppState.get_instance()
     app = CcxApp(state, yml)
     app.post(wildcard=wildcard, nbins=nbins)
 
+
 def plot_callback(yml: Path, plot3d: bool, plot2d: bool):
     state = AppState.get_instance()
     app = CcxApp(state, yml)
     app.plot(plot3d=plot3d, plot2d=plot2d)
 
+
 def failure_callback(yml: Path):
     state = AppState.get_instance()
     app = CcxApp(state, yml)
     app.failure_criteria()
+
 
 ccx_cli = cli(
     name="ccx",
@@ -147,8 +157,20 @@ ccx_cli.commands.append(
         callback=run_callback,
         arguments=[],
         options=[
-            option(flags=["--bondline", "-b"], is_flag=True, default=False, help="Use bondline meshes"),
-            option(flags=["--buckling", "-k"], is_flag=True, default=False, help="Enable buckling analysis"),
+            option(
+                flags=["--bondline", "-b"],
+                is_flag=True,
+                default=False,
+                arg_type=bool,
+                help="Use bondline meshes",
+            ),
+            option(
+                flags=["--buckling", "-k"],
+                is_flag=True,
+                default=False,
+                arg_type=bool,
+                help="Enable buckling analysis",
+            ),
         ],
     )
 )
@@ -160,8 +182,20 @@ ccx_cli.commands.append(
         callback=prep_callback,
         arguments=[],
         options=[
-            option(flags=["--bondline", "-b"], is_flag=True, default=False, help="Use bondline meshes"),
-            option(flags=["--buckling", "-k"], is_flag=True, default=False, help="Enable buckling analysis"),
+            option(
+                flags=["--bondline", "-b"],
+                is_flag=True,
+                default=False,
+                arg_type=bool,
+                help="Use bondline meshes",
+            ),
+            option(
+                flags=["--buckling", "-k"],
+                is_flag=True,
+                default=False,
+                arg_type=bool,
+                help="Enable buckling analysis",
+            ),
         ],
     )
 )
@@ -173,10 +207,31 @@ ccx_cli.commands.append(
         callback=solve_callback,
         arguments=[],
         options=[
-            option(flags=["--wildcard", "-w"], default="", arg_type=str, help="Wildcard pattern for input files"),
-            option(flags=["--nproc", "-p"], default=2, arg_type=int, help="Number of processes"),
-            option(flags=["--ccxexe", "-c"], default="ccx", arg_type=str, help="Calculix executable"),
-            option(flags=["--merged-plies", "-m"], is_flag=True, default=False, help="Only process merged plies"),
+            option(
+                flags=["--wildcard", "-w"],
+                default="",
+                arg_type=str,
+                help="Wildcard pattern for input files",
+            ),
+            option(
+                flags=["--nproc", "-p"],
+                default=2,
+                arg_type=int,
+                help="Number of processes",
+            ),
+            option(
+                flags=["--ccxexe", "-c"],
+                default="ccx",
+                arg_type=str,
+                help="Calculix executable",
+            ),
+            option(
+                flags=["--merged-plies", "-m"],
+                is_flag=True,
+                default=False,
+                arg_type=bool,
+                help="Only process merged plies",
+            ),
         ],
     )
 )
@@ -188,8 +243,18 @@ ccx_cli.commands.append(
         callback=post_callback,
         arguments=[],
         options=[
-            option(flags=["--wildcard", "-w"], default="", arg_type=str, help="Wildcard pattern for results"),
-            option(flags=["--nbins", "-n"], default=60, arg_type=int, help="Number of bins for tabulation"),
+            option(
+                flags=["--wildcard", "-w"],
+                default="",
+                arg_type=str,
+                help="Wildcard pattern for results",
+            ),
+            option(
+                flags=["--nbins", "-n"],
+                default=60,
+                arg_type=int,
+                help="Number of bins for tabulation",
+            ),
         ],
     )
 )
@@ -201,8 +266,20 @@ ccx_cli.commands.append(
         callback=plot_callback,
         arguments=[],
         options=[
-            option(flags=["--plot3d", "-3"], is_flag=True, default=True, help="Enable 3D plots"),
-            option(flags=["--plot2d", "-2"], is_flag=True, default=True, help="Enable 2D plots"),
+            option(
+                flags=["--plot3d", "-3"],
+                is_flag=True,
+                default=True,
+                arg_type=bool,
+                help="Enable 3D plots",
+            ),
+            option(
+                flags=["--plot2d", "-2"],
+                is_flag=True,
+                default=True,
+                arg_type=bool,
+                help="Enable 2D plots",
+            ),
         ],
     )
 )

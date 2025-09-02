@@ -10,21 +10,32 @@ OUTPUT_DIR = TEST_DIR / "output"
 REFERENCE_DIR = TEST_DIR / "reference"
 TEST_YAML = TEST_DIR / "test_config.yml"
 
+
 @pytest.fixture(scope="module")
 def run_geometry():
     """Fixture to run the geometry app once."""
     if not TEST_YAML.exists():
         pytest.skip("Test data not prepared. Run test_geom_consistency.sh first.")
-    result = subprocess.run(["b3p", "geom", "-y", str(TEST_YAML), "run"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["b3p", "geom", "-y", str(TEST_YAML), "run"], capture_output=True, text=True
+    )
     assert result.returncode == 0, f"Geometry run failed: {result.stderr}"
     return result
 
-@pytest.mark.skipif(not TEST_YAML.exists(), reason="Test data not prepared. Run test_geom_consistency.sh first.")
+
+@pytest.mark.skipif(
+    not TEST_YAML.exists(),
+    reason="Test data not prepared. Run test_geom_consistency.sh first.",
+)
 def test_geometry_run(run_geometry):
     """Test that the geometry run succeeds."""
     assert run_geometry.returncode == 0
 
-@pytest.mark.skipif(not TEST_YAML.exists(), reason="Test data not prepared. Run test_geom_consistency.sh first.")
+
+@pytest.mark.skipif(
+    not TEST_YAML.exists(),
+    reason="Test data not prepared. Run test_geom_consistency.sh first.",
+)
 def test_blade_geometry_variables_json():
     """Test comparison of blade_geometry_variables.json."""
     output_json = OUTPUT_DIR / "blade_geometry_variables.json"
@@ -37,7 +48,11 @@ def test_blade_geometry_variables_json():
         ref_data = f.read()
     assert output_data == ref_data, "Geometry variables differ"
 
-@pytest.mark.skipif(not TEST_YAML.exists(), reason="Test data not prepared. Run test_geom_consistency.sh first.")
+
+@pytest.mark.skipif(
+    not TEST_YAML.exists(),
+    reason="Test data not prepared. Run test_geom_consistency.sh first.",
+)
 def test_blade_geometry_vtp():
     """Test comparison of blade_geometry.vtp file size."""
     output_file = OUTPUT_DIR / "blade_geometry.vtp"
@@ -48,7 +63,11 @@ def test_blade_geometry_vtp():
     ref_size = ref_file.stat().st_size
     assert output_size == ref_size, f"VTP sizes differ: {output_size} vs {ref_size}"
 
-@pytest.mark.skipif(not TEST_YAML.exists(), reason="Test data not prepared. Run test_geom_consistency.sh first.")
+
+@pytest.mark.skipif(
+    not TEST_YAML.exists(),
+    reason="Test data not prepared. Run test_geom_consistency.sh first.",
+)
 def test_blade_geometry_pck():
     """Test comparison of blade_geometry.pck file size."""
     output_file = OUTPUT_DIR / "blade_geometry.pck"

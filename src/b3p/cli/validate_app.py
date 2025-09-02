@@ -32,6 +32,7 @@ def validate_callback(yml: Path):
     app = ValidateApp(yml)
     app.validate()
 
+
 validate_cli = cli(
     name="validate",
     help="Validate YAML configuration",

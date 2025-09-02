@@ -32,6 +32,7 @@ def clean_callback(yml: Path):
     app = CleanApp(state, yml)
     app.clean()
 
+
 clean_cli = cli(
     name="clean",
     help="Clean working directory",

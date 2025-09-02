@@ -18,7 +18,7 @@ def test_optspace():
     assert len(result) == n_points
     assert result[0] == 0.0
     assert result[-1] == 1.0
-    assert all(result[i] <= result[i+1] for i in range(len(result)-1))
+    assert all(result[i] <= result[i + 1] for i in range(len(result) - 1))
 
 
 def test_build_blade_geometry():
@@ -39,7 +39,7 @@ def test_build_blade_geometry():
                 0.2: {"xy": [[0, 0], [0.5, 0.1], [1, 0]]},
                 0.1: {"xy": [[0, 0], [0.5, 0.05], [1, 0]]},
             }
-        }
+        },
     }
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -62,6 +62,8 @@ def test_blade_initialization():
     airfoils = {0.2: {"xy": [[0, 0], [0.5, 0.1], [1, 0]]}}
     chordwise_sampling = np.linspace(0, 1, 50)
 
-    blade_obj = blade(chord, thickness, twist, dx, dy, z, airfoils, chordwise_sampling, np_spanwise=20)
-    assert hasattr(blade_obj, 'sections')
+    blade_obj = blade(
+        chord, thickness, twist, dx, dy, z, airfoils, chordwise_sampling, np_spanwise=20
+    )
+    assert hasattr(blade_obj, "sections")
     assert len(blade_obj.sections) > 0

@@ -17,7 +17,7 @@ from statesman.core.base import Statesman, ManagedFile
 from treeparse import cli, command, option
 from .app_state import AppState
 
-logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
+# logging.basicConfig(handlers=[RichHandler(rich_tracebacks=True)], level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -206,6 +206,7 @@ drape_cmd = command(
             is_flag=True,
             default=True,
             help="Add bondline to mesh",
+            arg_type=bool,
         ),
     ],
 )
@@ -241,6 +242,7 @@ run_cmd = command(
             is_flag=True,
             default=True,
             help="Include bondline",
+            arg_type=bool,
         ),
     ],
 )

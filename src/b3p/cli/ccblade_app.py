@@ -16,6 +16,7 @@ except ImportError:
 
 from treeparse import cli, command, option
 
+
 class CCBladeApp:
     def __init__(self, state, yml: Path):
         self.state = state  # AppState instance
@@ -34,6 +35,7 @@ def ccblade_callback(yml: Path):
     state = AppState.get_instance()
     app = CCBladeApp(state, yml)
     app.ccblade()
+
 
 ccblade_cli = cli(
     name="ccblade",
