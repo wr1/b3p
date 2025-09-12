@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI for Mesh App using treeparse."""
+"""CLI for Mesh App using treeparse, synced with build mesh."""
 
 from pathlib import Path
 from treeparse import cli, command, option
@@ -9,14 +9,14 @@ from ..cli.yml_portable import yaml_make_portable
 
 # Treeparse CLI for mesh_app
 def run_mesh_callback(yml: Path):
-    """Callback for running the mesh step."""
+    """Callback for running the mesh step, now synced."""
     step = MeshStep(str(yml))
     step.run()
 
 
 mesh_cli = cli(
     name="mesh",
-    help="Build blade mesh",
+    help="Build blade mesh (synced with build mesh)",
     line_connect=True,
     show_types=True,
     show_defaults=True,
@@ -33,7 +33,7 @@ mesh_cli = cli(
 mesh_cli.commands.append(
     command(
         name="run",
-        help="Run mesh building",
+        help="Run mesh building (synced)",
         callback=run_mesh_callback,
         arguments=[],
     )

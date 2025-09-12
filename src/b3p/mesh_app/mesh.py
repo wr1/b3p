@@ -1,4 +1,4 @@
-# Mesh building functions for mesh_app.
+# Mesh building functions for mesh_app, self-contained but synced with build mesh interpolation.
 
 import os
 import logging
@@ -9,275 +9,18 @@ from pathlib import Path
 import pyvista as pv
 import vtk
 from ..geometry.blade import blade
-from ..geometry.blade_section import section
+from ..geometry.blade_section import section as GeometrySection
 from ..geometry.loft_utils import load, interp, optspace
 from ..geometry.splining import intp_c
 
 logger = logging.getLogger(__name__)
 
-
-def write_web(
-    loc,
-    normal,
-    mesh,
-    name,
-    rootcut=0.0,
-    tipcut=100.0,
-    tip=0.0,
-    zone="d_rel_dist_from_te",
-    workdir=Path("."),
-):
-    """Slices a plane through a mesh, and reports back a relative
-    coordinate of top and bottom lines. This is used to represent geometrically straight entities
-    in 3D as coordinates in local systems defined per section.
-
-    Args:
-        loc (np.ndarray): location of the plane
-        normal (tuple): normal of the plane
-        mesh (str): mesh to slice
-        name (str): name of the web
-        rootcut (float, optional): cut the root of the web. Defaults to 0.0.
-        tipcut (float, optional): cut the tip of the web. Defaults to 100.0.
-        tip (float, optional): tip of the blade. Defaults to 0.0.
-        zone (str, optional): zone of the blade. Defaults to "d_rel_dist_from_te".
-        workdir (Path, optional): work directory. Defaults to Path(".").
-
-    Returns:
-        list: A list of tuples, each containing (rr, wwl, lwl, rt1[i])
-    """
-
-    rd = vtk.vtkXMLPolyDataReader()
-    rd.SetFileName(mesh)
-    rd.Update()
-    poly = rd.GetOutput()
-
-    plane = vtk.vtkPlane()
-    plane.SetOrigin(loc)
-    plane.SetNormal(normal)
-
-    clip = vtk.vtkCutter()
-    clip.SetCutFunction(plane)
-    clip.SetInputData(poly)
-
-    clip.Update()
-    out = clip.GetOutput()
-    points = []
-
-    c = out.GetPointData().GetArray("d_rel_dist_from_te")
-    cc = out.GetPointData().GetArray("d_abs_dist_from_te")
-    p = out.GetPointData().GetArray(zone)
-
-    num_points = out.GetNumberOfPoints()
-    logger.info(
-        f"Web {name}: origin {loc}, normal {normal}, points found: {num_points}"
-    )
-
-    if c is None or p is None or cc is None:
-        logger.warning(f"Web {name}: missing point data arrays")
-        return []
-
-    lw, ww = [], []
-    lwp, wwp = [], []
-    rta = []
-    minr, maxr = 1000, -1000
-    for i in range(out.GetNumberOfPoints()):
-        if c.GetValue(i) > 0.5:
-            lw.append((out.GetPoint(i)[2], p.GetValue(i)))
-            lwp.append(out.GetPoint(i))
-            rta.append((out.GetPoint(i)[2], cc.GetValue(i) / c.GetValue(i)))
-        else:
-            ww.append((out.GetPoint(i)[2], p.GetValue(i)))
-            wwp.append(out.GetPoint(i))
-        minr = min(minr, out.GetPoint(i)[2])
-        maxr = max(maxr, out.GetPoint(i)[2])
-        points.append(out.GetPoint(i))
-
-    if not lw or not ww:
-        logger.warning(f"Web {name}: no points in leading or trailing edge")
-        return []
-
-    lw = list(zip(*lw))
-    ww = list(zip(*ww))
-    rt = list(zip(*rta))
-    # interpolate the results
-    r = np.linspace(minr, maxr, 400)
-    lw1 = np.interp(r, lw[0], lw[1])
-    ww1 = np.interp(r, ww[0], ww[1])
-    rt1 = np.interp(r, rt[0], rt[1])
-
-    out = []
-    for i, rr in enumerate(r):
-        if rr <= tipcut:
-            lwl, wwl = lw1[i], ww1[i]
-        out.append((rr, wwl, lwl, rt1[i]))
-        if i > 0 and r[i - 1] < rootcut and rr > rootcut:
-            for j in range(i):
-                out[j][1] = wwl
-                out[j][2] = lwl
-
-    out = sorted(out)
-    if tip > out[-1][0]:
-        out.append((tip, out[-1][1], out[-1][2], out[-1][3]))
-
-        # Prepare data for JSON serialization
-        data = {
-            "name": name,
-            "data": out,
-            "points": {"lwp": [list(p) for p in lwp], "wwp": [list(p) for p in wwp]},
-        }
-
-        # Write data to a JSON file
-        with open(workdir / f"{name}.json", "w") as f:
-            import json
-
-            json.dump(data, f, indent=4)
-
-    # open("%s.txt" % name, "wb").write(str(out).encode("utf-8"))
-    # open("%s_points.txt" % name, "wb").write(str([lwp, wwp]).encode("utf-8"))
-
-    return out
-
-
-def build_webs(mesh, webs, prefix="__dum", workdir=Path(".")):
-    """Builds web meshes based on provided web definitions.
-    Args:
-        mesh (object): The base mesh object to which the webs will be attached.
-        webs (dict): A dictionary defining the webs to be created.
-            Each key in the dictionary represents the name of a web, and the
-            corresponding value is a dictionary containing the web's properties,
-            including:
-                "origin" (list/array-like): The origin point of the web.
-                "z_start" (float): The z-coordinate where the web starts.
-                "z_follow_blade" (float): The z-coordinate where the web follows the blade.
-                "z_end" (float): The z-coordinate where the web ends.
-                "orientation" (list/array-like, optional): The normal vector
-                    defining the orientation of the web. Defaults to (0, 1, 0).
-        prefix (str, optional): A prefix to be added to the name of each web mesh.
-            Defaults to "__dum".
-        workdir (Path, optional): work directory. Defaults to Path(".").
-    Returns:
-        dict: A dictionary containing the generated web meshes. The keys of the
-            dictionary are the names of the webs, and the values are the
-            corresponding mesh objects.
-    """
-
-    web_meshes = {}
-    for i in webs:
-        normal = (0, 1, 0)
-        name = str(prefix) + "_" + i
-
-        if "orientation" in webs[i]:
-            normal = webs[i]["orientation"]
-
-        fea_web = write_web(
-            np.array(webs[i]["origin"]),
-            normal,
-            mesh,
-            name,
-            rootcut=webs[i]["z_start"],
-            tipcut=webs[i]["z_follow_blade"],
-            tip=webs[i]["z_end"],
-            workdir=workdir,
-        )
-        web_meshes[i] = fea_web
-
-    return web_meshes
-
-
-def build_blade_mesh(config, workdir):
-    """Build the blade mesh including webs."""
-    pln = config["planform"]
-    radii = np.linspace(0, 100, 100)
-    web_inputs = config["mesh"]["webs"]
-    base_vtp = workdir / "blade_geometry.vtp"
-    web_intersections = build_webs(
-        str(base_vtp), web_inputs, prefix="blade", workdir=workdir
-    )
-    prefix = "blade"
-    pckfile = workdir / "blade_geometry.pck"
-    outfile = workdir / "blade_mesh.vtp"
-    build_mesh(
-        str(pckfile),
-        radii,
-        web_inputs,
-        web_intersections,
-        prefix,
-        outfile=str(outfile),
-    )
-    web_files = [f"{prefix}_{i}.vtp" for i in web_inputs]
-    logger.info(f"Web planes exported to {workdir}: {', '.join(web_files)}")
-
-
-def build_mesh(
-    pckfile,
-    radii,
-    web_inputs,
-    web_intersections,
-    prefix,
-    n_web_points=10,
-    n_ch_points=120,
-    outfile="out.vtp",
-    added_datums=None,
-    panel_mesh_scale=None,
-):
-    """Build the 3D mesh with webs linked to the shell."""
-    if added_datums is None:
-        added_datums = {}
-    if panel_mesh_scale is None:
-        panel_mesh_scale = []
-    sections = pickle.load(open(pckfile, "rb"))
-    weblist = [
-        Web(
-            points=web_intersections[i],
-            web_root=web_inputs[i]["z_start"],
-            web_tip=web_inputs[i]["z_end"],
-            web_name=f"{prefix}_{i}",
-            coordinate=i,
-            flip_normal=(web_inputs[i]["origin"][1] > 0),
-        )
-        for i in web_inputs
-    ]
-    nsec = []
-    z = [i[0][2] for i in sections]
-    for i in sections:
-        r = i[0][2] - min(z)
-        r_rel = (r - min(z)) / (max(z) - min(z))
-        sec = GeometrySection(r, r_rel, i, open_te=False)
-        nsec.append(sec)
-    blade = BladeShape(
-        nsec,
-        section_resolution=200,
-        web_resolution=n_web_points,
-        added_datums=added_datums,
-        prefix=prefix,
-    )
-    for i in weblist:
-        blade.set_web(i)
-    blade.build_interpolated_sections(radii=radii, interpolation_type=2)
-    blade.mesh(n_ch_points, panel_mesh_scale=panel_mesh_scale)
-    blade.write_mesh(outfile)
-    logger.info(f"Wrote blade mesh to {outfile}")
-    return blade
-
-
-# Local classes for self-containment
-
+# Local classes updated to match build mesh interpolation
 
 def spline_interp(x, y, newx):
     spl = vtk.vtkCardinalSpline()
     spl.SetLeftConstraint(2)
     spl.SetRightConstraint(2)
-    for i in zip(x, y):
-        spl.AddPoint(i[0], i[1])
-    return [spl.Evaluate(i) for i in newx]
-
-
-def spline_interp_k(x, y, newx):
-    spl = vtk.vtkKochanekSpline()
-    spl.SetLeftConstraint(2)
-    spl.SetRightConstraint(2)
-    spl.SetDefaultTension(0.0)
-    spl.SetDefaultContinuity(0.2)
     for i in zip(x, y):
         spl.AddPoint(i[0], i[1])
     return [spl.Evaluate(i) for i in newx]
@@ -410,11 +153,15 @@ class GeometrySection:
             added_datums = {}
         if panel_mesh_scale is None:
             panel_mesh_scale = []
+        # Updated to match build mesh interpolation: use vtkParametricSpline with constraints 3
         spline = vtk.vtkParametricSpline()
         spline.SetPoints(self.poly.GetPoints())
-        spline.SetLeftConstraint(2)
-        spline.SetRightConstraint(2)
+        spline.SetLeftConstraint(3)
+        spline.SetLeftValue(1.0)
+        spline.SetRightConstraint(3)
+        spline.SetRightValue(1.0)
         p, du = [0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        spline.DerivativesAvailableOn()
         out = []
         last = []
         distance_along_airfoil = 0.0
@@ -477,13 +224,7 @@ class GeometrySection:
         for i in webs:
             splits = sorted(i.splits(self.r, self.r_relative))
             datum, datum_r = [], []
-            for j in zip(
-                rel_dist_from_te,
-                [
-                    1 if k < len(rel_dist_from_te) // 2 else -1
-                    for k in range(len(rel_dist_from_te))
-                ],
-            ):
+            for j in zip(rel_dist_from_te, [1 if k < len(rel_dist_from_te) // 2 else -1 for k in range(len(rel_dist_from_te))]):
                 datum.append(
                     (j[0] - splits[j[1]]) * distance_along_airfoil * (-1 if j[1] else 1)
                 )
@@ -543,32 +284,25 @@ class Web:
         self.flip_normal = flip_normal
 
     def average_splits(self):
-        if len(self.points) < 3:
-            return 0.0, 0.0
         g = list(zip(*self.points))
         return np.mean(g[1]), np.mean(g[2])
 
     def splits(self, r, r_relative):
-        if not self.points:
-            return (0, 0)
         out = (self.splines[0].Evaluate(r), self.splines[1].Evaluate(r))
         self.evaluations[int(round(r * 1e2) * 10)] = [out]
         return out
 
-    def _find_top_and_bottom_points(self, webmesh):
-        if not self.points:
-            return
-        rad = webmesh.GetPointData().GetArray("radius")
-        rel_dist = webmesh.GetPointData().GetArray("d_rel_dist_from_te")
-        for i in range(webmesh.GetNumberOfPoints()):
+    def _find_top_and_bottom_points(self, mesh):
+        rad = mesh.GetPointData().GetArray("radius")
+        rel_dist = mesh.GetPointData().GetArray("d_rel_dist_from_te")
+        for i in range(mesh.GetNumberOfPoints()):
             rm = rad.GetValue(i)
             if self.web_root <= rm <= self.web_tip:
                 rd = rel_dist.GetValue(i)
-                pnt = webmesh.GetPoint(i)
+                pnt = mesh.GetPoint(i)
                 rmm = int(round(rm * 1e2) * 10)
-                if rmm in self.evaluations and (
-                    abs(rd - self.evaluations[rmm][0][0]) < 1e-6
-                    or abs(rd - self.evaluations[rmm][0][1]) < 1e-6
+                if equals(rd, self.evaluations[rmm][0][0]) or equals(
+                    rd, self.evaluations[rmm][0][1]
                 ):
                     self.evaluations[rmm].append(pnt)
 
@@ -613,15 +347,13 @@ class Web:
         return vp, added_arrays
 
     def write_mesh(self, vtpfile):
-        if not hasattr(self, "webmesh"):
-            return
-        self.webmesh.save(vtpfile)
+        if hasattr(self, "webmesh"):
+            self.webmesh.save(vtpfile)
         logger.info(f"Wrote mesh to {vtpfile}")
 
-    def mesh(self, webmesh, n_cells):
-        self._find_top_and_bottom_points(webmesh)
+    def mesh(self, mesh, n_cells):
+        self._find_top_and_bottom_points(mesh)
         points, pdata = self._create_points(n_cells)
-        logger.info(f"Web {self.name}: created {len(points)} points")
         if not points:
             self.webmesh = pv.PolyData()
             logger.info(f"Web {self.name}: no points, creating empty mesh")
@@ -728,7 +460,156 @@ class BladeShape:
             writer.Write()
         except Exception:
             logger.info("no valid mesh available")
-        workdir = Path(filename).parent
         for i in self.webs:
             if hasattr(i, "webmesh"):
-                i.write_mesh(str(workdir / f"{i.name}.vtp"))
+                i.write_mesh(f"{i.name}.vtp")
+
+
+def build_blade_mesh(config, workdir):
+    """Build the blade mesh using self-contained logic in mesh_app."""
+    prefix = config["general"]["prefix"]
+    radii = np.linspace(0, 100, 100)
+    web_inputs = config["mesh"]["webs"]
+    base_vtp = workdir / f"{prefix}_base.vtp"
+    web_intersections = build_webs(
+        str(base_vtp), web_inputs, prefix=prefix, workdir=workdir
+    )
+    pckfile = workdir / f"{prefix}.pck"
+    outfile = workdir / "blade_mesh.vtp"
+    build_mesh(
+        str(pckfile),
+        radii,
+        web_inputs,
+        web_intersections,
+        prefix,
+        outfile=str(outfile),
+    )
+    web_files = [f"{prefix}_{i}.vtp" for i in web_inputs]
+    logger.info(f"Web planes exported to {workdir}: {', '.join(web_files)}")
+
+
+def build_mesh(
+    pckfile,
+    radii,
+    web_inputs,
+    web_intersections,
+    prefix,
+    n_web_points=10,
+    n_ch_points=120,
+    outfile="out.vtp",
+    added_datums=None,
+    panel_mesh_scale=None,
+):
+    if added_datums is None:
+        added_datums = {}
+    if panel_mesh_scale is None:
+        panel_mesh_scale = []
+    sections = pickle.load(open(pckfile, "rb"))
+    weblist = [
+        Web(
+            points=web_intersections[i],
+            web_root=web_inputs[i]["z_start"],
+            web_tip=web_inputs[i]["z_end"],
+            web_name=f"{prefix}_{i}",
+            coordinate=i,
+            flip_normal=(web_inputs[i]["origin"][1] > 0),
+        )
+        for i in web_inputs
+    ]
+    nsec = []
+    z = [i[0][2] for i in sections]
+    for i in sections:
+        r = i[0][2] - min(z)
+        r_rel = (r - min(z)) / (max(z) - min(z))
+        sec = GeometrySection(r, r_rel, i, open_te=False)
+        nsec.append(sec)
+    blade = BladeShape(
+        nsec,
+        section_resolution=200,
+        web_resolution=n_web_points,
+        added_datums=added_datums,
+        prefix=prefix,
+    )
+    for i in weblist:
+        blade.set_web(i)
+    blade.build_interpolated_sections(radii=radii, interpolation_type=2)
+    blade.mesh(n_ch_points, panel_mesh_scale=panel_mesh_scale)
+    blade.write_mesh(outfile)
+    logger.info(f"Wrote blade mesh to {outfile}")
+    return blade
+
+
+def build_webs(mesh_path, webs, prefix="__dum", workdir=Path(".")):
+    """Build web intersections using pyvista and numpy with matrix operations, using radius array for reference."""
+    mesh = pv.read(mesh_path)
+    web_meshes = {}
+    for i in webs:
+        normal = (0, 1, 0)
+        name = str(prefix) + "_" + i
+        if "orientation" in webs[i]:
+            normal = webs[i]["orientation"]
+        loc = np.array(webs[i]["origin"])
+        # Slice the mesh with the plane
+        slice_mesh = mesh.slice(normal=normal, origin=loc)
+        if slice_mesh.n_points == 0:
+            logger.warning(f"Web {name}: no intersection points")
+            continue
+        # Get point data
+        c = slice_mesh.point_data.get("d_rel_dist_from_te")
+        cc = slice_mesh.point_data.get("d_abs_dist_from_te")
+        p = slice_mesh.point_data.get("d_rel_dist_from_te")
+        radius_coords = slice_mesh.point_data.get("radius")
+        if c is None or cc is None or radius_coords is None:
+            logger.warning(f"Web {name}: missing point data arrays")
+            continue
+        # Use radius_coords instead of z_coords for interpolation reference
+        minr = np.min(radius_coords)
+        maxr = np.max(radius_coords)
+        r = np.linspace(minr, maxr, 400)
+        # Use numpy boolean indexing for vectorized operations
+        leading_mask = c > 0.5
+        trailing_mask = ~leading_mask
+        # Leading edge
+        if np.any(leading_mask):
+            lw_r = radius_coords[leading_mask]
+            lw_p = p[leading_mask]
+            lw1 = np.interp(r, lw_r, lw_p)
+        else:
+            lw1 = np.zeros_like(r)
+        # Trailing edge
+        if np.any(trailing_mask):
+            ww_r = radius_coords[trailing_mask]
+            ww_p = p[trailing_mask]
+            ww1 = np.interp(r, ww_r, ww_p)
+        else:
+            ww1 = np.zeros_like(r)
+        # Ratio
+        rt1 = np.interp(r, radius_coords, cc / c)
+        # Build out_list using vectorized operations
+        z_follow_blade = webs[i]["z_follow_blade"]
+        mask_follow = r <= z_follow_blade
+        lwl = np.where(mask_follow, lw1, 0)
+        wwl = np.where(mask_follow, ww1, 0)
+        out_list = np.column_stack((r, wwl, lwl, rt1)).tolist()
+        # Append end point if needed
+        if webs[i]["z_end"] > out_list[-1][0]:
+            out_list.append([webs[i]["z_end"], out_list[-1][1], out_list[-1][2], out_list[-1][3]])
+        # Collect points for JSON and VTP
+        lwp = slice_mesh.points[leading_mask].tolist()
+        wwp = slice_mesh.points[trailing_mask].tolist()
+        data = {
+            "name": name,
+            "data": out_list,
+            "points": {"lwp": lwp, "wwp": wwp},
+        }
+        with open(workdir / f"{name}.json", "w") as f:
+            import json
+            json.dump(data, f, indent=4)
+        # Generate VTP file
+        web_points = np.array(lwp + wwp)
+        if web_points.size > 0:
+            web_poly = pv.PolyData(web_points)
+            web_poly.save(workdir / f"{name}.vtp")
+            logger.info(f"Wrote web VTP to {workdir / f'{name}.vtp'}")
+        web_meshes[i] = out_list
+    return web_meshes

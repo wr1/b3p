@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Statesman step for building blade mesh."""
+"""Statesman step for building blade mesh using self-contained mesh_app logic."""
 
 import logging
+import shutil
 from pathlib import Path
 from ..models.config import BladeConfig
-from .mesh import build_blade_mesh
+from .mesh import build_blade_mesh  # Use self-contained mesh_app function
 from ..cli import yml_portable
 from statesman.core.base import Statesman, ManagedFile
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class MeshStep(Statesman):
-    """Statesman step for building blade mesh."""
+    """Statesman step for building blade mesh, self-contained in mesh_app."""
 
     dependent_sections = ["general", "planform", "mesh"]
     output_files = ["blade_mesh.vtp"]
@@ -21,16 +22,31 @@ class MeshStep(Statesman):
         ManagedFile(name="blade_geometry.pck", non_empty=True),
     ]
 
-    def _execute(self):
-        """Execute the mesh building step."""
-        # Load config using custom loader
-        config_data = yml_portable.yaml_make_portable(Path(self.config_path))
-        self.config = config_data.model_dump()
-
-        # Set workdir relative to YAML file
+    def __init__(self, config_path, *args, **kwargs):
+        super().__init__(config_path, *args, **kwargs)
+        # Load config and set workdir to the config's workdir
+        self.config = yml_portable.yaml_make_portable(Path(self.config_path))
+        self.config = self.config.model_dump()  # Convert to dict for Statesman
         self.workdir = Path(self.config_path).parent / self.config["general"]["workdir"]
-        self.workdir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
+        self.workdir.mkdir(parents=True, exist_ok=True)
 
-        # Build mesh with fixed file names
+    def _execute(self):
+        """Execute the mesh building step using mesh_app's build_blade_mesh."""
+        # Config already loaded in __init__
+        # Copy and rename input files to expected names in workdir
+        prefix = self.config["general"]["prefix"]
+        src_pck = self.workdir / "blade_geometry.pck"
+        dst_pck = self.workdir / f"{prefix}.pck"
+        if src_pck.exists():
+            shutil.copy(src_pck, dst_pck)
+            logger.info(f"Copied and renamed {src_pck} to {dst_pck}")
+
+        src_vtp = self.workdir / "blade_geometry.vtp"
+        dst_vtp = self.workdir / f"{prefix}_base.vtp"  # Match expectation in mesh_app/mesh.py
+        if src_vtp.exists():
+            shutil.copy(src_vtp, dst_vtp)
+            logger.info(f"Copied and renamed {src_vtp} to {dst_vtp}")
+
+        # Use self-contained build_blade_mesh from mesh_app
         build_blade_mesh(self.config, self.workdir)
-        logger.info(f"Mesh built and saved to {self.workdir}")
+        logger.info(f"Mesh built using mesh_app's build_blade_mesh")
