@@ -14,6 +14,15 @@ from rich.spinner import Spinner
 from contextlib import redirect_stdout
 import math
 
+from .plots import (
+    plot_interpolated_polars,
+    plot_polars,
+    plot_grid,
+    plot_bladeloads,
+    plot_moments,
+    rotorplot,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,45 +54,6 @@ def load_polar(pname: Path) -> Tuple[List[float], np.ndarray, np.ndarray, np.nda
     cd = np.interp(alpha_new, g[0], g[2])
     cm = np.interp(alpha_new, g[0], g[3])
     return [alpha_new, cl, cd, cm]
-
-
-def plot_interpolated_polars(
-    t: List[float], data: np.ndarray, of: Path = Path("polars.png")
-) -> None:
-    """Plot interpolated polars with thickness values."""
-    fig, ax = plt.subplots(3, 1, figsize=(16, 25))
-    for n, i in enumerate(t):
-        alpha, cl, cd, cm = data[:, :, n]
-        ax[0].plot(alpha, cl, label=f"t={t[n]:.3f}")
-        ax[1].plot(alpha, cd)
-        ax[2].plot(cd, cl)
-        ax[0].set_ylabel("Cl")
-        ax[1].set_ylabel("Cd")
-        ax[2].set_ylabel("Cm")
-        ax[0].legend()
-        ax[0].grid()
-        ax[1].grid()
-        ax[2].grid()
-    fig.savefig(of)
-
-
-def plot_polars(polars: List[tuple], of: Path = Path("polars_in.png")) -> None:
-    """Plot polar data from a list."""
-    fig, ax = plt.subplots(3, 1, figsize=(16, 20))
-    for i in polars:
-        alpha, cl, cd, cm = i[1]
-        ax[0].plot(alpha, cl, label=i[0])
-        ax[1].plot(alpha, cd)
-        ax[2].plot(cd, cl)
-        ax[0].set_ylabel("Cl")
-        ax[1].set_ylabel("Cd")
-        ax[2].set_ylabel("Cl - Cd")
-        ax[0].legend()
-        ax[0].grid()
-        ax[1].grid()
-        ax[2].grid()
-    fig.tight_layout()
-    fig.savefig(of)
 
 
 def interpolate_polars(
@@ -184,20 +154,6 @@ def omega2tsr(omega: float, uinf: float, radius: float) -> float:
     return omega * 2.0 * np.pi * radius / (uinf * 60.0)
 
 
-def plot_grid(
-    num_plots: int, figsize: tuple = (15, 15)
-) -> Tuple[plt.Figure, np.ndarray]:
-    """Create a grid of subplots for plotting."""
-    grid_size = math.isqrt(num_plots)
-    columns = grid_size
-    rows = np.ceil(num_plots / grid_size).astype(int)
-    fig, axs = plt.subplots(rows, columns, figsize=figsize)
-    axs = axs.flatten()
-    for idx in range(len(axs) - 1, rows * columns):
-        fig.delaxes(axs[idx])
-    return fig, axs
-
-
 def find_closest_x(
     x_values: np.ndarray, evaluations: np.ndarray, target: float, order: int
 ) -> float:
@@ -208,24 +164,6 @@ def find_closest_x(
     x_dense = np.linspace(x_values[0], x_values[-1], 10000)
     x_closest = x_dense[np.argmin(np.abs(poly(x_dense) - target))]
     return x_closest
-
-
-def plot_bladeloads(
-    r: np.ndarray, loads_list: List[Dict[str, np.ndarray]], uinf_list: List[float], of: Path = Path("bladeloads.png")
-) -> None:
-    """Plot blade loads from a list of dictionaries for multiple operating points."""
-    if not loads_list:
-        return
-    fig, axs = plot_grid(len(loads_list[0]), figsize=(25, 25))
-    for idx, name in enumerate(loads_list[0].keys()):
-        for i, load_dict in enumerate(loads_list):
-            axs[idx].plot(r, load_dict[name], label=f"uinf={uinf_list[i]:.1f}")
-        axs[idx].set_title(name)
-        axs[idx].legend()
-        axs[idx].grid()
-    fig.tight_layout()
-    fig.savefig(of)
-    logger.info(f"Saved {of}")
 
 
 class controloptimize:
@@ -346,31 +284,46 @@ class controloptimize:
         """Compute and plot blade loads for all operating points."""
         loads_list = []
         uinf_list = []
+        flapwise_moments = []
+        edgewise_moments = []
+        r = self.rotor.r
         for ui, om, pi in zip(self.uinf, self.omega, self.pitch):
             loads, _ = self.rotor.distributedAeroLoads(ui, om, pi, 0)
             loads_list.append(loads)
             uinf_list.append(ui)
+            # Compute moments
+            Np = loads['Np']
+            Tp = loads['Tp']
+            moment_flap = np.trapz(Np * r, r)
+            moment_edge = np.trapz(Tp * r, r)
+            flapwise_moments.append(moment_flap)
+            edgewise_moments.append(moment_edge)
         plot_bladeloads(self.rotor.r, loads_list, uinf_list, of=self.workdir.parent / "ccblade_bladeloads.png")
-
-
-def rotorplot(
-    op: Dict[str, Any],
-    uinf: np.ndarray,
-    labels: List[str] = ["P", "CP", "T", "Mb"],
-    of: Path = Path("__temp.png"),
-) -> None:
-    """Plot rotor performance data against wind speeds."""
-    lab = [i for i in labels if i in op]
-    fig, ax = plot_grid(len(lab), figsize=(15, 15))
-    for n, i in enumerate(lab):
-        ax[n].plot(uinf, op[i], label=f"{i} max={op[i].max():.2f}")
-        ax[n].legend()
-        ax[n].grid()
-        ax[n].set_ylabel(i + "(W)" if i == "P" else "")
-        ax[n].set_xlabel("uinf [m/s]")
-    fig.tight_layout()
-    fig.savefig(of)
-    logger.info(f"saved {of}")
+        # Save table output
+        all_loads = {}
+        for ui, loads in zip(uinf_list, loads_list):
+            ui_str = f"{ui:.1f}"
+            for key, arr in loads.items():
+                if key in ['Np', 'Tp']:
+                    col_name = f"{key}_{ui_str}"
+                    all_loads[col_name] = arr
+        df_all = pd.DataFrame(all_loads, index=self.rotor.r)
+        df_all.index.name = 'r'
+        df_all.to_csv(self.workdir.parent / "ccblade_bladeloads.csv")
+        logger.info(f"Saved blade loads table")
+        # Save moments
+        combined_rms = np.sqrt(np.array(flapwise_moments)**2 + np.array(edgewise_moments)**2)
+        moments_dict = {
+            'uinf': uinf_list,
+            'flapwise_moment': flapwise_moments,
+            'edgewise_moment': edgewise_moments,
+            'combined_rms': combined_rms
+        }
+        df_moments = pd.DataFrame(moments_dict)
+        df_moments.to_csv(self.workdir.parent / "ccblade_moments.csv", index=False)
+        logger.info(f"Saved moments table")
+        # Plot moments
+        plot_moments(self.rotor.r, loads_list, uinf_list, {'flapwise': np.array(flapwise_moments), 'edgewise': np.array(edgewise_moments), 'combined_rms': combined_rms}, of=self.workdir.parent / "ccblade_moments.png")
 
 
 class ccblade_run:

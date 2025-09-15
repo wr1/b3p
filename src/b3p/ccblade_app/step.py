@@ -20,6 +20,9 @@ class CCBladeStep(Statesman):
         "ccblade_init.png",
         "ccblade_out.png",
         "polars.png",
+        "ccblade_bladeloads.csv",
+        "ccblade_moments.csv",
+        "ccblade_moments.png",
     ]
 
     def _execute(self):

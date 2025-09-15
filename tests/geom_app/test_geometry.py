@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Tests for geometry.py in geom_app."""
 
-import pytest
 import numpy as np
 from pathlib import Path
 import tempfile
-import json
 
 # Import the functions to test
 from src.b3p.geom_app.geometry import optspace, build_blade_geometry, blade

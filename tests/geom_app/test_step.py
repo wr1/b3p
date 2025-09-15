@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for step.py in geom_app."""
 
-import pytest
 import tempfile
 from pathlib import Path
 import yaml
