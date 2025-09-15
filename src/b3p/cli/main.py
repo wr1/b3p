@@ -13,7 +13,7 @@ file_handler = logging.FileHandler("output.log")
 file_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
 logger.addHandler(file_handler)
 
-from treeparse import cli, option
+from treeparse import cli
 from .build_app import build_cli
 from .two_d_app import twod_cli
 from .ccx_app import ccx_cli
@@ -21,9 +21,8 @@ from .clean_app import clean_cli
 from .validate_app import validate_cli
 from ..geom_app.cli import geom_cli
 from ..mesh_app.cli import mesh_cli  # Add the new mesh_cli
-from .ccblade_app import ccblade_cli
+from ..ccblade_app.cli import ccblade_cli
 
-from pathlib import Path
 
 clean_cli.sort_key = 10
 validate_cli.sort_key = 20

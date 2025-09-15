@@ -4,7 +4,6 @@
 from pathlib import Path
 from treeparse import cli, command, option
 from .step import MeshStep
-from ..cli.yml_portable import yaml_make_portable
 
 
 # Treeparse CLI for mesh_app

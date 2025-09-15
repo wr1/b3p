@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
-import os
 import shutil
-from ..models.config import BladeConfig  # Import for type hinting
 
 from treeparse import cli, command, option
 

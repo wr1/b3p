@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 import os
 import pickle
-from ..models.config import BladeConfig
 from . import yml_portable
 from ..geometry import build_blade_geometry
 from ..mesh import (
@@ -12,7 +11,6 @@ from ..mesh import (
     combine_meshes,
 )
 from ..laminates import build_plybook, drape_mesh, drape_summary
-from rich.logging import RichHandler
 from statesman.core.base import Statesman, ManagedFile
 from treeparse import cli, command, option
 from .app_state import AppState

@@ -4,7 +4,6 @@
 import logging
 import shutil
 from pathlib import Path
-from ..models.config import BladeConfig
 from .mesh import build_blade_mesh  # Use self-contained mesh_app function
 from ..cli import yml_portable
 from statesman.core.base import Statesman, ManagedFile
@@ -42,11 +41,13 @@ class MeshStep(Statesman):
             logger.info(f"Copied and renamed {src_pck} to {dst_pck}")
 
         src_vtp = self.workdir / "blade_geometry.vtp"
-        dst_vtp = self.workdir / f"{prefix}_base.vtp"  # Match expectation in mesh_app/mesh.py
+        dst_vtp = (
+            self.workdir / f"{prefix}_base.vtp"
+        )  # Match expectation in mesh_app/mesh.py
         if src_vtp.exists():
             shutil.copy(src_vtp, dst_vtp)
             logger.info(f"Copied and renamed {src_vtp} to {dst_vtp}")
 
         # Use self-contained build_blade_mesh from mesh_app
         build_blade_mesh(self.config, self.workdir)
-        logger.info(f"Mesh built using mesh_app's build_blade_mesh")
+        logger.info("Mesh built using mesh_app's build_blade_mesh")

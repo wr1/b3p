@@ -1,21 +1,17 @@
 # Mesh building functions for mesh_app, self-contained but synced with build mesh interpolation.
 
-import os
 import logging
 import pickle
-from copy import deepcopy as dc
 import numpy as np
 from pathlib import Path
 import pyvista as pv
 import vtk
-from ..geometry.blade import blade
 from ..geometry.blade_section import section as GeometrySection
-from ..geometry.loft_utils import load, interp, optspace
-from ..geometry.splining import intp_c
 
 logger = logging.getLogger(__name__)
 
 # Local classes updated to match build mesh interpolation
+
 
 def spline_interp(x, y, newx):
     spl = vtk.vtkCardinalSpline()
@@ -224,7 +220,13 @@ class GeometrySection:
         for i in webs:
             splits = sorted(i.splits(self.r, self.r_relative))
             datum, datum_r = [], []
-            for j in zip(rel_dist_from_te, [1 if k < len(rel_dist_from_te) // 2 else -1 for k in range(len(rel_dist_from_te))]):
+            for j in zip(
+                rel_dist_from_te,
+                [
+                    1 if k < len(rel_dist_from_te) // 2 else -1
+                    for k in range(len(rel_dist_from_te))
+                ],
+            ):
                 datum.append(
                     (j[0] - splits[j[1]]) * distance_along_airfoil * (-1 if j[1] else 1)
                 )
@@ -593,7 +595,9 @@ def build_webs(mesh_path, webs, prefix="__dum", workdir=Path(".")):
         out_list = np.column_stack((r, wwl, lwl, rt1)).tolist()
         # Append end point if needed
         if webs[i]["z_end"] > out_list[-1][0]:
-            out_list.append([webs[i]["z_end"], out_list[-1][1], out_list[-1][2], out_list[-1][3]])
+            out_list.append(
+                [webs[i]["z_end"], out_list[-1][1], out_list[-1][2], out_list[-1][3]]
+            )
         # Collect points for JSON and VTP
         lwp = slice_mesh.points[leading_mask].tolist()
         wwp = slice_mesh.points[trailing_mask].tolist()
@@ -604,6 +608,7 @@ def build_webs(mesh_path, webs, prefix="__dum", workdir=Path(".")):
         }
         with open(workdir / f"{name}.json", "w") as f:
             import json
+
             json.dump(data, f, indent=4)
         # Generate VTP file
         web_points = np.array(lwp + wwp)

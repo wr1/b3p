@@ -3,10 +3,9 @@
 
 import logging
 from pathlib import Path
-from ..models.config import BladeConfig
 from .geometry import build_blade_geometry
 from ..cli import yml_portable
-from statesman.core.base import Statesman, ManagedFile
+from statesman.core.base import Statesman
 
 logger = logging.getLogger(__name__)
 

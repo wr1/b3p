@@ -3,7 +3,6 @@
 import logging
 from pathlib import Path
 from b3p.cli.app_state import AppState
-from b3p.models.config import BladeConfig  # Updated import for fixed config
 from treeparse import cli, command, option
 
 logger = logging.getLogger(__name__)

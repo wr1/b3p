@@ -51,7 +51,7 @@ def plot_interpolated_polars(
     t: List[float], data: np.ndarray, of: Path = Path("polars.png")
 ) -> None:
     """Plot interpolated polars with thickness values."""
-    fig, ax = plt.subplots(3, 1, figsize=(12, 19))
+    fig, ax = plt.subplots(3, 1, figsize=(16, 25))
     for n, i in enumerate(t):
         alpha, cl, cd, cm = data[:, :, n]
         ax[0].plot(alpha, cl, label=f"t={t[n]:.3f}")
@@ -61,12 +61,15 @@ def plot_interpolated_polars(
         ax[1].set_ylabel("Cd")
         ax[2].set_ylabel("Cm")
         ax[0].legend()
+        ax[0].grid()
+        ax[1].grid()
+        ax[2].grid()
     fig.savefig(of)
 
 
 def plot_polars(polars: List[tuple], of: Path = Path("polars_in.png")) -> None:
     """Plot polar data from a list."""
-    fig, ax = plt.subplots(3, 1, figsize=(12, 16))
+    fig, ax = plt.subplots(3, 1, figsize=(16, 20))
     for i in polars:
         alpha, cl, cd, cm = i[1]
         ax[0].plot(alpha, cl, label=i[0])
@@ -208,13 +211,18 @@ def find_closest_x(
 
 
 def plot_bladeloads(
-    r: np.ndarray, data_dict: Dict[str, np.ndarray], of: Path = Path("bladeloads.png")
+    r: np.ndarray, loads_list: List[Dict[str, np.ndarray]], uinf_list: List[float], of: Path = Path("bladeloads.png")
 ) -> None:
-    """Plot blade loads from a dictionary."""
-    fig, axs = plot_grid(len(data_dict), figsize=(15, 15))
-    for idx, (name, array) in enumerate(data_dict.items()):
-        axs[idx].plot(r, array)
+    """Plot blade loads from a list of dictionaries for multiple operating points."""
+    if not loads_list:
+        return
+    fig, axs = plot_grid(len(loads_list[0]), figsize=(25, 25))
+    for idx, name in enumerate(loads_list[0].keys()):
+        for i, load_dict in enumerate(loads_list):
+            axs[idx].plot(r, load_dict[name], label=f"uinf={uinf_list[i]:.1f}")
         axs[idx].set_title(name)
+        axs[idx].legend()
+        axs[idx].grid()
     fig.tight_layout()
     fig.savefig(of)
     logger.info(f"Saved {of}")
@@ -265,10 +273,6 @@ class controloptimize:
         logger.info(f" {init_val} {opt_val}, improvement {opt_val / init_val}")
         self.optimal_tsr = omega2tsr(optimal_values[0], starting_uinf, self.rtip)
         self.fine_pitch = optimal_values[1]
-        loads, _ = self.rotor.distributedAeroLoads(
-            self.uinf, optimal_values[0], optimal_values[1], 0
-        )
-        plot_bladeloads(self.rotor.r, loads, of=self.workdir / "ccblade_bladeloads.png")
         logger.info(f"optimal tsr {self.optimal_tsr} {self.fine_pitch}")
 
     def control_opt_above_rated(self) -> Dict[str, Any]:
@@ -293,7 +297,7 @@ class controloptimize:
                     self.pitch,
                     coefficients=False,
                 )
-        rotorplot(init_pc, self.uinf, of=self.workdir / "ccblade_init.png")
+        rotorplot(init_pc, self.uinf, of=self.workdir.parent / "ccblade_init.png")
         overrated = np.where(init_pc["P"] > self.rating)
         logger.info(f"overrated {overrated}, {self.uinf[overrated]}")
         upost = self.uinf[overrated]
@@ -318,7 +322,7 @@ class controloptimize:
         with Live(
             Spinner("dots", text="Final rotor evaluation..."), refresh_per_second=10
         ):
-            with redirect_stdout(open(os.devnull, "w")):  # Redirect stdout
+            with redirect_stdout(open(os.devnull, "w")):
                 out_pc, _ = self.rotor.evaluate(
                     self.uinf,
                     self.omega,
@@ -333,10 +337,20 @@ class controloptimize:
             out_pc,
             self.uinf,
             labels=["P", "CP", "Mb", "T", "omega", "pitch", "tsr"],
-            of=self.workdir / "ccblade_out.png",
+            of=self.workdir.parent / "ccblade_out.png",
         )
         logger.info(f"pitch {self.pitch}")
         return out_pc
+
+    def compute_bladeloads(self) -> None:
+        """Compute and plot blade loads for all operating points."""
+        loads_list = []
+        uinf_list = []
+        for ui, om, pi in zip(self.uinf, self.omega, self.pitch):
+            loads, _ = self.rotor.distributedAeroLoads(ui, om, pi, 0)
+            loads_list.append(loads)
+            uinf_list.append(ui)
+        plot_bladeloads(self.rotor.r, loads_list, uinf_list, of=self.workdir.parent / "ccblade_bladeloads.png")
 
 
 def rotorplot(
@@ -347,7 +361,7 @@ def rotorplot(
 ) -> None:
     """Plot rotor performance data against wind speeds."""
     lab = [i for i in labels if i in op]
-    fig, ax = plot_grid(len(lab), figsize=(10, 10))
+    fig, ax = plot_grid(len(lab), figsize=(15, 15))
     for n, i in enumerate(lab):
         ax[n].plot(uinf, op[i], label=f"{i} max={op[i].max():.2f}")
         ax[n].legend()
@@ -372,6 +386,7 @@ class ccblade_run:
         if not workdir_path.is_absolute():
             workdir_path = self.yml_dir / workdir_path
         self.workdir = workdir_path.resolve() / "mesh"
+        self.workdir.mkdir(parents=True, exist_ok=True)  # Ensure mesh directory exists
 
         bem = self.config["aero"]["bem"]
         self.prefix = self.workdir / self.config["general"]["prefix"]
@@ -388,7 +403,7 @@ class ccblade_run:
             reverse=True,
         )
         iplr = interpolate_polars(
-            plrs, plf.relative_thickness, of=self.workdir / "polars.png"
+            plrs, plf.relative_thickness, of=self.workdir.parent / "polars.png"
         )
         rhub, rtip = plf.z.iloc[0], plf.z.iloc[-1]
         self.rotor = CCBlade(
@@ -422,6 +437,7 @@ class ccblade_run:
         """Execute the CCBlade analysis."""
         self.copt.control_opt_below_rated()
         output = self.copt.control_opt_above_rated()
+        self.copt.compute_bladeloads()
         del output["W"]
         df = pd.DataFrame(output).dropna()
         df.to_csv(self.workdir.parent / "ccblade_output.csv", sep=";")

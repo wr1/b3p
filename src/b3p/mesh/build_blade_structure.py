@@ -2,7 +2,6 @@
 
 from b3p.mesh import mesh_from_loft
 from b3p.mesh import webs
-import numpy as np
 
 
 def build_blade_structure(config, prefix=None):

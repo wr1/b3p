@@ -1,6 +1,5 @@
 # Geometry building functions for geom_app.
 
-from pathlib import Path
 from ..geometry.blade import blade
 from ..geometry.loft_utils import optspace
 from ..geometry.geometry_section import section as GeometrySection

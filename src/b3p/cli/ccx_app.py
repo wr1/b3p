@@ -6,9 +6,7 @@ import glob
 import multiprocessing
 import subprocess
 from rich.progress import Progress
-from rich.logging import RichHandler
-from ..ccx import mesh2ccx, ccx2vtu, ccxpost
-from ..ccx.failcrit_mesh import compute_failure_for_meshes
+from ..ccx import mesh2ccx
 from statesman.core.base import Statesman, ManagedFile
 from treeparse import cli, command, option
 
