@@ -3,7 +3,7 @@
 
 import logging
 from pathlib import Path
-from .ccblade import ccblade_run
+from .runner import ccblade_run
 from ..cli import yml_portable
 from statesman.core.base import Statesman
 
