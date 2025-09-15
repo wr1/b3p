@@ -20,6 +20,18 @@ class GeometryStep(Statesman):
         "blade_geometry_variables.json",
         "blade_geometry_portable.yml",
     ]
+    workdir_key = "general.workdir"
+
+    def __init__(self, config_path, force=False):
+        super().__init__(config_path)
+        self.force = force
+        self.workdir.mkdir(parents=True, exist_ok=True)
+
+    def run(self):
+        if self.force:
+            self._execute()
+        else:
+            super().run()
 
     def _execute(self):
         """Execute the geometry building step."""

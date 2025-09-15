@@ -63,22 +63,11 @@ class blade:
         df.to_csv(f"{prefix}.csv", index=False, sep=";")
 
     def _load_airfoils(self, airfoils, x):
-        """Load airfoils from list of dicts."""
+        """Load airfoils from dict of xy lists."""
         logger.info("Loading airfoils")
         self.airfoils = {}
-        for airfoil in airfoils:
-            thickness = airfoil['key']
-            if 'file' in airfoil:
-                if airfoil['file'].find("du") != -1:
-                    logger.debug(f"Loading {airfoil['file']} normalized")
-                    t = loft_utils.load(airfoil['file'], normalise=True)
-                else:
-                    logger.debug(f"Loading {airfoil['file']} unnormalized")
-                    t = loft_utils.load(airfoil['file'], normalise=False)
-            else:
-                logger.debug(f"Loading airfoil {airfoil['name']} at thickness {thickness}")
-                t = airfoil["xy"]
-
+        for thickness in sorted(airfoils):
+            t = airfoils[thickness]
             self.airfoils[thickness] = loft_utils.interp(x, t)[:2]
 
     def _interpolate_planform(self, chord, thickness, twist, dx, dy, z):
@@ -143,7 +132,6 @@ class blade:
             "chord rotor_diam=%.3f" % (2.0 * max(self.z[1])),
             "twist",
             "relative thickness",
-            "absolute thickness",
             "dx",
             "dy",
             "abs thickness root",
