@@ -11,7 +11,7 @@ import logging
 from typing import List, Tuple, Dict, Optional, Any
 from rich.live import Live
 from rich.spinner import Spinner
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 import math
 
 from .plots import (
@@ -121,9 +121,10 @@ class RotorOptimizer:
             omega, pitch = self.omega, x[0]
 
         if (omega, pitch) not in self.cache:
-            outputs, _ = self.rotor.evaluate(
-                self.uinf, omega, pitch, coefficients=coefficients
-            )
+            with redirect_stdout(open(os.devnull, "w")), redirect_stderr(open(os.devnull, "w")):
+                outputs, _ = self.rotor.evaluate(
+                    self.uinf, omega, pitch, coefficients=coefficients
+                )
             self.cache[(omega, pitch)] = outputs
 
         P = np.mean(self.cache[(omega, pitch)]["P"])
@@ -203,7 +204,7 @@ class controloptimize:
             Spinner("dots", text="Optimize pitch and TSR below rated..."),
             refresh_per_second=10,
         ):
-            with redirect_stdout(open(os.devnull, "w")):
+            with redirect_stdout(open(os.devnull, "w")), redirect_stderr(open(os.devnull, "w")):
                 optimal_values = optimizer.optimize(initial_guess)
                 init_val = optimizer.evaluate(initial_guess)[0]
                 opt_val, optt = optimizer.evaluate(optimal_values, coefficients=True)
@@ -228,7 +229,7 @@ class controloptimize:
             Spinner("dots", text="Above rated initial guess..."),
             refresh_per_second=10,
         ):
-            with redirect_stdout(open(os.devnull, "w")):
+            with redirect_stdout(open(os.devnull, "w")), redirect_stderr(open(os.devnull, "w")):
                 init_pc, _ = self.rotor.evaluate(
                     self.uinf,
                     self.omega,
@@ -252,7 +253,7 @@ class controloptimize:
                 pitch = np.linspace(closest_pitch, closest_pitch + 15.0, 8)
                 ui = np.ones_like(pitch) * i[0]
                 oi = np.ones_like(pitch) * i[1]
-                with redirect_stdout(open(os.devnull, "w")):  # Redirect stdout
+                with redirect_stdout(open(os.devnull, "w")), redirect_stderr(open(os.devnull, "w")):
                     pg, _ = self.rotor.evaluate(ui, oi, pitch, coefficients=False)
                 closest_pitch = find_closest_x(pitch, pg["P"], self.rating, 3)
                 pitch_over_rated.append(closest_pitch)
@@ -260,7 +261,7 @@ class controloptimize:
         with Live(
             Spinner("dots", text="Final rotor evaluation..."), refresh_per_second=10
         ):
-            with redirect_stdout(open(os.devnull, "w")):
+            with redirect_stdout(open(os.devnull, "w")), redirect_stderr(open(os.devnull, "w")):
                 out_pc, _ = self.rotor.evaluate(
                     self.uinf,
                     self.omega,
@@ -288,7 +289,8 @@ class controloptimize:
         edgewise_moments = []
         r = self.rotor.r
         for ui, om, pi in zip(self.uinf, self.omega, self.pitch):
-            loads, _ = self.rotor.distributedAeroLoads(ui, om, pi, 0)
+            with redirect_stdout(open(os.devnull, "w")), redirect_stderr(open(os.devnull, "w")):
+                loads, _ = self.rotor.distributedAeroLoads(ui, om, pi, 0)
             loads_list.append(loads)
             uinf_list.append(ui)
             # Compute moments

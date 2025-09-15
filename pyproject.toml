@@ -27,8 +27,8 @@ dependencies = [
   "sympy>=1.13.3,<2.0.0",
   "tqdm>=4.66.5,<5.0.0",
   "vtk==9.3.1", # "ccblade@git+https://github.com/WISDEM/CCBlade.git@master",
-  "treeparse @ git+https://github.com/wr1/treeparse.git@master",
-  "statesman @ git+https://github.com/wr1/statesman.git@master"
+  "treeparse @ git+https://github.com/wr1/treeparse.git@master", # "statesman @ git+https://github.com/wr1/statesman.git@master"
+  "statesman",
 ]
 
 [project.scripts]

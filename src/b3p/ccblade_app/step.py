@@ -16,14 +16,19 @@ class CCBladeStep(Statesman):
     dependent_sections = ["general", "aero"]
     output_files = [
         "ccblade_output.csv",
-        "ccblade_bladeloads.png",
-        "ccblade_init.png",
-        "ccblade_out.png",
-        "polars.png",
         "ccblade_bladeloads.csv",
         "ccblade_moments.csv",
-        "ccblade_moments.png",
     ]
+
+    def __init__(self, config_path, force=False):
+        super().__init__(config_path)
+        self.force = force
+
+    def run(self):
+        if self.force:
+            self._execute()
+        else:
+            super().run()
 
     def _execute(self):
         """Execute the CCBlade analysis step."""

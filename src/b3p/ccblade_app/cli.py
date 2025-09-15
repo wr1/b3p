@@ -7,9 +7,9 @@ from .step import CCBladeStep
 
 
 # Treeparse CLI for ccblade_app
-def run_ccblade_callback(yml: Path):
+def run_ccblade_callback(yml: Path, force: bool = False):
     """Callback for running the CCBlade step."""
-    step = CCBladeStep(str(yml))
+    step = CCBladeStep(str(yml), force=force)
     step.run()
 
 
@@ -25,6 +25,12 @@ ccblade_cli = cli(
             arg_type=Path,
             required=True,
             help="Path to YAML config file",
+        ),
+        option(
+            flags=["--force", "-f"],
+            arg_type=bool,
+            default=False,
+            help="Force run despite statesman",
         ),
     ],
 )
