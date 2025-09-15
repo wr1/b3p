@@ -13,12 +13,13 @@ logger = logging.getLogger(__name__)
 class CCBladeStep(Statesman):
     """Statesman step for running CCBlade analysis."""
 
-    dependent_sections = ["general", "aero"]
+    dependent_sections = ["general","planform", "aero"]
     output_files = [
         "ccblade_output.csv",
         "ccblade_bladeloads.csv",
         "ccblade_moments.csv",
     ]
+    workdir_key = "general.workdir"
 
     def __init__(self, config_path, force=False):
         super().__init__(config_path)

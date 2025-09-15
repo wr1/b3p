@@ -40,7 +40,7 @@ class ccblade_run:
             self.prefix.with_name(self.prefix.stem + "_sca_50.csv"), sep=";"
         )
         plrs = sorted(
-            [(i[0], load_polar(yml_dir / Path(i[1]))) for i in bem["polars"].items()],
+            [(i['key'], load_polar(yml_dir / Path(i['file']))) for i in bem["polars"]],
             reverse=True,
         )
         iplr = interpolate_polars(

@@ -20,15 +20,56 @@ planform:
   twist: [[0.0, 10], [0.2, 2], [0.4, 1], [0.6, 0], [0.8, -0.5], [0.9, -1], [1.0, 0]]
 
 aero:
-  airfoils: {1.0: airfoils/circ_m32.dat, 0.25: airfoils/du_91_w2_250_smoothed_dero_0.250.dat,
-    0.21: airfoils/DU93-W-210_smoothed_dero_0.210.dat, 0.179928: airfoils/naca633418_te.dat,
-    0.17: airfoils/naca0017.dat}
+  airfoils:
+    - key: 1.0
+      name: circ
+      file: airfoils/circ_m32.dat
+    - key: 0.25
+      name: du91
+      file: airfoils/du_91_w2_250_smoothed_dero_0.250.dat
+    - key: 0.21
+      name: DU93
+      file: airfoils/DU93-W-210_smoothed_dero_0.210.dat
+    - key: 0.179928
+      name: naca633418
+      file: airfoils/naca633418_te.dat
+    - key: 0.17
+      name: naca0017
+      file: airfoils/naca0017.dat
   bem:
-    rated_power : 10000000
-
-    polars: {1.0: polars/Cylinder1.dat, 0.21: polars/DU21_A17.dat, 0.25: polars/DU25_A17.dat,
-      0.30: polars/DU30_A17.dat, 0.35: polars/DU35_A17.dat, 0.40: polars/DU40_A17.dat,
-      0.17: polars/NACA64_A17.dat}
+    rated_power: 10000000
+    polars:
+      - key: 1.0
+        name: Cylinder
+        file: polars/Cylinder1.dat
+      - key: 0.21
+        name: DU21
+        file: polars/DU21_A17.dat
+      - key: 0.25
+        name: DU25
+        file: polars/DU25_A17.dat
+      - key: 0.30
+        name: DU30
+        file: polars/DU30_A17.dat
+      - key: 0.35
+        name: DU35
+        file: polars/DU35_A17.dat
+      - key: 0.40
+        name: DU40
+        file: polars/DU40_A17.dat
+      - key: 0.17
+        name: NACA64
+        file: polars/NACA64_A17.dat
+    B: 3
+    rho: 1.225
+    mu: 0.0000181
+    precone: 0
+    tilt: 0
+    yaw: 0
+    shearExp: 0.2
+    hubHt: 90
+    max_tipspeed: 95
+    uinf: [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26]
 
 mesh:
   radii: np.linspace(0,100, 100)

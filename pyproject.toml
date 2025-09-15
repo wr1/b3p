@@ -28,9 +28,9 @@ dependencies = [
   "tqdm>=4.66.5,<5.0.0",
   "vtk==9.3.1", # "ccblade@git+https://github.com/WISDEM/CCBlade.git@master",
   "treeparse @ git+https://github.com/wr1/treeparse.git@master", # "statesman @ file://../statesman"
-  "statesman @ file://../statesman",
+  "statesman @ git+https://github.com/wr1/statesman.git@master",
 ]
-
+#  @ file://../statesman/ 
 [project.scripts]
 b3p = "b3p.cli.main:main"
 

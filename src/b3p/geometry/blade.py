@@ -63,21 +63,23 @@ class blade:
         df.to_csv(f"{prefix}.csv", index=False, sep=";")
 
     def _load_airfoils(self, airfoils, x):
+        """Load airfoils from list of dicts."""
         logger.info("Loading airfoils")
         self.airfoils = {}
-        for i in sorted(airfoils):
-            if type(airfoils[i]) == str:
-                if airfoils[i].find("du") != -1:
-                    logger.debug(f"Loading {airfoils[i]} normalized")
-                    t = loft_utils.load(airfoils[i], normalise=True)
+        for airfoil in airfoils:
+            thickness = airfoil['key']
+            if 'file' in airfoil:
+                if airfoil['file'].find("du") != -1:
+                    logger.debug(f"Loading {airfoil['file']} normalized")
+                    t = loft_utils.load(airfoil['file'], normalise=True)
                 else:
-                    logger.debug(f"Loading {airfoils[i]} unnormalized")
-                    t = loft_utils.load(airfoils[i], normalise=False)
+                    logger.debug(f"Loading {airfoil['file']} unnormalized")
+                    t = loft_utils.load(airfoil['file'], normalise=False)
             else:
-                logger.debug(f"Loading airfoil {airfoils[i]['name']} at thickness {i}")
-                t = airfoils[i]["xy"]
+                logger.debug(f"Loading airfoil {airfoil['name']} at thickness {thickness}")
+                t = airfoil["xy"]
 
-            self.airfoils[i] = loft_utils.interp(x, t)[:2]
+            self.airfoils[thickness] = loft_utils.interp(x, t)[:2]
 
     def _interpolate_planform(self, chord, thickness, twist, dx, dy, z):
         self.x = np.linspace(0, 1.0, self.np_spanwise)
