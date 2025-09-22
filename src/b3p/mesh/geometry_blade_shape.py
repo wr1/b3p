@@ -1,7 +1,7 @@
 import vtk
-from b3p.geometry import geometry_section
+from b3p.geom_app import geometry_section
 import numpy
-from b3p.geometry import geom_utils
+from b3p.geom_app import geom_utils
 import logging
 
 logger = logging.getLogger(__name__)

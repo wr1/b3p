@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 import pyvista as pv
 import vtk
-from ..geometry.blade_section import section as GeometrySection
+# from ..geom_app.blade_section import section as GeometrySection
 
 logger = logging.getLogger(__name__)
 
@@ -559,7 +559,7 @@ def build_webs(mesh_path, webs, prefix="__dum", workdir=Path(".")):
         # Get point data
         c = slice_mesh.point_data.get("d_rel_dist_from_te")
         cc = slice_mesh.point_data.get("d_abs_dist_from_te")
-        p = slice_mesh.point_data.get("d_rel_dist_from_te")
+        # p = slice_mesh.point_data.get("d_rel_dist_from_te")
         radius_coords = slice_mesh.point_data.get("radius")
         if c is None or cc is None or radius_coords is None:
             logger.warning(f"Web {name}: missing point data arrays")
@@ -569,38 +569,41 @@ def build_webs(mesh_path, webs, prefix="__dum", workdir=Path(".")):
         maxr = np.max(radius_coords)
         r = np.linspace(minr, maxr, 400)
         # Use numpy boolean indexing for vectorized operations
-        leading_mask = c > 0.5
-        trailing_mask = ~leading_mask
-        # Leading edge
-        if np.any(leading_mask):
-            lw_r = radius_coords[leading_mask]
-            lw_p = p[leading_mask]
+        lw_mask = c > 0.5
+        ww_mask = ~lw_mask
+        # pressure side
+        if np.any(lw_mask):
+            lw_r = radius_coords[lw_mask]
+            lw_p = c[lw_mask]
             lw1 = np.interp(r, lw_r, lw_p)
         else:
             lw1 = np.zeros_like(r)
-        # Trailing edge
-        if np.any(trailing_mask):
-            ww_r = radius_coords[trailing_mask]
-            ww_p = p[trailing_mask]
+        # suction side
+        if np.any(ww_mask):
+            ww_r = radius_coords[ww_mask]
+            ww_p = c[ww_mask]
             ww1 = np.interp(r, ww_r, ww_p)
         else:
             ww1 = np.zeros_like(r)
         # Ratio
-        rt1 = np.interp(r, radius_coords, cc / c)
+        # ratio = np.divide(cc, c, out=np.zeros_like(cc), where=c != 0)
+        # if np.any(c == 0):
+        #     logger.warning(f"Web {name}: division by zero in ratio calculation, setting to 0 where c=0")
+        # rt1 = np.interp(r, radius_coords, ratio)
         # Build out_list using vectorized operations
         z_follow_blade = webs[i]["z_follow_blade"]
         mask_follow = r <= z_follow_blade
         lwl = np.where(mask_follow, lw1, 0)
         wwl = np.where(mask_follow, ww1, 0)
-        out_list = np.column_stack((r, wwl, lwl, rt1)).tolist()
+        out_list = np.column_stack((r, wwl, lwl)).tolist()
         # Append end point if needed
         if webs[i]["z_end"] > out_list[-1][0]:
             out_list.append(
                 [webs[i]["z_end"], out_list[-1][1], out_list[-1][2], out_list[-1][3]]
             )
         # Collect points for JSON and VTP
-        lwp = slice_mesh.points[leading_mask].tolist()
-        wwp = slice_mesh.points[trailing_mask].tolist()
+        lwp = slice_mesh.points[lw_mask].tolist()
+        wwp = slice_mesh.points[ww_mask].tolist()
         data = {
             "name": name,
             "data": out_list,

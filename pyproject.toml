@@ -34,6 +34,7 @@ dependencies = [
 [project.scripts]
 b3p = "b3p.cli.main:main"
 geom = "b3p.geom_app.cli:geom_cli.run"
+mesh = "b3p.mesh_app.cli:mesh_cli.run"
 
 [build-system]
 build-backend = "hatchling.build"

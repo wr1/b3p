@@ -3,13 +3,17 @@
 
 from pathlib import Path
 from treeparse import cli, command, option
-from .step import MeshStep
+from b3p.mesh_app.step import MeshStep
+import logging
 
 
 # Treeparse CLI for mesh_app
-def run_mesh_callback(yml: Path):
+def run_mesh_callback(yml: Path, force: bool):
     """Callback for running the mesh step, now synced."""
-    step = MeshStep(str(yml))
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info("Starting mesh run")
+    step = MeshStep(str(yml), force=force)
     step.run()
 
 
@@ -26,6 +30,12 @@ mesh_cli = cli(
             required=True,
             help="Path to YAML config file",
         ),
+        option(
+            flags=["--force", "-f"],
+            arg_type=bool,
+            default=False,
+            help="Force rebuild the mesh",
+        )
     ],
 )
 
@@ -36,4 +46,9 @@ mesh_cli.commands.append(
         callback=run_mesh_callback,
         arguments=[],
     )
+
 )
+
+
+if __name__=="__main__":
+    mesh_cli.run()
