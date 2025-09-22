@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 import pickle
 from . import yml_portable
-from ..geometry import build_blade_geometry
+# from ..geometry import build_blade_geometry
 from ..mesh import (
     add_load_to_mesh,
     add_te_solids,

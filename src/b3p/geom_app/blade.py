@@ -6,9 +6,9 @@ from matplotlib import pyplot as plt
 import pickle
 import pyvista as pv
 import json
-from b3p.geometry import splining
-from b3p.geometry import loft_utils
-from b3p.geometry import blade_section
+from b3p.geom_app import splining
+from b3p.geom_app import loft_utils
+from b3p.geom_app import blade_section
 
 # Configure logging
 logger = logging.getLogger(__name__)

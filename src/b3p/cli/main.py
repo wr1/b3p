@@ -17,17 +17,15 @@ from treeparse import cli
 from .build_app import build_cli
 from .two_d_app import twod_cli
 from .ccx_app import ccx_cli
-from .clean_app import clean_cli
 from .validate_app import validate_cli
 from ..geom_app.cli import geom_cli
-from ..mesh_app.cli import mesh_cli  # Add the new mesh_cli
+from ..mesh_app.cli import mesh_cli
 from ..ccblade_app.cli import ccblade_cli
 
 
-clean_cli.sort_key = 10
 validate_cli.sort_key = 20
 geom_cli.sort_key = 25
-mesh_cli.sort_key = 30  # Add mesh_cli
+mesh_cli.sort_key = 30
 build_cli.sort_key = 35
 twod_cli.sort_key = 40
 ccx_cli.sort_key = 50
@@ -40,12 +38,10 @@ app = cli(
     show_types=True,
     show_defaults=True,
     max_width=120,
-    # Removed --yml from top level
     subgroups=[
-        clean_cli,
         validate_cli,
         geom_cli,
-        mesh_cli,  # Add mesh_cli
+        mesh_cli,
         build_cli,
         twod_cli,
         ccx_cli,

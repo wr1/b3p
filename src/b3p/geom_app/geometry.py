@@ -1,8 +1,8 @@
 # Geometry building functions for geom_app.
 
-from b3p.geometry.blade import blade
-from b3p.geometry.loft_utils import optspace
-from b3p.geometry.geometry_section import section as GeometrySection
+from b3p.geom_app.blade import blade
+from b3p.geom_app.loft_utils import optspace
+from b3p.geom_app.geometry_section import section as GeometrySection
 from copy import deepcopy as dc
 import os
 import numpy as np

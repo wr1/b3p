@@ -2,7 +2,7 @@ from pathlib import Path
 from ruamel.yaml import YAML
 from pydantic import BaseModel
 from typing import Any, Dict, List
-from ..geometry.loft_utils import load
+from ..geom_app.loft_utils import load
 
 
 class Aero(BaseModel):

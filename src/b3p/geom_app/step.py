@@ -25,6 +25,11 @@ class GeometryStep(Statesman):
     def __init__(self, config_path, force=False):
         super().__init__(config_path)
         self.force = force
+        # Load config using custom loader
+        self.config_data = yml_portable.yaml_make_portable(Path(self.config_path))
+        self.config = self.config_data.model_dump()
+        # Set workdir relative to YAML file
+        self.workdir = Path(self.config_path).parent / self.config["general"]["workdir"]
         self.workdir.mkdir(parents=True, exist_ok=True)
 
     def run(self):
@@ -35,17 +40,9 @@ class GeometryStep(Statesman):
 
     def _execute(self):
         """Execute the geometry building step."""
-        # Load config using custom loader
-        config_data = yml_portable.yaml_make_portable(Path(self.config_path))
-        self.config = config_data.model_dump()
-
-        # Set workdir relative to YAML file
-        self.workdir = Path(self.config_path).parent / self.config["general"]["workdir"]
-        self.workdir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
-
         # Build geometry with fixed file names
         build_blade_geometry(self.config, self.workdir)
         yml_portable.save_yaml(
-            self.workdir / "blade_geometry_portable.yml", config_data
+            self.workdir / "blade_geometry_portable.yml", self.config_data
         )
         logger.info(f"Geometry built and saved to {self.workdir}")

@@ -1,17 +1,21 @@
-#! /usr/bin/env python3
+"""Convert mesh to CCX input."""
 
 import pyvista as pv
 import numpy as np
 import vtk
 import time
-import json
-import os
 import logging
+from .material_db import material_db_to_ccx
+from .element_sets import compute_ply_groups, compute_slab_groups
+from .buffers import nodebuffer, element_buffer, orientation_buffer
+from .loadcases import get_loadcases, root_clamp
+from .shell_sections import make_shell_section
 
 logger = logging.getLogger(__name__)
 
 
 def zero_midside_loads(mesh):
+    """Zero midside loads."""
     if mesh.celltypes[0] == 23:
         conn = mesh.cell_connectivity.reshape(
             (
@@ -24,225 +28,6 @@ def zero_midside_loads(mesh):
             if i.startswith("lc_"):
                 mesh.point_data[i][midsides] *= 0.0
     return mesh
-
-
-def make_shell_section(elem_id, plyarray, merge_adjacent_plies=True, zero_angle=True):
-    plies = []
-    filtered_plyarray = plyarray[plyarray[:, 1] > 1e-6]
-
-    for j in filtered_plyarray:
-        if plies and plies[-1][1] == j[0] and merge_adjacent_plies:
-            plies[-1][0] += j[1] * 1e-3
-        else:
-            plies.append([j[1] * 1e-3, j[0]])
-
-    if zero_angle:
-        section_string = "".join("%f,,m%i,0\n" % tuple(i) for i in plies)
-    else:
-        section_string = "".join(
-            "%f,,m%i,or%i\n" % tuple(i + [elem_id + 1]) for i in plies
-        )
-
-    return len(plies), section_string
-
-
-def material_db_to_ccx(materials, matmap=None, force_iso=False):
-    """find the material db and write properties to a ccx block"""
-    mat_db = None
-    if os.path.isfile(matmap):  # check if the material map file is there
-        mm1 = json.load(open(matmap, "r"))
-        mm = mm1["map"]
-        mat_db = mm1["matdb"]
-    else:
-        exit("no material map defined")
-
-    mm_inv = {v: k for k, v in mm.items()}
-
-    matblock = ""
-    for i in materials:
-        if i > 1e-6:
-            material_properties = mat_db[mm_inv[int(i)]]
-            matblock += (
-                f"** material: {mm_inv[int(i)]} {i} {material_properties['name']}\n"
-            )
-
-            if "C" in material_properties and not force_iso:
-                logger.info(
-                    f"{material_properties['name']} is assumed to be orthotropic"
-                )
-                C = np.array(material_properties["C"])
-                matblock += "** orthotropic material\n"
-                matblock += "*material,name=m%i\n*elastic,type=ortho\n" % i
-                D = C
-                D[0, 3] = C[0, 5]
-                D[0, 5] = C[0, 3]
-                D[1, 3] = C[1, 5]
-                D[1, 5] = C[1, 3]
-                D[2, 3] = C[2, 5]
-                D[2, 5] = C[2, 3]
-                D[3, 3] = C[5, 5]
-                D[5, 5] = C[3, 3]
-                matblock += (
-                    f"{D[0, 0]:.4g},{D[0, 1]:.4g},{D[1, 1]:.4g},"
-                    + f"{D[0, 2]:.4g},{D[1, 2]:.4g},{D[2, 2]:.4g},"
-                    + f"{D[3, 3]:.4g},{D[4, 4]:.4g},\n"
-                    + f"{D[5, 5]:.4g},293\n"
-                )
-            elif "Ex" in material_properties and not force_iso:
-                logger.info(f"{material_properties['name']} has engineering constants")
-                matblock += "** orthotropic material\n"
-                matblock += (
-                    "*material,name=m%i\n*elastic,type=engineering constants\n" % i
-                )
-                matblock += (
-                    f"{material_properties['Ex']:.4g},{material_properties['Ey']:.4g},{material_properties['Ez']:.4g},"
-                    + f"{material_properties['nuxy']:.4g},{material_properties['nuxz']:.4g},{material_properties['nuyz']:.4g},"
-                    + f"{material_properties['Gxy']:.4g},{material_properties['Gxz']:.4g},\n"
-                    + f"{material_properties['Gyz']:.4g},293\n"
-                )
-            else:
-                logger.info(f"{material_properties['name']} is assumed to be isotropic")
-                nu = min(
-                    0.45,
-                    max(
-                        0.1,
-                        (
-                            float(material_properties["nu"])
-                            if "nu" in material_properties
-                            else material_properties["nuxy"]
-                        ),
-                    ),
-                )
-                E = float(
-                    material_properties["Ex"]
-                    if "Ex" in material_properties
-                    else material_properties["E"]
-                )
-                matblock += "** isotropic material\n"
-                matblock += "*material,name=m%i\n*elastic,type=iso\n" % i
-                matblock += f"{E:.4g},{nu:.4g},293\n"
-
-    return matblock
-
-
-def format_eset(name, eids):
-    out = f"*elset,elset={name}\n"
-    for i in range(len(eids)):
-        out += f"{eids[i]}"
-        out += "\n" if (i % 16 == 15) else ","
-    if out[-1] == ",":
-        out = out[:-1] + "\n"
-    return out
-
-
-def compute_ply_groups(grid, prefix):
-    gr = ""
-    n = 1
-    for i in grid.cell_data:
-        if i.startswith(prefix):
-            eids = np.where(grid.cell_data[i][:, 1] > 0)[0] + 1
-            gr += format_eset(i, eids)
-            n += 1
-    return gr
-
-
-def compute_slab_groups(grid, prefix):
-    gr = ""
-    for i in grid.cell_data:
-        if i.startswith(prefix):
-            eids = np.where(grid.cell_data[i] > 0)[0] + 1
-            gr += format_eset(i, eids)
-    return gr
-
-
-def nodebuffer(grid):
-    nodes = np.column_stack((np.arange(1, len(grid.points) + 1), grid.points))
-    logger.info(f"exporting {len(nodes)} nodes")
-    return (
-        "*node,nset=nall\n"
-        + "\n".join([f"{int(n)},{x:f},{y:f},{z:f}" for n, x, y, z in nodes])
-        + "\n"
-    )
-
-
-def element_buffer(grid):
-    conn = grid.cells_dict
-    # logger.info(f"{conn}")
-    extypes = [23]
-
-    vtk_ccx = {23: "s8r"}
-
-    buf = ""
-    for tp in extypes:
-        ccxtype = vtk_ccx[tp]
-        for n, i in enumerate(conn[tp]):
-            conn[tp][n] = np.array(i) + 1
-            buf += f"*element,type={ccxtype},elset=e{n + 1}\n"
-            buf += f"{n + 1},{','.join(map(str, conn[tp][n]))}\n"
-
-    return buf
-
-
-def orientation_buffer(grid, add_centers=False):
-    shells = grid.extract_cells(grid.cells_dict.get(23, []))
-    buf = ""
-    x_dirs = shells.cell_data["x_dir"]
-    y_dirs = shells.cell_data["y_dir"]
-    centers = shells.cell_data["centers"]
-    num_cells = shells.GetNumberOfCells()
-
-    for n in range(num_cells):
-        xdir, ydir = x_dirs[n], y_dirs[n]
-        center = centers[n]
-        buf += "*orientation,name=or%i,system=rectangular\n" % (n + 1)
-        if add_centers:
-            coords = np.concatenate([xdir + center, ydir + center, center], axis=0)
-            buf += ",".join(format(k, ".4g") for k in coords.tolist()) + "\n3,0\n"
-        else:
-            coords = np.concatenate([xdir, ydir], axis=0)
-            buf += ",".join(format(k, ".4g") for k in coords.tolist()) + "\n"
-
-    return buf
-
-
-def get_loadcases(mesh, multiplier=1.0, buckling=False):
-    loadcases = {}
-
-    for i in mesh.point_data:
-        if i.startswith("lc_"):
-            logger.info(f"loadcase {i}")
-            multiplier = 1.0  # TODO fix for quadratic meshes
-            if buckling:
-                lbuf = f"** {i}\n*step\n*buckle\n5\n*cload\n"
-            else:
-                lbuf = f"** {i}\n*step\n*static\n*cload\n"
-
-            ld = mesh.point_data[i] * multiplier
-            for n, j in enumerate(ld):
-                if j[0] ** 2 > 1e-8:
-                    lbuf += "%i,1,%f\n" % (n + 1, j[0])
-                if j[1] ** 2 > 1e-8:
-                    lbuf += "%i,2,%f\n" % (n + 1, j[1])
-
-            lbuf += "*node output,output=3d\nU\n*element output\nE,S\n*node print,nset=root,totals=yes\nrf\n*end step\n"
-
-            loadcases[i] = lbuf
-
-    return loadcases
-
-
-def root_clamp(mesh):
-    root = np.where(mesh.points[:, 2] == mesh.points[:, 2].min())
-    lbuf = "*nset, nset=root\n"
-    for n, j in enumerate(root[0]):
-        lbuf += "%i" % (j + 1)
-        if n % 16 == 0:
-            lbuf += "\n"
-        else:
-            lbuf += ","
-    lbuf += "\n"
-    lbuf += "*boundary,op=new\nroot,1,3\n"
-    return lbuf
 
 
 def mesh2ccx(
@@ -261,6 +46,7 @@ def mesh2ccx(
     meshonly=False,
     bondline=False,  # Added to accept bondline argument
 ):
+    """Convert VTU to CCX input file."""
     logger.info(f"Converting {vtu} to ccx input file {out}")
     grid = pv.read(vtu)
     gr = grid.threshold(value=(1e-6, 1e9), scalars="thickness")

@@ -69,6 +69,7 @@ class SolveStep(Statesman):
 
 
 def check_ccx_run_done(inpfile):
+    """Check if CCX run is done."""
     frd_file = inpfile.replace(".inp", ".frd")
     if os.path.exists(frd_file):
         with open(frd_file, "rb") as f:
@@ -81,6 +82,7 @@ def check_ccx_run_done(inpfile):
 
 
 def run_ccx(inp, ccxexe, logger):
+    """Run CCX."""
     cmd = [ccxexe, inp.replace(".inp", "")]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -150,9 +152,9 @@ ccx_cli = cli(
 
 ccx_cli.commands.append(
     command(
-        name="run",
-        help="Run full Calculix process",
-        callback=run_callback,
+        name="prep",
+        help="Prepare CCX input files",
+        callback=prep_callback,
         arguments=[],
         options=[
             option(
@@ -175,9 +177,9 @@ ccx_cli.commands.append(
 
 ccx_cli.commands.append(
     command(
-        name="prep",
-        help="Prepare CCX input files",
-        callback=prep_callback,
+        name="run",
+        help="Run full Calculix process",
+        callback=run_callback,
         arguments=[],
         options=[
             option(
@@ -259,6 +261,15 @@ ccx_cli.commands.append(
 
 ccx_cli.commands.append(
     command(
+        name="failure",
+        help="Compute failure criteria",
+        callback=failure_callback,
+        arguments=[],
+    )
+)
+
+ccx_cli.commands.append(
+    command(
         name="plot",
         help="Plot CCX results",
         callback=plot_callback,
@@ -279,14 +290,5 @@ ccx_cli.commands.append(
                 help="Enable 2D plots",
             ),
         ],
-    )
-)
-
-ccx_cli.commands.append(
-    command(
-        name="failure",
-        help="Compute failure criteria",
-        callback=failure_callback,
-        arguments=[],
     )
 )
