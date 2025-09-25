@@ -408,10 +408,10 @@ class BladeShape:
                 nx = np.interp(radii, r, list(zip(*i))[0])
                 ny = np.interp(radii, r, list(zip(*i))[1])
                 nz = np.interp(radii, r, list(zip(*i))[2])
-            elif interpolation_type == 3:
-                nx = spline_interp_k(r, list(zip(*i))[0], radii)
-                ny = spline_interp_k(r, list(zip(*i))[1], radii)
-                nz = spline_interp_k(r, list(zip(*i))[2], radii)
+            # elif interpolation_type == 3:
+            #     nx = spline_interp_k(r, list(zip(*i))[0], radii)
+            #     ny = spline_interp_k(r, list(zip(*i))[1], radii)
+            #     nz = spline_interp_k(r, list(zip(*i))[2], radii)
             nxyz.append(list(zip(nx, ny, nz)))
         self.interp_sections = [
             GeometrySection(i[0], i[0] / max(radii), i[1])
@@ -591,16 +591,20 @@ def build_webs(mesh_path, webs, prefix="__dum", workdir=Path(".")):
         #     logger.warning(f"Web {name}: division by zero in ratio calculation, setting to 0 where c=0")
         # rt1 = np.interp(r, radius_coords, ratio)
         # Build out_list using vectorized operations
-        z_follow_blade = webs[i]["z_follow_blade"]
-        mask_follow = r <= z_follow_blade
-        lwl = np.where(mask_follow, lw1, 0)
-        wwl = np.where(mask_follow, ww1, 0)
-        out_list = np.column_stack((r, wwl, lwl)).tolist()
+        
+        # z_follow_blade = webs[i]["z_follow_blade"]
+        # mask_follow = r <= z_follow_blade
+        # print(mask_follow)
+        # lwl = np.where(mask_follow, lw1, 0)
+        # wwl = np.where(mask_follow, ww1, 0)
+        # out_list = np.column_stack((r, wwl, lwl)).tolist()
+        out_list = np.column_stack((r, lw1, ww1)).tolist()
+        
         # Append end point if needed
-        if webs[i]["z_end"] > out_list[-1][0]:
-            out_list.append(
-                [webs[i]["z_end"], out_list[-1][1], out_list[-1][2], out_list[-1][3]]
-            )
+        # if webs[i]["z_end"] > out_list[-1][0]:
+        #     out_list.append(
+        #         [webs[i]["z_end"], out_list[-1][1], out_list[-1][2], out_list[-1][3]]
+        #     )
         # Collect points for JSON and VTP
         lwp = slice_mesh.points[lw_mask].tolist()
         wwp = slice_mesh.points[ww_mask].tolist()
